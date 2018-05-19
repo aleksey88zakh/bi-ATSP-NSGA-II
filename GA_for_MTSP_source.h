@@ -11,13 +11,27 @@
 #define ITER_MAX 200
 #define MODIF true //ПОМЕНЯТЬ!!!
 
+//эксперимент по сужению
+//число шагов для teta
+#define NUM_STEPS_TETA 9
+//размер контейнера для хранения процента сужения (два "кванта")
+#define SIZE_EXCL_TETA (NUM_STEPS_TETA-1)*NUM_STEPS_TETA/2
+//"кванты информации"
+#define _1ST_2ND_ 1
+#define _2ND_1ST_ 2
+
+//частота вывода при оценке аппроксимации (число итераций)
+#define FREQ_SHOW_COMP 20
+//частота вывода при сужении (число итераций)
+#define FREQ_SHOW_RED 100
+
 
 using namespace std;
 using namespace System;
 using namespace System::IO;
 
-
-enum recomb_oper { DEC_new, DPX };
+//операторы кроссинговера
+public enum class recomb_oper {DEC_new, DPX};
 
 
 class GA_path
@@ -93,10 +107,6 @@ public:
 	vector<int> DPX(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2);
 
 
-	//ЛОКАЛЬНЫЙ ПОИСК
-	vector<int> local_search(vector<int> pop, vector<vector<int>> s_m_crit_index);
-
-
 	//МЕТРИКА
 	//построение аппроксимации мн-ва Парето (значения векторного критерия, без повторов)
 	void build_phi_P_approx();
@@ -118,11 +128,14 @@ public:
 	//СУЖЕНИЕ МН-ВА ПАРЕТО
 	//сам эксперимент
 	vector<double> experiment_reduction(StreamWriter^ sw, String^ problem_name_str, 
-		double h, int num_steps, double teta_start, bool is_1st_to_2nd);
+		double h, int num_steps, double teta_start, unsigned quantum_inf);
 	//аппрокимации мн-ва Парето (без повторов) относительного "нового" критерия
-	vector<vector<double>> build_new_phi_P_approx(vector<vector<int>> init_phi_P_approx, double teta, bool is_1st_to_2nd);
+	vector<vector<double>> build_new_phi_P_approx(vector<vector<int>> init_phi_P_approx, double teta_1, double teta_2, unsigned quantum_inf);
 	//построение мн-ва Парето перебором
 	vector<vector<double>> build_phi_P_enum(vector<vector<double>> init_set);
+	//вывод результатов эксперимента
+	friend void print_exp_red(StreamWriter^ sw_4, String^ quantum_inf_name_str, vector<vector<double>> index_reduced, vector<int> total_num_P_approx);
+	friend void print_exp_red_two(StreamWriter^ sw_4, String^ problem_name_str, vector<double> index_reduced, int num_steps, double total_num_P_approx);
 
 	
 
@@ -167,7 +180,6 @@ private:
 	bool is_improve_LS;//решение в локальном поиске локально улучшено
 	int q_current;//значение q для текущей задачи ОР (по алгоритму Сердюкова)
 
-
 	//РЕКОМБИНАЦИЯ
 	// << julia: Используется в функциях DEC_new и DCX
 	vector<bool> flag_Pareto_sol(int k, vector<vector<int>> s);
@@ -175,6 +187,9 @@ private:
 	//           поиск следующего активного элемента
 	int next(int j, int k, vector<bool> flag_S);
 
+
+	//ЛОКАЛЬНЫЙ ПОИСК
+	vector<int> local_search(vector<int> assignment, vector<vector<int>> s_m_crit_index);
 
 	//вычисление пригодности особи
 	int phitness(vector<vector<int>> s, vector<int> p);
@@ -193,7 +208,6 @@ private:
 	vector<int> random_change2(vector<int> assignment, int Nchange, vector<vector<int>> c,
 		int c_aver, int alpha);
 	
-
 	//метод не нужен
 	//vector<int> GA_path::local_search_fast(vector<int> assignment, vector<vector<int>> c,
 	//	vector<vector<int>> vertex, vector<int> vertex_initial, int alpha);
