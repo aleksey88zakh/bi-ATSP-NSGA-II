@@ -1,4 +1,4 @@
-// MTSP_GA_1.cpp: определяет точку входа для консольного приложения.
+п»ї// MTSP_GA_1.cpp: РѕРїСЂРµРґРµР»СЏРµС‚ С‚РѕС‡РєСѓ РІС…РѕРґР° РґР»СЏ РєРѕРЅСЃРѕР»СЊРЅРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ.
 //
 
 #include "stdafx.h"
@@ -14,41 +14,41 @@ using namespace System::IO;
 
 int main(int argc, char* argv[])
 {
-	//число городов
+	//С‡РёСЃР»Рѕ РіРѕСЂРѕРґРѕРІ
 	int num_n = 12;
 
-	//число особей
+	//С‡РёСЃР»Рѕ РѕСЃРѕР±РµР№
 	int num_N = 50;
 
-	//число итерация
+	//С‡РёСЃР»Рѕ РёС‚РµСЂР°С†РёСЏ
 	int num_iter = 200;
 
-	//кол-во запусков на одной задаче
+	//РєРѕР»-РІРѕ Р·Р°РїСѓСЃРєРѕРІ РЅР° РѕРґРЅРѕР№ Р·Р°РґР°С‡Рµ
 	int num_runs = 1;
 
-	//имя файла, с которого считываем
-	String^ file_name_rd_str = "Example_MTSP_m2_n20_N50_12.txt";//ПОМЕНЯТЬ!!!
+	//РёРјСЏ С„Р°Р№Р»Р°, СЃ РєРѕС‚РѕСЂРѕРіРѕ СЃС‡РёС‚С‹РІР°РµРј
+	String^ file_name_rd_str = "Example_MTSP_m2_n20_N50_12.txt";//РџРћРњР•РќРЇРўР¬!!!
 
-	//имя задачи в файле
-	String^ problem_name_str;	//ПОМЕНЯТЬ!!!
+	//РёРјСЏ Р·Р°РґР°С‡Рё РІ С„Р°Р№Р»Рµ
+	String^ problem_name_str;	//РџРћРњР•РќРЇРўР¬!!!
 
-	//чтение множества Парето из файла
+	//С‡С‚РµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° РџР°СЂРµС‚Рѕ РёР· С„Р°Р№Р»Р°
 	String^ file_name_source_Pareto_set_str;
 
-	//оператор рекомбинации
+	//РѕРїРµСЂР°С‚РѕСЂ СЂРµРєРѕРјР±РёРЅР°С†РёРё
 	recomb_oper rec_oper = recomb_oper::DEC_new;
 
-	//"кванты информации"
+	//"РєРІР°РЅС‚С‹ РёРЅС„РѕСЂРјР°С†РёРё"
 	unsigned quantum_inf = _1ST_2ND_ + _2ND_1ST_;
 
-	//общее время выполнения всех задач
+	//РѕР±С‰РµРµ РІСЂРµРјСЏ РІС‹РїРѕР»РЅРµРЅРёСЏ РІСЃРµС… Р·Р°РґР°С‡
 	unsigned long long total_time = 0;
-	//для инициализации рандомизатора
+	//РґР»СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё СЂР°РЅРґРѕРјРёР·Р°С‚РѕСЂР°
 	unsigned long long temp_time;
-	//среднее время выполнения задачи
+	//СЃСЂРµРґРЅРµРµ РІСЂРµРјСЏ РІС‹РїРѕР»РЅРµРЅРёСЏ Р·Р°РґР°С‡Рё
 	double aver_time = 0;
 
-	//для статистики по метрике
+	//РґР»СЏ СЃС‚Р°С‚РёСЃС‚РёРєРё РїРѕ РјРµС‚СЂРёРєРµ
 	double total_dist_begin_1 = 0;
 	double total_dist_begin_2 = 0;
 	double total_dist_end_1 = 0;
@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 	double min_dist_end_1 = 0;
 	double min_dist_end_2 = 0;
 
-	//для статистики аппроксимации мн-ва Парето
+	//РґР»СЏ СЃС‚Р°С‚РёСЃС‚РёРєРё Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё РјРЅ-РІР° РџР°СЂРµС‚Рѕ
 	double total_num_approx_P_begin = 0;
 	double total_num_approx_P_end = 0;
 
@@ -83,23 +83,23 @@ int main(int argc, char* argv[])
 	int min_num_approx_in_P_begin = 0;
 	int min_num_approx_in_P_end = 0;
 
-	//статистика эксперимента по сужению мн-ва Парето
-	//контейнеры для относительных показателей сужения мн-ва Парето
-	//доля "отброшенных" точек (в %)
-	vector<vector<double>> index_reduced_1_2; //1-ый критерий важнее 2-го
-	vector<vector<double>> index_reduced_2_1; //2-ой критерий важнее 1-го
-	vector<double> index_reduced_both(SIZE_EXCL_TETA+19); //1-ый важнее 2-го + 2-ой важнее 1-го (таблица, разложенная по строке)
-	vector<double> index_reduced_tmp(SIZE_EXCL_TETA+19); //хранение текущих значения (два "кванта информации")
+	//СЃС‚Р°С‚РёСЃС‚РёРєР° СЌРєСЃРїРµСЂРёРјРµРЅС‚Р° РїРѕ СЃСѓР¶РµРЅРёСЋ РјРЅ-РІР° РџР°СЂРµС‚Рѕ
+	//РєРѕРЅС‚РµР№РЅРµСЂС‹ РґР»СЏ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅС‹С… РїРѕРєР°Р·Р°С‚РµР»РµР№ СЃСѓР¶РµРЅРёСЏ РјРЅ-РІР° РџР°СЂРµС‚Рѕ
+	//РґРѕР»СЏ "РѕС‚Р±СЂРѕС€РµРЅРЅС‹С…" С‚РѕС‡РµРє (РІ %)
+	vector<vector<double>> index_reduced_1_2; //1-С‹Р№ РєСЂРёС‚РµСЂРёР№ РІР°Р¶РЅРµРµ 2-РіРѕ
+	vector<vector<double>> index_reduced_2_1; //2-РѕР№ РєСЂРёС‚РµСЂРёР№ РІР°Р¶РЅРµРµ 1-РіРѕ
+	vector<double> index_reduced_both(SIZE_EXCL_TETA+19); //1-С‹Р№ РІР°Р¶РЅРµРµ 2-РіРѕ + 2-РѕР№ РІР°Р¶РЅРµРµ 1-РіРѕ (С‚Р°Р±Р»РёС†Р°, СЂР°Р·Р»РѕР¶РµРЅРЅР°СЏ РїРѕ СЃС‚СЂРѕРєРµ)
+	vector<double> index_reduced_tmp(SIZE_EXCL_TETA+19); //С…СЂР°РЅРµРЅРёРµ С‚РµРєСѓС‰РёС… Р·РЅР°С‡РµРЅРёСЏ (РґРІР° "РєРІР°РЅС‚Р° РёРЅС„РѕСЂРјР°С†РёРё")
 
 
-	//контейнер числа точек в аппроксимации мн-ва Парето 
+	//РєРѕРЅС‚РµР№РЅРµСЂ С‡РёСЃР»Р° С‚РѕС‡РµРє РІ Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё РјРЅ-РІР° РџР°СЂРµС‚Рѕ 
 	vector<int> total_num_P_approx;
 
 
-	//флаг вычисления сужения
+	//С„Р»Р°Рі РІС‹С‡РёСЃР»РµРЅРёСЏ СЃСѓР¶РµРЅРёСЏ
 	bool reduction = false;
 
-	//инициализация параметров
+	//РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїР°СЂР°РјРµС‚СЂРѕРІ
 	string str_temp;
 	for (int i = 1; i < argc; i++)
 	{
@@ -153,7 +153,7 @@ int main(int argc, char* argv[])
 			rec_oper = recomb_oper::DPX;
 	}
 	
-	//открываем для считывания
+	//РѕС‚РєСЂС‹РІР°РµРј РґР»СЏ СЃС‡РёС‚С‹РІР°РЅРёСЏ
 	StreamReader^ sr = gcnew StreamReader(file_name_rd_str);
 	/*
 	TCHAR buffer[MAX_PATH];
@@ -166,15 +166,15 @@ int main(int argc, char* argv[])
 	_mkdir(str_temp.c_str());
 	*/
 
-	//короткий файл для записи
+	//РєРѕСЂРѕС‚РєРёР№ С„Р°Р№Р» РґР»СЏ Р·Р°РїРёСЃРё
 	String^ file_name_1_st = "results/Example_MTSP_m2_n" + num_n + "_N" + num_N + "_" + rec_oper.ToString("g") + "_results.csv";
 	StreamWriter^ sw_1 = gcnew StreamWriter(file_name_1_st);
 
-	//файл для записи эксперимента по сужению мн-ва Парето
+	//С„Р°Р№Р» РґР»СЏ Р·Р°РїРёСЃРё СЌРєСЃРїРµСЂРёРјРµРЅС‚Р° РїРѕ СЃСѓР¶РµРЅРёСЋ РјРЅ-РІР° РџР°СЂРµС‚Рѕ
 	String^ file_name_red_P_set_str = "results/Example_MTSP_m2_n" + num_n + "_N" + num_N + "_" + rec_oper.ToString("g") + "_red_P_set.csv";
 	StreamWriter^ sw_3 = gcnew StreamWriter(file_name_red_P_set_str);
 
-	//короткий файл для записи эксперимента по сужению мн-ва Парето
+	//РєРѕСЂРѕС‚РєРёР№ С„Р°Р№Р» РґР»СЏ Р·Р°РїРёСЃРё СЌРєСЃРїРµСЂРёРјРµРЅС‚Р° РїРѕ СЃСѓР¶РµРЅРёСЋ РјРЅ-РІР° РџР°СЂРµС‚Рѕ
 	String^ file_name_short_red_P_set_str = "results/Example_MTSP_m2_n" + num_n + "_N" + num_N + "_" + rec_oper.ToString("g") + "_red_P_set_short.csv";
 	StreamWriter^ sw_4 = gcnew StreamWriter(file_name_short_red_P_set_str);
 	sw_4->WriteLine("Reduction of the Pareto set");
@@ -182,12 +182,12 @@ int main(int argc, char* argv[])
 
 	String^ cur_line_str = sr->ReadLine();
 
-	//количества задач
+	//РєРѕР»РёС‡РµСЃС‚РІР° Р·Р°РґР°С‡
 	int num_prbl_val = 0;
-	//флаг, указано название задачи
+	//С„Р»Р°Рі, СѓРєР°Р·Р°РЅРѕ РЅР°Р·РІР°РЅРёРµ Р·Р°РґР°С‡Рё
 	bool is_problem_specified;
 
-	//если указано название задачи
+	//РµСЃР»Рё СѓРєР°Р·Р°РЅРѕ РЅР°Р·РІР°РЅРёРµ Р·Р°РґР°С‡Рё
 	if (problem_name_str)
 	{
 		num_prbl_val = 1;
@@ -195,8 +195,8 @@ int main(int argc, char* argv[])
 		while (cur_line_str != problem_name_str)
 			cur_line_str = sr->ReadLine();
 	}
-	//если не указано название задачи
-	//определение количества задач
+	//РµСЃР»Рё РЅРµ СѓРєР°Р·Р°РЅРѕ РЅР°Р·РІР°РЅРёРµ Р·Р°РґР°С‡Рё
+	//РѕРїСЂРµРґРµР»РµРЅРёРµ РєРѕР»РёС‡РµСЃС‚РІР° Р·Р°РґР°С‡
 	else
 	{
 		is_problem_specified = false;
@@ -212,11 +212,11 @@ int main(int argc, char* argv[])
 	//char** vec_problem_name_str = new char*[num_prbl_val];
 
 
-	//ЗАДАЧИ
-	//цикл по всем задачам
+	//Р—РђР”РђР§Р
+	//С†РёРєР» РїРѕ РІСЃРµРј Р·Р°РґР°С‡Р°Рј
 	for (int iter_prbl = 0; iter_prbl < num_prbl_val; iter_prbl++) 
 	{
-		//если не указано название задачи
+		//РµСЃР»Рё РЅРµ СѓРєР°Р·Р°РЅРѕ РЅР°Р·РІР°РЅРёРµ Р·Р°РґР°С‡Рё
 		if (!is_problem_specified)
 		{
 			while (cur_line_str != "")
@@ -227,20 +227,20 @@ int main(int argc, char* argv[])
 		
 		//vec_problem_name_str[iter_prbl] = problem_name_str;
 
-		//значения аргументов конструктора ГА (по порядку)
-		//число городов
-		//число особей
-		//число критериев
-		//длина максимального пути (?)
+		//Р·РЅР°С‡РµРЅРёСЏ Р°СЂРіСѓРјРµРЅС‚РѕРІ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂР° Р“Рђ (РїРѕ РїРѕСЂСЏРґРєСѓ)
+		//С‡РёСЃР»Рѕ РіРѕСЂРѕРґРѕРІ
+		//С‡РёСЃР»Рѕ РѕСЃРѕР±РµР№
+		//С‡РёСЃР»Рѕ РєСЂРёС‚РµСЂРёРµРІ
+		//РґР»РёРЅР° РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ РїСѓС‚Рё (?)
 		GA_path ga(num_n, num_N, 2, 100);
 
 
-		//генерация матриц расстояний (2 критерия)
+		//РіРµРЅРµСЂР°С†РёСЏ РјР°С‚СЂРёС† СЂР°СЃСЃС‚РѕСЏРЅРёР№ (2 РєСЂРёС‚РµСЂРёСЏ)
 		vector<vector<int>> s_temp(ga.get_n(), vector<int>(ga.get_n()));
-		//макс длина дуги по каждому критерию
+		//РјР°РєСЃ РґР»РёРЅР° РґСѓРіРё РїРѕ РєР°Р¶РґРѕРјСѓ РєСЂРёС‚РµСЂРёСЋ
 		vector<int> c_max;
 
-		//функция reserve() почему-то не работает
+		//С„СѓРЅРєС†РёСЏ reserve() РїРѕС‡РµРјСѓ-С‚Рѕ РЅРµ СЂР°Р±РѕС‚Р°РµС‚
 		//s_temp.reserve(10);
 		//for (int i = 0; i < 10; i++)
 		//	s_temp[i].reserve(10);
@@ -262,13 +262,13 @@ int main(int argc, char* argv[])
 		//StreamWriter^ sw_1 = gcnew StreamWriter(file_name_1_st);
 
 
-		//чтение множества Парето из файла (если присвоена строка с именем)
+		//С‡С‚РµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° РџР°СЂРµС‚Рѕ РёР· С„Р°Р№Р»Р° (РµСЃР»Рё РїСЂРёСЃРІРѕРµРЅР° СЃС‚СЂРѕРєР° СЃ РёРјРµРЅРµРј)
 		//String^ file_name_source_Pareto_set_str = "Example_MTSP_m2_n20_N50_1_10_Temp.csv";
 		vector<vector<int>> phi_Pareto_set;
 		if (file_name_source_Pareto_set_str)
 			phi_Pareto_set = ga.read_Pareto_set_from_file(file_name_source_Pareto_set_str, problem_name_str);
 		
-		//счетчик числа совпадений аппроксимации и мн-ва Парето
+		//СЃС‡РµС‚С‡РёРє С‡РёСЃР»Р° СЃРѕРІРїР°РґРµРЅРёР№ Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё Рё РјРЅ-РІР° РџР°СЂРµС‚Рѕ
 		ga.count_P_eq_approx = 0;
 
 
@@ -285,7 +285,7 @@ int main(int argc, char* argv[])
 		sw_1->WriteLine("iter; {0}", num_iter);
 		sw_1->WriteLine("run; {0}", num_runs);
 
-		//файл для записи эксепримента по сужению мн-ва Парето
+		//С„Р°Р№Р» РґР»СЏ Р·Р°РїРёСЃРё СЌРєСЃРµРїСЂРёРјРµРЅС‚Р° РїРѕ СЃСѓР¶РµРЅРёСЋ РјРЅ-РІР° РџР°СЂРµС‚Рѕ
 		if (reduction)
 		{
 			sw_3->WriteLine(problem_name_str);
@@ -299,17 +299,17 @@ int main(int argc, char* argv[])
 		while (cur_line_str != "s1=")
 			cur_line_str = sr->ReadLine();
 
-		//заполнение матрицы 1-го критерия из файла
+		//Р·Р°РїРѕР»РЅРµРЅРёРµ РјР°С‚СЂРёС†С‹ 1-РіРѕ РєСЂРёС‚РµСЂРёСЏ РёР· С„Р°Р№Р»Р°
 		//printf("Criterion 1");
 		//sw->WriteLine("Criterion 1");
-		for (int i = 0; i < ga.get_n(); i++) //индекс строки
+		for (int i = 0; i < ga.get_n(); i++) //РёРЅРґРµРєСЃ СЃС‚СЂРѕРєРё
 		{
 			cur_line_str = sr->ReadLine();
 
-			int j = 0; //индекс столбца
+			int j = 0; //РёРЅРґРµРєСЃ СЃС‚РѕР»Р±С†Р°
 			int num_temp;
 			string str_temp;
-			//разбираем текущую строку
+			//СЂР°Р·Р±РёСЂР°РµРј С‚РµРєСѓС‰СѓСЋ СЃС‚СЂРѕРєСѓ
 			for (int k = 0; k < cur_line_str->Length; k++)
 			{
 				if (cur_line_str[k] == ' ')
@@ -319,9 +319,9 @@ int main(int argc, char* argv[])
 					//sw->Write("{0};", s_temp[i][j]);
 					//printf("%d \t", s_temp[i][j]);
 
-					//подсчет среднего элемента
+					//РїРѕРґСЃС‡РµС‚ СЃСЂРµРґРЅРµРіРѕ СЌР»РµРјРµРЅС‚Р°
 					s_aver_temp += s_temp[i][j];
-					//подсчет максимального элемента
+					//РїРѕРґСЃС‡РµС‚ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ СЌР»РµРјРµРЅС‚Р°
 					if (c_max_temp < s_temp[i][j])
 						c_max_temp = s_temp[i][j];
 
@@ -338,11 +338,11 @@ int main(int argc, char* argv[])
 
 		}
 
-		//добавляем матрицу 1-го критерия в массив s_m
+		//РґРѕР±Р°РІР»СЏРµРј РјР°С‚СЂРёС†Сѓ 1-РіРѕ РєСЂРёС‚РµСЂРёСЏ РІ РјР°СЃСЃРёРІ s_m
 		ga.set_matrix_criteria(s_temp);
 
 		s_aver_temp = (int)s_aver_temp / ga.get_n()*ga.get_n();
-		//добавляем средний и макс элементы в свои массивы
+		//РґРѕР±Р°РІР»СЏРµРј СЃСЂРµРґРЅРёР№ Рё РјР°РєСЃ СЌР»РµРјРµРЅС‚С‹ РІ СЃРІРѕРё РјР°СЃСЃРёРІС‹
 		ga.s_aver.push_back(s_aver_temp);
 		c_max.push_back(c_max_temp);
 
@@ -353,12 +353,12 @@ int main(int argc, char* argv[])
 		c_max_temp = 0;
 
 		/*
-		//Матрица расстояний 1-го критерия
+		//РњР°С‚СЂРёС†Р° СЂР°СЃСЃС‚РѕСЏРЅРёР№ 1-РіРѕ РєСЂРёС‚РµСЂРёСЏ
 		int k = 0;
 			printf("Criterion %d\n", k + 1);
 			sw->WriteLine("Criterion; {0}", k + 1);
 
-			srand(23);//ПОМЕНЯТЬ!!!
+			srand(23);//РџРћРњР•РќРЇРўР¬!!!
 
 			vector <vector<int>> s_temp1(20, vector<int>(20));
 			for (int i = 0; i < 20; i++)
@@ -368,7 +368,7 @@ int main(int argc, char* argv[])
 					if (i == j)
 						s_temp1[i][i] = 0;
 					else
-						s_temp1[i][j] = (rand() % 20) + 1; //ПОМЕНЯТЬ!!!
+						s_temp1[i][j] = (rand() % 20) + 1; //РџРћРњР•РќРЇРўР¬!!!
 				}
 			}
 
@@ -407,17 +407,17 @@ int main(int argc, char* argv[])
 		while (cur_line_str != "s2=")
 			cur_line_str = sr->ReadLine();
 
-		//заполнение матрицы 2-го критерия из файла
+		//Р·Р°РїРѕР»РЅРµРЅРёРµ РјР°С‚СЂРёС†С‹ 2-РіРѕ РєСЂРёС‚РµСЂРёСЏ РёР· С„Р°Р№Р»Р°
 		//printf("Criterion 2");
 		//sw->WriteLine("Criterion 2");
-		for (int i = 0; i < ga.get_n(); i++) //индекс строки
+		for (int i = 0; i < ga.get_n(); i++) //РёРЅРґРµРєСЃ СЃС‚СЂРѕРєРё
 		{
 			cur_line_str = sr->ReadLine();
 
-			int j = 0; //индекс столбца
+			int j = 0; //РёРЅРґРµРєСЃ СЃС‚РѕР»Р±С†Р°
 			int num_temp;
 			string str_temp;
-			//разбираем текущую строку
+			//СЂР°Р·Р±РёСЂР°РµРј С‚РµРєСѓС‰СѓСЋ СЃС‚СЂРѕРєСѓ
 			for (int k = 0; k < cur_line_str->Length; k++)
 			{
 				if (cur_line_str[k] == ' ')
@@ -427,9 +427,9 @@ int main(int argc, char* argv[])
 					//sw->Write("{0};", s_temp[i][j]);
 					//printf("%d \t", s_temp[i][j]);
 
-					//подсчет среднего элемента
+					//РїРѕРґСЃС‡РµС‚ СЃСЂРµРґРЅРµРіРѕ СЌР»РµРјРµРЅС‚Р°
 					s_aver_temp += s_temp[i][j];
-					//подсчет максимального элемента
+					//РїРѕРґСЃС‡РµС‚ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ СЌР»РµРјРµРЅС‚Р°
 					if (c_max_temp < s_temp[i][j])
 						c_max_temp = s_temp[i][j];
 
@@ -446,11 +446,11 @@ int main(int argc, char* argv[])
 
 		}
 
-		//добавляем матрицу 2-го критерия в массив s_m
+		//РґРѕР±Р°РІР»СЏРµРј РјР°С‚СЂРёС†Сѓ 2-РіРѕ РєСЂРёС‚РµСЂРёСЏ РІ РјР°СЃСЃРёРІ s_m
 		ga.set_matrix_criteria(s_temp);
 
 		s_aver_temp = (int)s_aver_temp / ga.get_n()*ga.get_n();
-		//добавляем средний и макс элементы в свои массивы
+		//РґРѕР±Р°РІР»СЏРµРј СЃСЂРµРґРЅРёР№ Рё РјР°РєСЃ СЌР»РµРјРµРЅС‚С‹ РІ СЃРІРѕРё РјР°СЃСЃРёРІС‹
 		ga.s_aver.push_back(s_aver_temp);
 		c_max.push_back(c_max_temp);
 
@@ -459,13 +459,13 @@ int main(int argc, char* argv[])
 
 
 		/*
-		//Матрица расстояний 2-го критерия
+		//РњР°С‚СЂРёС†Р° СЂР°СЃСЃС‚РѕСЏРЅРёР№ 2-РіРѕ РєСЂРёС‚РµСЂРёСЏ
 		k++;
 		printf("Criterion %d\n", k + 1);
 		sw->WriteLine("Criterion; {0}", k + 1);
 
 
-		srand(32);//ПОМЕНЯТЬ!!!
+		srand(32);//РџРћРњР•РќРЇРўР¬!!!
 
 		for (int i = 0; i < 20; i++)
 		{
@@ -474,7 +474,7 @@ int main(int argc, char* argv[])
 				if (i == j)
 					s_temp1[i][i] = 0;
 				else
-					s_temp1[i][j] = (rand() % 20) + 1;//ПОМЕНЯТЬ!!!
+					s_temp1[i][j] = (rand() % 20) + 1;//РџРћРњР•РќРЇРўР¬!!!
 			}
 		}
 
@@ -510,7 +510,7 @@ int main(int argc, char* argv[])
 		sw->WriteLine();
 
 		
-		//сбрасываем перед циклом по всем запускам
+		//СЃР±СЂР°СЃС‹РІР°РµРј РїРµСЂРµРґ С†РёРєР»РѕРј РїРѕ РІСЃРµРј Р·Р°РїСѓСЃРєР°Рј
 		total_dist_begin_1 = 0;
 		total_dist_begin_2 = 0;
 		total_dist_end_1 = 0;
@@ -544,25 +544,25 @@ int main(int argc, char* argv[])
 		min_num_approx_in_P_begin = 0;
 		min_num_approx_in_P_end = 0;
 
-		//для сужения делаем только один запуск
+		//РґР»СЏ СЃСѓР¶РµРЅРёСЏ РґРµР»Р°РµРј С‚РѕР»СЊРєРѕ РѕРґРёРЅ Р·Р°РїСѓСЃРє
 		if (reduction)
 			num_runs = 1;
 
 
-		//засекаем время начала работы алгоритма для данной задачи
-		//считаем общее время для одной задачи по всем запускам
+		//Р·Р°СЃРµРєР°РµРј РІСЂРµРјСЏ РЅР°С‡Р°Р»Р° СЂР°Р±РѕС‚С‹ Р°Р»РіРѕСЂРёС‚РјР° РґР»СЏ РґР°РЅРЅРѕР№ Р·Р°РґР°С‡Рё
+		//СЃС‡РёС‚Р°РµРј РѕР±С‰РµРµ РІСЂРµРјСЏ РґР»СЏ РѕРґРЅРѕР№ Р·Р°РґР°С‡Рё РїРѕ РІСЃРµРј Р·Р°РїСѓСЃРєР°Рј
 		unsigned long long start_time = ::GetTickCount();
 
-		//ЗАПУСКИ
-		//цикл по запускаем (на одной задаче)
+		//Р—РђРџРЈРЎРљР
+		//С†РёРєР» РїРѕ Р·Р°РїСѓСЃРєР°РµРј (РЅР° РѕРґРЅРѕР№ Р·Р°РґР°С‡Рµ)
 		for (int index_run = 0; index_run < num_runs; index_run++)
 		{
 			sw->WriteLine("Problem{0} Run {1}", iter_prbl + 1, index_run + 1);
-			//для рандомизатора
+			//РґР»СЏ СЂР°РЅРґРѕРјРёР·Р°С‚РѕСЂР°
 			temp_time = ::GetTickCount();
 			srand(temp_time);
 
-			//родители нач популяции
+			//СЂРѕРґРёС‚РµР»Рё РЅР°С‡ РїРѕРїСѓР»СЏС†РёРё
 			vector<int> p1, p2, p3, p4;
 			p1 = ga.patching_algorithm(ga.s_m[0], c_max[0], false);
 			p2 = ga.patching_algorithm(ga.s_m[0], c_max[0], true);
@@ -643,7 +643,7 @@ int main(int argc, char* argv[])
 			*/
 
 
-			//0. начальная популяция
+			//0. РЅР°С‡Р°Р»СЊРЅР°СЏ РїРѕРїСѓР»СЏС†РёСЏ
 			temp_time = ::GetTickCount();
 			ga.init_pop(ga.s_m, c_max[0], temp_time, p1, p2, p3, p4);
 
@@ -665,8 +665,8 @@ int main(int argc, char* argv[])
 
 
 
-			//заполняем значение векторного критерия по популяции
-			//phi[i][j], i - индекс критерия, j - индекс особи
+			//Р·Р°РїРѕР»РЅСЏРµРј Р·РЅР°С‡РµРЅРёРµ РІРµРєС‚РѕСЂРЅРѕРіРѕ РєСЂРёС‚РµСЂРёСЏ РїРѕ РїРѕРїСѓР»СЏС†РёРё
+			//phi[i][j], i - РёРЅРґРµРєСЃ РєСЂРёС‚РµСЂРёСЏ, j - РёРЅРґРµРєСЃ РѕСЃРѕР±Рё
 
 			sw->WriteLine("Values of vector criterion (initial population)");
 			//sw_1->WriteLine("Values of vector criterion");
@@ -699,11 +699,11 @@ int main(int argc, char* argv[])
 			//sw_1->WriteLine();
 			printf("\n");
 
-			//построение фронтов
+			//РїРѕСЃС‚СЂРѕРµРЅРёРµ С„СЂРѕРЅС‚РѕРІ
 			sw->WriteLine("Ranks of poulation (initial population)");
 			//sw_1->WriteLine("Ranks of poulation");
 			printf("Ranks of poulation (initial population, problem %d):\n", iter_prbl+1);
-			//false - популяция в явном виде не отсорирована по фронтам, ранги фронтов заданы в векторе i_rank
+			//false - РїРѕРїСѓР»СЏС†РёСЏ РІ СЏРІРЅРѕРј РІРёРґРµ РЅРµ РѕС‚СЃРѕСЂРёСЂРѕРІР°РЅР° РїРѕ С„СЂРѕРЅС‚Р°Рј, СЂР°РЅРіРё С„СЂРѕРЅС‚РѕРІ Р·Р°РґР°РЅС‹ РІ РІРµРєС‚РѕСЂРµ i_rank
 			ga.i_rank = ga.range_front(ga.pop, true);
 			for (int i = 0; i < ga.get_N(); i++)
 			{
@@ -749,7 +749,7 @@ int main(int argc, char* argv[])
 			printf("\n");
 			*/
 
-			//построение расстояний в каждом фронте
+			//РїРѕСЃС‚СЂРѕРµРЅРёРµ СЂР°СЃСЃС‚РѕСЏРЅРёР№ РІ РєР°Р¶РґРѕРј С„СЂРѕРЅС‚Рµ
 			ga.crowd_dist_new(ga.pop, true);
 
 			sw->WriteLine("Crowding distances of population (initial population)");
@@ -761,7 +761,7 @@ int main(int argc, char* argv[])
 			}
 			sw->WriteLine();
 
-			//вывод значений векторного критерия аппроксимации мн-ва Парето для НАЧАЛЬНОЙ популяции
+			//РІС‹РІРѕРґ Р·РЅР°С‡РµРЅРёР№ РІРµРєС‚РѕСЂРЅРѕРіРѕ РєСЂРёС‚РµСЂРёСЏ Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё РјРЅ-РІР° РџР°СЂРµС‚Рѕ РґР»СЏ РќРђР§РђР›Р¬РќРћР™ РїРѕРїСѓР»СЏС†РёРё
 			ga.phi_P_approx.clear();
 			ga.build_phi_P_approx();
 
@@ -781,10 +781,10 @@ int main(int argc, char* argv[])
 			sw->WriteLine();
 			//sw_1->WriteLine();
 
-			//вычисление метрики для НАЧАЛЬНОЙ популяции - аппроксимации множества Парето (если выше присвоено имя файла)
+			//РІС‹С‡РёСЃР»РµРЅРёРµ РјРµС‚СЂРёРєРё РґР»СЏ РќРђР§РђР›Р¬РќРћР™ РїРѕРїСѓР»СЏС†РёРё - Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё РјРЅРѕР¶РµСЃС‚РІР° РџР°СЂРµС‚Рѕ (РµСЃР»Рё РІС‹С€Рµ РїСЂРёСЃРІРѕРµРЅРѕ РёРјСЏ С„Р°Р№Р»Р°)
 			if (file_name_source_Pareto_set_str)
 			{
-				//заголовок
+				//Р·Р°РіРѕР»РѕРІРѕРє
 				if (index_run == 0)
 				{
 					sw_1->WriteLine("N_PS; {0}", phi_Pareto_set.size());
@@ -805,14 +805,14 @@ int main(int argc, char* argv[])
 					sw_1->WriteLine("Run");
 				}
 
-				//вычисляем метрики
+				//РІС‹С‡РёСЃР»СЏРµРј РјРµС‚СЂРёРєРё
 				ga.count_P_eq_approx = 0;
 				ga.evaluate_metric_of_approx(sw_1, phi_Pareto_set, true);
 				ga.evaluate_metric_of_approx(sw, phi_Pareto_set, false);
 				sw->WriteLine();
 				sw_1->Write("{0};", ga.count_P_eq_approx);
 
-				//для средней метрики по всем запускам
+				//РґР»СЏ СЃСЂРµРґРЅРµР№ РјРµС‚СЂРёРєРё РїРѕ РІСЃРµРј Р·Р°РїСѓСЃРєР°Рј
 				total_dist_begin_1 += ga.dist_conver_approx_to_P_set_val;
 				total_dist_begin_2 += ga.dist_conver_P_set_to_approx_val;
 
@@ -827,7 +827,7 @@ int main(int argc, char* argv[])
 					max_num_approx_in_P_begin = min_num_approx_in_P_begin = ga.count_P_eq_approx;
 				}
 
-				//определение максимума метрики по всем запускам
+				//РѕРїСЂРµРґРµР»РµРЅРёРµ РјР°РєСЃРёРјСѓРјР° РјРµС‚СЂРёРєРё РїРѕ РІСЃРµРј Р·Р°РїСѓСЃРєР°Рј
 				if (max_dist_begin_1 < ga.dist_conver_approx_to_P_set_val)
 					max_dist_begin_1 = ga.dist_conver_approx_to_P_set_val;
 				if (max_dist_begin_2 < ga.dist_conver_P_set_to_approx_val)
@@ -838,7 +838,7 @@ int main(int argc, char* argv[])
 				if (max_num_approx_in_P_begin < ga.count_P_eq_approx)
 					max_num_approx_in_P_begin = ga.count_P_eq_approx;
 
-				//определение минимума метрики по всем запускам
+				//РѕРїСЂРµРґРµР»РµРЅРёРµ РјРёРЅРёРјСѓРјР° РјРµС‚СЂРёРєРё РїРѕ РІСЃРµРј Р·Р°РїСѓСЃРєР°Рј
 				if (min_dist_begin_1 > ga.dist_conver_approx_to_P_set_val)
 					min_dist_begin_1 = ga.dist_conver_approx_to_P_set_val;
 				if (min_dist_begin_2 > ga.dist_conver_P_set_to_approx_val)
@@ -855,32 +855,32 @@ int main(int argc, char* argv[])
 			p1_temp = p1;
 			p2_temp = p2;
 
-			//родители + потомки (R_t = P_t + Q_t) - сделан членом класса GA_path
+			//СЂРѕРґРёС‚РµР»Рё + РїРѕС‚РѕРјРєРё (R_t = P_t + Q_t) - СЃРґРµР»Р°РЅ С‡Р»РµРЅРѕРј РєР»Р°СЃСЃР° GA_path
 			//vector<vector<int>> pop_R_t(2 * ga.get_N());
-			//текущий потомок
+			//С‚РµРєСѓС‰РёР№ РїРѕС‚РѕРјРѕРє
 			vector<int> child(ga.get_n());
-			//вектор рангов фронтов для R_t - сделан членом класса GA_path
+			//РІРµРєС‚РѕСЂ СЂР°РЅРіРѕРІ С„СЂРѕРЅС‚РѕРІ РґР»СЏ R_t - СЃРґРµР»Р°РЅ С‡Р»РµРЅРѕРј РєР»Р°СЃСЃР° GA_path
 			//vector<int> i_rank_R_t(2 * ga.get_N());
 
 
-			//ОСНОВНОЙ ЦИКЛ ПО ИТЕРАЦИЯМ
+			//РћРЎРќРћР’РќРћР™ Р¦РРљР› РџРћ РРўР•Р РђР¦РРЇРњ
 			int iter = 0;
 			while (++iter <= num_iter)
 			{
 				ga.pop_R_t = ga.pop; //R_t = P_t
 				for (int i = 0; i < ga.get_N(); i++)
 				{
-					//1. выбираем родительские решения турнирной селекцией
+					//1. РІС‹Р±РёСЂР°РµРј СЂРѕРґРёС‚РµР»СЊСЃРєРёРµ СЂРµС€РµРЅРёСЏ С‚СѓСЂРЅРёСЂРЅРѕР№ СЃРµР»РµРєС†РёРµР№
 					
-					//для рандомизатора
+					//РґР»СЏ СЂР°РЅРґРѕРјРёР·Р°С‚РѕСЂР°
 					temp_time = ::GetTickCount();
 					srand(temp_time);
 					i_p1 = ga.tourn_selection();
 					i_p2 = ga.tourn_selection();
 
-					//2. мутация
+					//2. РјСѓС‚Р°С†РёСЏ
 
-					//для рандомизатора
+					//РґР»СЏ СЂР°РЅРґРѕРјРёР·Р°С‚РѕСЂР°
 					temp_time = ::GetTickCount();
 					srand(temp_time);
 					ga.mutation(i_p1, i_p2, p1_temp, p2_temp);
@@ -894,8 +894,8 @@ int main(int argc, char* argv[])
 					//}
 					//printf("\n");
 
-					//записываем родителей в нужном виде для рекомбинации
-					//первый родитель
+					//Р·Р°РїРёСЃС‹РІР°РµРј СЂРѕРґРёС‚РµР»РµР№ РІ РЅСѓР¶РЅРѕРј РІРёРґРµ РґР»СЏ СЂРµРєРѕРјР±РёРЅР°С†РёРё
+					//РїРµСЂРІС‹Р№ СЂРѕРґРёС‚РµР»СЊ
 					p1[0] = 1;
 					int i_temp = 0;
 					for (int i = 1; i < ga.get_n(); ++i)
@@ -903,7 +903,7 @@ int main(int argc, char* argv[])
 						p1[i] = p1_temp[i_temp] + 1;
 						i_temp = p1_temp[i_temp];
 					}
-					//второй родитель
+					//РІС‚РѕСЂРѕР№ СЂРѕРґРёС‚РµР»СЊ
 					p2[0] = 1;
 					i_temp = 0;
 					for (int i = 1; i < ga.get_n(); ++i)
@@ -912,9 +912,9 @@ int main(int argc, char* argv[])
 						i_temp = p2_temp[i_temp];
 					}
 
-					//3. оптимальная рекомбинация
+					//3. РѕРїС‚РёРјР°Р»СЊРЅР°СЏ СЂРµРєРѕРјР±РёРЅР°С†РёСЏ
 
-					//для рандомизатора
+					//РґР»СЏ СЂР°РЅРґРѕРјРёР·Р°С‚РѕСЂР°
 					temp_time = ::GetTickCount();
 					srand(temp_time);
 
@@ -929,11 +929,11 @@ int main(int argc, char* argv[])
 					}
 						
 
-					//мутируем потомка, у кототорого значения критерия совпадает хотя бы с одним из родителей
-					//Юля
+					//РјСѓС‚РёСЂСѓРµРј РїРѕС‚РѕРјРєР°, Сѓ РєРѕС‚РѕС‚РѕСЂРѕРіРѕ Р·РЅР°С‡РµРЅРёСЏ РєСЂРёС‚РµСЂРёСЏ СЃРѕРІРїР°РґР°РµС‚ С…РѕС‚СЏ Р±С‹ СЃ РѕРґРЅРёРј РёР· СЂРѕРґРёС‚РµР»РµР№
+					//Р®Р»СЏ
 					if (MODIF)
 					{
-						//для рандомизатора
+						//РґР»СЏ СЂР°РЅРґРѕРјРёР·Р°С‚РѕСЂР°
 						temp_time = ::GetTickCount();
 						srand(temp_time);
 						
@@ -956,27 +956,27 @@ int main(int argc, char* argv[])
 
 				//R_t = P_t + Q_t
 
-				//ФОРМИРОВАНИЕ НОВОЙ ПОПУЛЯЦИИ
+				//Р¤РћР РњРР РћР’РђРќРР• РќРћР’РћР™ РџРћРџРЈР›РЇР¦РР
 
-				//вычисление ранга особей
+				//РІС‹С‡РёСЃР»РµРЅРёРµ СЂР°РЅРіР° РѕСЃРѕР±РµР№
 				//printf("Ranks of poulation:\n");
-				//true - популяция в явном виде отсорирована про фронтам, i_rank_R_t - такой же порядок (ранги фронтов)
+				//true - РїРѕРїСѓР»СЏС†РёСЏ РІ СЏРІРЅРѕРј РІРёРґРµ РѕС‚СЃРѕСЂРёСЂРѕРІР°РЅР° РїСЂРѕ С„СЂРѕРЅС‚Р°Рј, i_rank_R_t - С‚Р°РєРѕР№ Р¶Рµ РїРѕСЂСЏРґРѕРє (СЂР°РЅРіРё С„СЂРѕРЅС‚РѕРІ)
 				ga.i_rank_R_t = ga.range_front(ga.pop_R_t, true);
 				//for (int i = 0; i < ga.get_N(); i++)
 				//	printf("%d\t", ga.i_rank[i]);
 				//printf("\n");
 
-				//ранг последенго фронта, который целиком войдет в новую популяцию
+				//СЂР°РЅРі РїРѕСЃР»РµРґРµРЅРіРѕ С„СЂРѕРЅС‚Р°, РєРѕС‚РѕСЂС‹Р№ С†РµР»РёРєРѕРј РІРѕР№РґРµС‚ РІ РЅРѕРІСѓСЋ РїРѕРїСѓР»СЏС†РёСЋ
 				int index_rank_last = ga.i_rank_R_t[ga.get_N()] - 1;
 
-				//для проверки, что расстояния сортируются, если все ранги = 1
+				//РґР»СЏ РїСЂРѕРІРµСЂРєРё, С‡С‚Рѕ СЂР°СЃСЃС‚РѕСЏРЅРёСЏ СЃРѕСЂС‚РёСЂСѓСЋС‚СЃСЏ, РµСЃР»Рё РІСЃРµ СЂР°РЅРіРё = 1
 				int temp = 0;
 				if ((index_rank_last == 0) && (ga.i_rank_R_t[2 * ga.get_N() - 1] == 1))
 				{
-					temp++; //поставить точку останова
+					temp++; //РїРѕСЃС‚Р°РІРёС‚СЊ С‚РѕС‡РєСѓ РѕСЃС‚Р°РЅРѕРІР°
 				}
 
-				//обновляем популяцию "цельными" фронтами
+				//РѕР±РЅРѕРІР»СЏРµРј РїРѕРїСѓР»СЏС†РёСЋ "С†РµР»СЊРЅС‹РјРё" С„СЂРѕРЅС‚Р°РјРё
 				ga.pop.clear();
 				ga.i_rank.clear();
 				int i_pop_last_rank = 0;
@@ -991,11 +991,11 @@ int main(int argc, char* argv[])
 					ga.i_rank.push_back(ga.i_rank_R_t[i]);
 				}
 
-				//true - пирамидальная сортировка, false - быстрая сортировка
+				//true - РїРёСЂР°РјРёРґР°Р»СЊРЅР°СЏ СЃРѕСЂС‚РёСЂРѕРІРєР°, false - Р±С‹СЃС‚СЂР°СЏ СЃРѕСЂС‚РёСЂРѕРІРєР°
 				ga.crowd_dist_new(ga.pop_R_t, true);
 				
 
-				//ищем границы последнего фронта
+				//РёС‰РµРј РіСЂР°РЅРёС†С‹ РїРѕСЃР»РµРґРЅРµРіРѕ С„СЂРѕРЅС‚Р°
 				int i_start_last_front_exceeded = 0;
 				int i_stop_last_front_exceeded = 0;
 				bool is_seen_i_start = false;
@@ -1014,20 +1014,20 @@ int main(int argc, char* argv[])
 					}
 				}
 
-				//если у всех особей один ранг
+				//РµСЃР»Рё Сѓ РІСЃРµС… РѕСЃРѕР±РµР№ РѕРґРёРЅ СЂР°РЅРі
 				//if ( (!is_seen_i_start) && (!is_seen_i_stop))
 
 
-				//если фронт, который частично вошел в новую популяцию,
-				//оказался последним в расширенной популяции (родители+потомки)
+				//РµСЃР»Рё С„СЂРѕРЅС‚, РєРѕС‚РѕСЂС‹Р№ С‡Р°СЃС‚РёС‡РЅРѕ РІРѕС€РµР» РІ РЅРѕРІСѓСЋ РїРѕРїСѓР»СЏС†РёСЋ,
+				//РѕРєР°Р·Р°Р»СЃСЏ РїРѕСЃР»РµРґРЅРёРј РІ СЂР°СЃС€РёСЂРµРЅРЅРѕР№ РїРѕРїСѓР»СЏС†РёРё (СЂРѕРґРёС‚РµР»Рё+РїРѕС‚РѕРјРєРё)
 				if (!is_seen_i_stop)
 					i_stop_last_front_exceeded = 2 * ga.get_N() - 1;
 
-				//если последний фронт закончился индексом > N-1 (полностью не войдет в новую популяцию)
-				//то добавляем особи из следующего фронта 
+				//РµСЃР»Рё РїРѕСЃР»РµРґРЅРёР№ С„СЂРѕРЅС‚ Р·Р°РєРѕРЅС‡РёР»СЃСЏ РёРЅРґРµРєСЃРѕРј > N-1 (РїРѕР»РЅРѕСЃС‚СЊСЋ РЅРµ РІРѕР№РґРµС‚ РІ РЅРѕРІСѓСЋ РїРѕРїСѓР»СЏС†РёСЋ)
+				//С‚Рѕ РґРѕР±Р°РІР»СЏРµРј РѕСЃРѕР±Рё РёР· СЃР»РµРґСѓСЋС‰РµРіРѕ С„СЂРѕРЅС‚Р° 
 				if (ga.i_rank_R_t[ga.get_N() - 1] != index_rank_last)
 				{
-					//дополяняем до N из фронта, не попавшего полностью (сортировка по i_dist)
+					//РґРѕРїРѕР»СЏРЅСЏРµРј РґРѕ N РёР· С„СЂРѕРЅС‚Р°, РЅРµ РїРѕРїР°РІС€РµРіРѕ РїРѕР»РЅРѕСЃС‚СЊСЋ (СЃРѕСЂС‚РёСЂРѕРІРєР° РїРѕ i_dist)
 					vector<int> index_front_temp;
 					for (int s = 0; s <= i_stop_last_front_exceeded - i_start_last_front_exceeded; s++)
 						index_front_temp.push_back(i_start_last_front_exceeded + s);
@@ -1041,21 +1041,21 @@ int main(int argc, char* argv[])
 					}
 					ga.i_dist.resize(ga.get_N());
 				}
-				//если последний фронт закончился индексом N-1 (полностью войдет в новую популяцию)
-				//то особи из следующих фронтов не добавляем
+				//РµСЃР»Рё РїРѕСЃР»РµРґРЅРёР№ С„СЂРѕРЅС‚ Р·Р°РєРѕРЅС‡РёР»СЃСЏ РёРЅРґРµРєСЃРѕРј N-1 (РїРѕР»РЅРѕСЃС‚СЊСЋ РІРѕР№РґРµС‚ РІ РЅРѕРІСѓСЋ РїРѕРїСѓР»СЏС†РёСЋ)
+				//С‚Рѕ РѕСЃРѕР±Рё РёР· СЃР»РµРґСѓСЋС‰РёС… С„СЂРѕРЅС‚РѕРІ РЅРµ РґРѕР±Р°РІР»СЏРµРј
 
-				//ЛОКАЛЬНЫЙ ПОИСК (не сделан)
+				//Р›РћРљРђР›Р¬РќР«Р™ РџРћРРЎРљ (РЅРµ СЃРґРµР»Р°РЅ)
 				//for (int i = 0; i < ga.get_n(); i++)
 				//{
-					//ga.local_search(ga.pop[i], ga.s_m[0]); //что писать вторым аргументом?
+					//ga.local_search(ga.pop[i], ga.s_m[0]); //С‡С‚Рѕ РїРёСЃР°С‚СЊ РІС‚РѕСЂС‹Рј Р°СЂРіСѓРјРµРЅС‚РѕРј?
 				//}
 
-				//формируем значения векторного критерия аппроксимации мн-ва Парето (без повторов)
+				//С„РѕСЂРјРёСЂСѓРµРј Р·РЅР°С‡РµРЅРёСЏ РІРµРєС‚РѕСЂРЅРѕРіРѕ РєСЂРёС‚РµСЂРёСЏ Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё РјРЅ-РІР° РџР°СЂРµС‚Рѕ (Р±РµР· РїРѕРІС‚РѕСЂРѕРІ)
 				ga.phi_P_approx.clear();
 				ga.build_phi_P_approx();
 				
 				
-				//выводим популяцию, ранги, расстояния и аппрокимацию мн-ва Парето (векторный критерий) без повторов
+				//РІС‹РІРѕРґРёРј РїРѕРїСѓР»СЏС†РёСЋ, СЂР°РЅРіРё, СЂР°СЃСЃС‚РѕСЏРЅРёСЏ Рё Р°РїРїСЂРѕРєРёРјР°С†РёСЋ РјРЅ-РІР° РџР°СЂРµС‚Рѕ (РІРµРєС‚РѕСЂРЅС‹Р№ РєСЂРёС‚РµСЂРёР№) Р±РµР· РїРѕРІС‚РѕСЂРѕРІ
 				if (  ( ((iter % FREQ_SHOW_COMP) == 0) && file_name_source_Pareto_set_str ) || 
 					( ((iter % FREQ_SHOW_RED ) == 0) && reduction )  )
 				{
@@ -1090,7 +1090,7 @@ int main(int argc, char* argv[])
 					sw->WriteLine();
 					printf("\n");
 
-					//расстояния популяции
+					//СЂР°СЃСЃС‚РѕСЏРЅРёСЏ РїРѕРїСѓР»СЏС†РёРё
 					sw->WriteLine("Crowding distances of population (problem {0}, run {1}, iteration {2})", iter_prbl+1, index_run+1, iter);
 					printf("Crowding distances of population (problem %d, run %d, iteration %d):\n", iter_prbl+1, index_run+1, iter);
 					for (int i = 0; i < ga.get_N(); i++)
@@ -1102,7 +1102,7 @@ int main(int argc, char* argv[])
 					sw->WriteLine();
 					printf("\n");
 
-					//значания критериев
+					//Р·РЅР°С‡Р°РЅРёСЏ РєСЂРёС‚РµСЂРёРµРІ
 					sw->WriteLine("Values of vector criterion (problem {0}, run {1}, iteration {2})", iter_prbl+1, index_run+1, iter);
 					printf("Values of vector criterion (problem %d, run %d, iteration %d):\n", iter_prbl+1, index_run+1, iter);
 					for (int i = 0; i < ga.get_m(); i++)
@@ -1136,7 +1136,7 @@ int main(int argc, char* argv[])
 					sw->WriteLine();
 					//sw_1->WriteLine();
 
-					//вычисление метрики - аппроксимации множества Парето (если выше присвоено имя файла)
+					//РІС‹С‡РёСЃР»РµРЅРёРµ РјРµС‚СЂРёРєРё - Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё РјРЅРѕР¶РµСЃС‚РІР° РџР°СЂРµС‚Рѕ (РµСЃР»Рё РІС‹С€Рµ РїСЂРёСЃРІРѕРµРЅРѕ РёРјСЏ С„Р°Р№Р»Р°)
 					if (file_name_source_Pareto_set_str)
 					{
 						ga.evaluate_metric_of_approx(sw, phi_Pareto_set, false);
@@ -1157,10 +1157,10 @@ int main(int argc, char* argv[])
 				ga.pop_R_t.clear();
 				//ga.i_dist_R_t.clear();
 				ga.i_rank_R_t.clear();
-			}//основной цикл итераций
+			}//РѕСЃРЅРѕРІРЅРѕР№ С†РёРєР» РёС‚РµСЂР°С†РёР№
 
 			/*
-			//расстояния конечной популяции
+			//СЂР°СЃСЃС‚РѕСЏРЅРёСЏ РєРѕРЅРµС‡РЅРѕР№ РїРѕРїСѓР»СЏС†РёРё
 			sw->WriteLine("Crowding distances of population");
 			printf("Crowding distances of population:\n");
 			for (int i = 0; i < ga.get_N(); i++)
@@ -1169,7 +1169,7 @@ int main(int argc, char* argv[])
 				printf("%.2f\n", ga.i_dist[i]);
 			}
 
-			//значания критериев конечной популяции
+			//Р·РЅР°С‡Р°РЅРёСЏ РєСЂРёС‚РµСЂРёРµРІ РєРѕРЅРµС‡РЅРѕР№ РїРѕРїСѓР»СЏС†РёРё
 			sw->WriteLine("Values of vector criterion");
 			printf("Values of vector criterion:\n");
 			for (int i = 0; i < ga.get_m(); i++)
@@ -1186,9 +1186,9 @@ int main(int argc, char* argv[])
 			sw->WriteLine();
 			printf("\n");
 
-			//построение аппроксимации мн-ва Парето
+			//РїРѕСЃС‚СЂРѕРµРЅРёРµ Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё РјРЅ-РІР° РџР°СЂРµС‚Рѕ
 			ga.build_phi_P_approx();
-			//вывод аппроксимации мн-ва Парето (векторный критерий)
+			//РІС‹РІРѕРґ Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё РјРЅ-РІР° РџР°СЂРµС‚Рѕ (РІРµРєС‚РѕСЂРЅС‹Р№ РєСЂРёС‚РµСЂРёР№)
 			sw->WriteLine("Approximation of the Pareto set");
 			for (int i = 0; i < ga.get_m(); i++)
 			{
@@ -1215,22 +1215,22 @@ int main(int argc, char* argv[])
 			sw_1->WriteLine();
 			*/
 
-			//после основного цикла итераций
-			//вычисление метрики - аппроксимации множества Парето (если выше присвоено имя файла)
+			//РїРѕСЃР»Рµ РѕСЃРЅРѕРІРЅРѕРіРѕ С†РёРєР»Р° РёС‚РµСЂР°С†РёР№
+			//РІС‹С‡РёСЃР»РµРЅРёРµ РјРµС‚СЂРёРєРё - Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё РјРЅРѕР¶РµСЃС‚РІР° РџР°СЂРµС‚Рѕ (РµСЃР»Рё РІС‹С€Рµ РїСЂРёСЃРІРѕРµРЅРѕ РёРјСЏ С„Р°Р№Р»Р°)
 			if (file_name_source_Pareto_set_str)
 			{
-				//в файл sw выводим в цикле итераций
+				//РІ С„Р°Р№Р» sw РІС‹РІРѕРґРёРј РІ С†РёРєР»Рµ РёС‚РµСЂР°С†РёР№
 				ga.count_P_eq_approx = 0;
 				ga.evaluate_metric_of_approx(sw_1, phi_Pareto_set, true);
 				sw->WriteLine();
 				sw_1->Write("{0};", ga.count_P_eq_approx);
 				sw_1->WriteLine("{0};", index_run + 1);
 
-				//для средней метрики по всем запускам
+				//РґР»СЏ СЃСЂРµРґРЅРµР№ РјРµС‚СЂРёРєРё РїРѕ РІСЃРµРј Р·Р°РїСѓСЃРєР°Рј
 				total_dist_end_1 += ga.dist_conver_approx_to_P_set_val;
 				total_dist_end_2 += ga.dist_conver_P_set_to_approx_val;
 				
-				//для среднего числа точек в аппрокс мн-ва Парето по всем запускам
+				//РґР»СЏ СЃСЂРµРґРЅРµРіРѕ С‡РёСЃР»Р° С‚РѕС‡РµРє РІ Р°РїРїСЂРѕРєСЃ РјРЅ-РІР° РџР°СЂРµС‚Рѕ РїРѕ РІСЃРµРј Р·Р°РїСѓСЃРєР°Рј
 				total_num_approx_P_end += ga.phi_P_approx.size();
 				total_num_approx_in_P_end += ga.count_P_eq_approx;
 
@@ -1242,7 +1242,7 @@ int main(int argc, char* argv[])
 					max_num_approx_in_P_end = min_num_approx_in_P_end = ga.count_P_eq_approx;
 				}
 
-				//определение максимума метрики по всем запускам
+				//РѕРїСЂРµРґРµР»РµРЅРёРµ РјР°РєСЃРёРјСѓРјР° РјРµС‚СЂРёРєРё РїРѕ РІСЃРµРј Р·Р°РїСѓСЃРєР°Рј
 				if (max_dist_end_1 < ga.dist_conver_approx_to_P_set_val)
 					max_dist_end_1 = ga.dist_conver_approx_to_P_set_val;
 				if (max_dist_end_2 < ga.dist_conver_P_set_to_approx_val)
@@ -1254,7 +1254,7 @@ int main(int argc, char* argv[])
 				if (max_num_approx_in_P_end < ga.count_P_eq_approx)
 					max_num_approx_in_P_end = ga.count_P_eq_approx;
 
-				//определение минимума метрики по всем запускам
+				//РѕРїСЂРµРґРµР»РµРЅРёРµ РјРёРЅРёРјСѓРјР° РјРµС‚СЂРёРєРё РїРѕ РІСЃРµРј Р·Р°РїСѓСЃРєР°Рј
 				if (min_dist_end_1 > ga.dist_conver_approx_to_P_set_val)
 					min_dist_end_1 = ga.dist_conver_approx_to_P_set_val;
 				if (min_dist_end_2 > ga.dist_conver_P_set_to_approx_val)
@@ -1267,7 +1267,7 @@ int main(int argc, char* argv[])
 					min_num_approx_in_P_end = ga.count_P_eq_approx;
 				
 			
-				//множество Парето (векторный критерий)
+				//РјРЅРѕР¶РµСЃС‚РІРѕ РџР°СЂРµС‚Рѕ (РІРµРєС‚РѕСЂРЅС‹Р№ РєСЂРёС‚РµСЂРёР№)
 				sw->WriteLine("The Pareto set");
 				for (int i = 0; i < ga.get_m(); i++)
 				{
@@ -1280,21 +1280,21 @@ int main(int argc, char* argv[])
 				sw->WriteLine();
 			}
 
-			//очищаем популяцию и ранги
+			//РѕС‡РёС‰Р°РµРј РїРѕРїСѓР»СЏС†РёСЋ Рё СЂР°РЅРіРё
 			ga.pop.clear();
 			for (int l = 0; l < ga.get_N(); l++)
 				ga.i_rank[l] = 0;
 
-		}//цикл запусков
+		}//С†РёРєР» Р·Р°РїСѓСЃРєРѕРІ
 
 
-		//время окончания решения одной задачи (все запуски)
+		//РІСЂРµРјСЏ РѕРєРѕРЅС‡Р°РЅРёСЏ СЂРµС€РµРЅРёСЏ РѕРґРЅРѕР№ Р·Р°РґР°С‡Рё (РІСЃРµ Р·Р°РїСѓСЃРєРё)
 		unsigned long long stop_time = ::GetTickCount();
 
 
 
 		//------------------------------------------------------------------------------------
-		//----------ЭКСПЕРИМЕНТ ПО СУЖЕНИЮ МН-ВА ПАРЕТО (если установлен флаг)
+		//----------Р­РљРЎРџР•Р РРњР•РќРў РџРћ РЎРЈР–Р•РќРР® РњРќ-Р’Рђ РџРђР Р•РўРћ (РµСЃР»Рё СѓСЃС‚Р°РЅРѕРІР»РµРЅ С„Р»Р°Рі)
 
 		if (reduction)
 		{
@@ -1313,7 +1313,7 @@ int main(int argc, char* argv[])
 			sw_3->WriteLine();
 
 
-			//определение минимума, максимума и среднего числа точек в мн-ве Парето по всем запускам
+			//РѕРїСЂРµРґРµР»РµРЅРёРµ РјРёРЅРёРјСѓРјР°, РјР°РєСЃРёРјСѓРјР° Рё СЃСЂРµРґРЅРµРіРѕ С‡РёСЃР»Р° С‚РѕС‡РµРє РІ РјРЅ-РІРµ РџР°СЂРµС‚Рѕ РїРѕ РІСЃРµРј Р·Р°РїСѓСЃРєР°Рј
 			total_num_P_approx.push_back(ga.phi_P_approx.size());
 			
 			/*
@@ -1327,44 +1327,44 @@ int main(int argc, char* argv[])
 			*/
 			
 			if (quantum_inf < _1ST_2ND_ + _2ND_1ST_)
-			{ //задан один "квант информации"
+			{ //Р·Р°РґР°РЅ РѕРґРёРЅ "РєРІР°РЅС‚ РёРЅС„РѕСЂРјР°С†РёРё"
 
-				//1-ый критерий важнее 2-го
+				//1-С‹Р№ РєСЂРёС‚РµСЂРёР№ РІР°Р¶РЅРµРµ 2-РіРѕ
 				sw_3->WriteLine("Reduction of the Pareto set");
 				sw_3->WriteLine("1st is more important than 2nd");
 				index_reduced_1_2.push_back(ga.experiment_reduction(sw_3, problem_name_str, 0.1, NUM_STEPS_TETA, 0, _1ST_2ND_));
 				sw_3->WriteLine();
 
-				//2-ой критерий важнее 1-го
+				//2-РѕР№ РєСЂРёС‚РµСЂРёР№ РІР°Р¶РЅРµРµ 1-РіРѕ
 				sw_3->WriteLine("Reduction of the Pareto set");
 				sw_3->WriteLine("2nd is more important than 1st");
 				index_reduced_2_1.push_back(ga.experiment_reduction(sw_3, problem_name_str, 0.1, NUM_STEPS_TETA, 0, _2ND_1ST_));
 				sw_3->WriteLine();
 			}
 			else
-			{ //задано два "кванта информации"
+			{ //Р·Р°РґР°РЅРѕ РґРІР° "РєРІР°РЅС‚Р° РёРЅС„РѕСЂРјР°С†РёРё"
 
-				//1-ый критерий важнее 2-го + 2-ой важнее второго
+				//1-С‹Р№ РєСЂРёС‚РµСЂРёР№ РІР°Р¶РЅРµРµ 2-РіРѕ + 2-РѕР№ РІР°Р¶РЅРµРµ РІС‚РѕСЂРѕРіРѕ
 				sw_3->WriteLine("Reduction of the Pareto set");
 				sw_3->WriteLine("1st -> 2nd and 2nd -> 1st");
 				//index_reduced_1_2.push_back(ga.experiment_reduction(sw_3, problem_name_str, 0.1, 9, 0, _1ST_2ND_ + _2ND_1ST_));
 				index_reduced_tmp = ga.experiment_reduction(sw_3, problem_name_str, 0.1, NUM_STEPS_TETA+1, -0.1, _1ST_2ND_ + _2ND_1ST_);
-				//накапливаем сумму по всем задачам, чтобы потом вычислить среднее
-//!!! инициализация index_reduced_both и index_reduced_tmp
+				//РЅР°РєР°РїР»РёРІР°РµРј СЃСѓРјРјСѓ РїРѕ РІСЃРµРј Р·Р°РґР°С‡Р°Рј, С‡С‚РѕР±С‹ РїРѕС‚РѕРј РІС‹С‡РёСЃР»РёС‚СЊ СЃСЂРµРґРЅРµРµ
+//!!! РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ index_reduced_both Рё index_reduced_tmp
 				for (int i = 0; i < index_reduced_tmp.size(); i++)
 					index_reduced_both[i] += index_reduced_tmp[i];
 				sw_3->WriteLine();
-				//вывод таблицы процента сужения
+				//РІС‹РІРѕРґ С‚Р°Р±Р»РёС†С‹ РїСЂРѕС†РµРЅС‚Р° СЃСѓР¶РµРЅРёСЏ
 				print_exp_red_two(sw_4, problem_name_str, index_reduced_tmp, NUM_STEPS_TETA+1, total_num_P_approx[iter_prbl]);
 
 
-				//таблица (в случае двух "квантов информации")
+				//С‚Р°Р±Р»РёС†Р° (РІ СЃР»СѓС‡Р°Рµ РґРІСѓС… "РєРІР°РЅС‚РѕРІ РёРЅС„РѕСЂРјР°С†РёРё")
 
 			}
 
 
 	
-		}//эксперимент по сужению мн-ва Парето
+		}//СЌРєСЃРїРµСЂРёРјРµРЅС‚ РїРѕ СЃСѓР¶РµРЅРёСЋ РјРЅ-РІР° РџР°СЂРµС‚Рѕ
 
 
 		//------------------------------------------------------------------------------------
@@ -1373,7 +1373,7 @@ int main(int argc, char* argv[])
 
 		
 
-		 //статистика по метрике после всех запусков
+		 //СЃС‚Р°С‚РёСЃС‚РёРєР° РїРѕ РјРµС‚СЂРёРєРµ РїРѕСЃР»Рµ РІСЃРµС… Р·Р°РїСѓСЃРєРѕРІ
 		if (file_name_source_Pareto_set_str)
 		{
 			total_dist_begin_1 = total_dist_begin_1 / num_runs;
@@ -1451,9 +1451,9 @@ int main(int argc, char* argv[])
 		}
 
 
-		//вычисляем время решения одной задачи (все запуски)
+		//РІС‹С‡РёСЃР»СЏРµРј РІСЂРµРјСЏ СЂРµС€РµРЅРёСЏ РѕРґРЅРѕР№ Р·Р°РґР°С‡Рё (РІСЃРµ Р·Р°РїСѓСЃРєРё)
 		unsigned long long result_time = stop_time - start_time;
-		total_time += result_time; //общее время решения всех задач
+		total_time += result_time; //РѕР±С‰РµРµ РІСЂРµРјСЏ СЂРµС€РµРЅРёСЏ РІСЃРµС… Р·Р°РґР°С‡
 		//printf("Time: %d\n", result_time);
 		time_format(result_time, "Time (one problem)", sw);
 		time_format(result_time, "Time (one problem)", sw_1);
@@ -1482,19 +1482,19 @@ int main(int argc, char* argv[])
 
 		ga.~GA_path();
 
-	}//цикл по задачам
+	}//С†РёРєР» РїРѕ Р·Р°РґР°С‡Р°Рј
 
 
-	 //вывод 2-х таблиц: 1) 1-ый важнее 2-го; 2) 2-ой важнее 1-го
-	 //вывод статистики по сужению по всем задачам
+	 //РІС‹РІРѕРґ 2-С… С‚Р°Р±Р»РёС†: 1) 1-С‹Р№ РІР°Р¶РЅРµРµ 2-РіРѕ; 2) 2-РѕР№ РІР°Р¶РЅРµРµ 1-РіРѕ
+	 //РІС‹РІРѕРґ СЃС‚Р°С‚РёСЃС‚РёРєРё РїРѕ СЃСѓР¶РµРЅРёСЋ РїРѕ РІСЃРµРј Р·Р°РґР°С‡Р°Рј
 	if ( reduction )
 	{
 		if (quantum_inf < _1ST_2ND_ + _2ND_1ST_)
 		{
-			//ТАБЛ. 1) 1-ый важнее 2-го
+			//РўРђР‘Р›. 1) 1-С‹Р№ РІР°Р¶РЅРµРµ 2-РіРѕ
 			print_exp_red(sw_4, "1st criterion is more important then the 2nd", index_reduced_1_2, total_num_P_approx);
 
-			//ТАБЛ. 2) 2-ой важнее 1-го
+			//РўРђР‘Р›. 2) 2-РѕР№ РІР°Р¶РЅРµРµ 1-РіРѕ
 			print_exp_red(sw_4, "2nd criterion is more important then the 1st", index_reduced_2_1, total_num_P_approx);
 		}
 		else
@@ -1509,15 +1509,15 @@ int main(int argc, char* argv[])
 
 		/*
 
-		//ТАБЛ. 1) 1-ый важнее 2-го
-		//заголовок
+		//РўРђР‘Р›. 1) 1-С‹Р№ РІР°Р¶РЅРµРµ 2-РіРѕ
+		//Р·Р°РіРѕР»РѕРІРѕРє
 		sw_4->WriteLine("1st criterion is more important then the 2nd");
 		sw_4->Write(";Points in approx of Pareto set;");
 		for (int j = 1; j <= index_reduced_1_2[0].size(); j++)
 			sw_4->Write("{0:F1};", 0.1*j);
 		sw_4->WriteLine();
 
-		//процент "отброшенных" точек
+		//РїСЂРѕС†РµРЅС‚ "РѕС‚Р±СЂРѕС€РµРЅРЅС‹С…" С‚РѕС‡РµРє
 		for (int i = 0; i < index_reduced_1_2.size(); i++)
 		{
 			//sw_4->Write(vec_problem_name_str[i]);
@@ -1527,8 +1527,8 @@ int main(int argc, char* argv[])
 			sw_4->WriteLine();
 		}
 
-		//статистика
-		//среднее
+		//СЃС‚Р°С‚РёСЃС‚РёРєР°
+		//СЃСЂРµРґРЅРµРµ
 		sw_4->Write("Aver;");
 		double aver_num = 0;
 		int max_num = total_num_P_approx[0];
@@ -1555,7 +1555,7 @@ int main(int argc, char* argv[])
 		}
 		sw_4->WriteLine();
 
-		//минимум
+		//РјРёРЅРёРјСѓРј
 		sw_4->Write("Min;");
 		sw_4->Write("{0};", min_num);
 
@@ -1572,7 +1572,7 @@ int main(int argc, char* argv[])
 		}
 		sw_4->WriteLine();
 
-		//максимум
+		//РјР°РєСЃРёРјСѓРј
 		sw_4->Write("Max;");
 		sw_4->Write("{0};", max_num);
 
@@ -1591,15 +1591,15 @@ int main(int argc, char* argv[])
 		sw_4->WriteLine();
 
 
-		//ТАБЛ. 2) 2-ой важнее 1-го
-		//заголовок
+		//РўРђР‘Р›. 2) 2-РѕР№ РІР°Р¶РЅРµРµ 1-РіРѕ
+		//Р·Р°РіРѕР»РѕРІРѕРє
 		sw_4->WriteLine("2nd criterion is more important then the 1st");
 		sw_4->Write(";Points in approx of Pareto set;");
 		for (int j = 1; j <= index_reduced_2_1[0].size(); j++)
 			sw_4->Write("{0:F1};", 0.1*j);
 		sw_4->WriteLine();
 
-		//процент "отброшенных" точек
+		//РїСЂРѕС†РµРЅС‚ "РѕС‚Р±СЂРѕС€РµРЅРЅС‹С…" С‚РѕС‡РµРє
 		for (int i = 0; i < index_reduced_2_1.size(); i++)
 		{
 			//sw_4->Write(vec_problem_name_str[i]);
@@ -1609,8 +1609,8 @@ int main(int argc, char* argv[])
 			sw_4->WriteLine();
 		}
 
-		//статистика
-		//среднее
+		//СЃС‚Р°С‚РёСЃС‚РёРєР°
+		//СЃСЂРµРґРЅРµРµ
 		sw_4->Write("Aver;");
 		sw_4->Write("{0:F2};", aver_num);
 
@@ -1624,7 +1624,7 @@ int main(int argc, char* argv[])
 		}
 		sw_4->WriteLine();
 
-		//минимум
+		//РјРёРЅРёРјСѓРј
 		sw_4->Write("Min;");
 		sw_4->Write("{0};", min_num);
 
@@ -1640,7 +1640,7 @@ int main(int argc, char* argv[])
 		}
 		sw_4->WriteLine();
 
-		//максимум
+		//РјР°РєСЃРёРјСѓРј
 		sw_4->Write("Max;");
 		sw_4->Write("{0};", max_num);
 
@@ -1661,7 +1661,7 @@ int main(int argc, char* argv[])
 
 	}
 
-	//общее время по всем задачам
+	//РѕР±С‰РµРµ РІСЂРµРјСЏ РїРѕ РІСЃРµРј Р·Р°РґР°С‡Р°Рј
 	time_format(total_time, "Total time of all problems", sw_1);
 	time_format(total_time, "Total time of all problems", sw_3);
 	time_format(total_time, "Total time of all problems", sw_4);
