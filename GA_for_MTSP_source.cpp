@@ -1,8 +1,8 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "GA_for_MTSP_source.h"
 
 
-//подумать, что ввести, или как сделать по-другому
+//РїРѕРґСѓРјР°С‚СЊ, С‡С‚Рѕ РІРІРµСЃС‚Рё, РёР»Рё РєР°Рє СЃРґРµР»Р°С‚СЊ РїРѕ-РґСЂСѓРіРѕРјСѓ
 const int INF = 1000;
 
 GA_path::GA_path()
@@ -11,9 +11,9 @@ GA_path::GA_path()
 
 GA_path::GA_path(int n, int N, int m, int s_max_N)
 {
-	this->n = n;//число городов
-	this->N = N;//размер популяции
-	this->m = m;//число критериев
+	this->n = n;//С‡РёСЃР»Рѕ РіРѕСЂРѕРґРѕРІ
+	this->N = N;//СЂР°Р·РјРµСЂ РїРѕРїСѓР»СЏС†РёРё
+	this->m = m;//С‡РёСЃР»Рѕ РєСЂРёС‚РµСЂРёРµРІ
 
 	phi.resize(m);
 	for (int i = 0; i < m; i++)
@@ -25,7 +25,7 @@ GA_path::GA_path(int n, int N, int m, int s_max_N)
 	i_rank_R_t.resize(2*N);
 	i_dist_R_t.resize(2*N);
 
-	this->tourn_size = 10;//размер турнира
+	this->tourn_size = 10;//СЂР°Р·РјРµСЂ С‚СѓСЂРЅРёСЂР°
 
 	//this->pop = new int*[N];
 	//for (int i = 0; i < N; i++)
@@ -58,11 +58,11 @@ GA_path::~GA_path()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//Генерация начальной популяции
+//Р“РµРЅРµСЂР°С†РёСЏ РЅР°С‡Р°Р»СЊРЅРѕР№ РїРѕРїСѓР»СЏС†РёРё
 ///////////////////////////////////////////////////////////////////////////////
 void GA_path::init_pop(vector<vector<vector<int>>> s, int S_max, unsigned long long temp_time,
 	vector<int> p1, vector<int> p2, vector<int> p3, vector<int> p4)
-	//vector<vector<int>> vertex, vector<int> vertex_initial) - пока не используем
+	//vector<vector<int>> vertex, vector<int> vertex_initial) - РїРѕРєР° РЅРµ РёСЃРїРѕР»СЊР·СѓРµРј
 {
 	this->phi_best = S_max*this->n;
 	this->phi_best_in_rec = S_max*this->n;
@@ -70,66 +70,66 @@ void GA_path::init_pop(vector<vector<vector<int>>> s, int S_max, unsigned long l
 	this->count_best_child = 0;
 	this->iter_best_child = 0;
 	this->avg_phi = 0;
-	//!!! pop.reserve(n); почему-то не работает
+	//!!! pop.reserve(n); РїРѕС‡РµРјСѓ-С‚Рѕ РЅРµ СЂР°Р±РѕС‚Р°РµС‚
 	////////////////////////////////////////////////////////////////////////////////
-	//        первая особь строится специальным методом patching algorithm (венгерский метод+склейка циклов) модификация
-	pop.push_back(p1);//модифицированный метод
+	//        РїРµСЂРІР°СЏ РѕСЃРѕР±СЊ СЃС‚СЂРѕРёС‚СЃСЏ СЃРїРµС†РёР°Р»СЊРЅС‹Рј РјРµС‚РѕРґРѕРј patching algorithm (РІРµРЅРіРµСЂСЃРєРёР№ РјРµС‚РѕРґ+СЃРєР»РµР№РєР° С†РёРєР»РѕРІ) РјРѕРґРёС„РёРєР°С†РёСЏ
+	pop.push_back(p1);//РјРѕРґРёС„РёС†РёСЂРѕРІР°РЅРЅС‹Р№ РјРµС‚РѕРґ
 	//phi[0][0] = this->phitness(s1, pop[0]);
 	//phi[0][1] = this->phitness(s2, pop[0]);
 	//phi_best = phi[0];
 	//ord_best_ind = 1;
-	//вторая особь строится специальным методом patching algorithm (венгерский метод+склейка циклов) original
-	pop.push_back(p2);//оригинальный метод
+	//РІС‚РѕСЂР°СЏ РѕСЃРѕР±СЊ СЃС‚СЂРѕРёС‚СЃСЏ СЃРїРµС†РёР°Р»СЊРЅС‹Рј РјРµС‚РѕРґРѕРј patching algorithm (РІРµРЅРіРµСЂСЃРєРёР№ РјРµС‚РѕРґ+СЃРєР»РµР№РєР° С†РёРєР»РѕРІ) original
+	pop.push_back(p2);//РѕСЂРёРіРёРЅР°Р»СЊРЅС‹Р№ РјРµС‚РѕРґ
 	//phi[1][0] = this->phitness(s1, pop[1]);
 	//phi[1][1] = this->phitness(s2, pop[1]);
 	//if (phi_best>phi[1]) {
 	//	phi_best = phi[1];
 	//	ord_best_ind = 2;
 	//}
-	//avg_phi = (phi[0] + phi[1]) / 2;//средняя пригодность
+	//avg_phi = (phi[0] + phi[1]) / 2;//СЃСЂРµРґРЅСЏСЏ РїСЂРёРіРѕРґРЅРѕСЃС‚СЊ
 	//time_best = GetTickCount64() - start_time;
 
 	pop.push_back(p3);
 	pop.push_back(p4);
 
-	//применяем локальный поиск
-	//pop[0] = this->local_search(pop[0], this->s_m[0]); //что писать вторым аргументом?
-	//pop[1] = this->local_search(pop[1], this->s_m[0]); //что писать вторым аргументом?
-	//pop[2] = this->local_search(pop[2], this->s_m[0]); //что писать вторым аргументом?
-	//pop[3] = this->local_search(pop[3], this->s_m[0]); //что писать вторым аргументом?
+	//РїСЂРёРјРµРЅСЏРµРј Р»РѕРєР°Р»СЊРЅС‹Р№ РїРѕРёСЃРє
+	//pop[0] = this->local_search(pop[0], this->s_m[0]); //С‡С‚Рѕ РїРёСЃР°С‚СЊ РІС‚РѕСЂС‹Рј Р°СЂРіСѓРјРµРЅС‚РѕРј?
+	//pop[1] = this->local_search(pop[1], this->s_m[0]); //С‡С‚Рѕ РїРёСЃР°С‚СЊ РІС‚РѕСЂС‹Рј Р°СЂРіСѓРјРµРЅС‚РѕРј?
+	//pop[2] = this->local_search(pop[2], this->s_m[0]); //С‡С‚Рѕ РїРёСЃР°С‚СЊ РІС‚РѕСЂС‹Рј Р°СЂРіСѓРјРµРЅС‚РѕРј?
+	//pop[3] = this->local_search(pop[3], this->s_m[0]); //С‡С‚Рѕ РїРёСЃР°С‚СЊ РІС‚РѕСЂС‹Рј Р°СЂРіСѓРјРµРЅС‚РѕРј?
 
 	////////////////////////////////////////////////////////////////////////////////
 	srand(temp_time);
 	for (int i = 4; i < N; ++i)
 	{
-		//строим особь с помощью рандомизатора
+		//СЃС‚СЂРѕРёРј РѕСЃРѕР±СЊ СЃ РїРѕРјРѕС‰СЊСЋ СЂР°РЅРґРѕРјРёР·Р°С‚РѕСЂР°
 		pop.push_back(this->random_individual());
 
-		//применяем локальный поиск
-		//pop[i] = this->local_search(pop[i], this->s_m[0]); //что писать вторым аргументом?
+		//РїСЂРёРјРµРЅСЏРµРј Р»РѕРєР°Р»СЊРЅС‹Р№ РїРѕРёСЃРє
+		//pop[i] = this->local_search(pop[i], this->s_m[0]); //С‡С‚Рѕ РїРёСЃР°С‚СЊ РІС‚РѕСЂС‹Рј Р°СЂРіСѓРјРµРЅС‚РѕРј?
 
 		//            for(int j=0;j<n;++j){
 		//            System.out.print(pop[i][j]+" ");
 		//            }
 		//            System.out.println();
-		//вычисляем пригодность особи
+		//РІС‹С‡РёСЃР»СЏРµРј РїСЂРёРіРѕРґРЅРѕСЃС‚СЊ РѕСЃРѕР±Рё
 		//phi[i] = this->phitness(s, pop[i]);
-		// находим лучшую особь в популяции и ее пригодность
+		// РЅР°С…РѕРґРёРј Р»СѓС‡С€СѓСЋ РѕСЃРѕР±СЊ РІ РїРѕРїСѓР»СЏС†РёРё Рё РµРµ РїСЂРёРіРѕРґРЅРѕСЃС‚СЊ
 	//	if (phi[i] < phi_best)
 	//	{
 	//		phi_best = phi[i];
 	//		ord_best_ind = i + 1;
 	//		time_best = GetTickCount64() - start_time;
 	//	}
-	//	avg_phi = (double)((avg_phi*(i)+phi[i]) / (i + 1));//средняя пригодность
+	//	avg_phi = (double)((avg_phi*(i)+phi[i]) / (i + 1));//СЃСЂРµРґРЅСЏСЏ РїСЂРёРіРѕРґРЅРѕСЃС‚СЊ
 	}
-	//iter_best = 0;//итерация лучшей особи
-	//			  //         time_best=System.currentTimeMillis()-StartTime;//время получения лучшей особи
+	//iter_best = 0;//РёС‚РµСЂР°С†РёСЏ Р»СѓС‡С€РµР№ РѕСЃРѕР±Рё
+	//			  //         time_best=System.currentTimeMillis()-StartTime;//РІСЂРµРјСЏ РїРѕР»СѓС‡РµРЅРёСЏ Р»СѓС‡С€РµР№ РѕСЃРѕР±Рё
 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//Локальный поиск
+//Р›РѕРєР°Р»СЊРЅС‹Р№ РїРѕРёСЃРє
 ////////////////////////////////////////////////////////////////////////////////
 vector<int> GA_path::local_search(vector<int> assignment, vector<vector<int>> s_m_crit_index)
 {
@@ -139,7 +139,7 @@ vector<int> GA_path::local_search(vector<int> assignment, vector<vector<int>> s_
 	vector<int> result(this->get_n());
 	vector<vector<int>> path(2, vector<int>(this->get_n()));
 
-	//            Random rnd = new Random();//датчик случайных чисел
+	//            Random rnd = new Random();//РґР°С‚С‡РёРє СЃР»СѓС‡Р°Р№РЅС‹С… С‡РёСЃРµР»
 	int j_head = -1;
 	int i_next = -1;
 	int i_temp = -1;
@@ -157,36 +157,36 @@ vector<int> GA_path::local_search(vector<int> assignment, vector<vector<int>> s_
 	path[0][assignment[0] - 1] = assignment[this->get_n() - 1] - 1;
 
 	while (is_improve)
-	{//пока есть улучшения - движемся вперед!
-					   //          i_head=rnd.nextInt(n);//случайным образом выбирается начальная вершина (i_head - это конец пути)
+	{//РїРѕРєР° РµСЃС‚СЊ СѓР»СѓС‡С€РµРЅРёСЏ - РґРІРёР¶РµРјСЃСЏ РІРїРµСЂРµРґ!
+					   //          i_head=rnd.nextInt(n);//СЃР»СѓС‡Р°Р№РЅС‹Рј РѕР±СЂР°Р·РѕРј РІС‹Р±РёСЂР°РµС‚СЃСЏ РЅР°С‡Р°Р»СЊРЅР°СЏ РІРµСЂС€РёРЅР° (i_head - СЌС‚Рѕ РєРѕРЅРµС† РїСѓС‚Рё)
 		for (int i_head = 0; i_head < this->get_n(); i_head++)
 		{
 			is_improve = false;
-			j_head = path[1][i_head]; //(j_head - это начало пути) 
-			path[1][i_head] = -1;//удаляем дугу
+			j_head = path[1][i_head]; //(j_head - СЌС‚Рѕ РЅР°С‡Р°Р»Рѕ РїСѓС‚Рё) 
+			path[1][i_head] = -1;//СѓРґР°Р»СЏРµРј РґСѓРіСѓ
 			path[0][j_head] = -1;
 
-			//добавляем дугу для образования цикла 
+			//РґРѕР±Р°РІР»СЏРµРј РґСѓРіСѓ РґР»СЏ РѕР±СЂР°Р·РѕРІР°РЅРёСЏ С†РёРєР»Р° 
 			for (int i_t = 0; i_t < this->get_n(); i_t++)
 			{
 				if (i_head != i_t && j_head != i_t)
 				{
 					i_next = i_t;
-					G = 0;//начальный выигрыш
-						  //добавляем дугу и тем самым создаем цикл
-						  //добавляем (i_head, i_next)
+					G = 0;//РЅР°С‡Р°Р»СЊРЅС‹Р№ РІС‹РёРіСЂС‹С€
+						  //РґРѕР±Р°РІР»СЏРµРј РґСѓРіСѓ Рё С‚РµРј СЃР°РјС‹Рј СЃРѕР·РґР°РµРј С†РёРєР»
+						  //РґРѕР±Р°РІР»СЏРµРј (i_head, i_next)
 					path[1][i_head] = i_next;
-					i_temp = path[0][i_next];//дуга для удаления формируется однозначно
+					i_temp = path[0][i_next];//РґСѓРіР° РґР»СЏ СѓРґР°Р»РµРЅРёСЏ С„РѕСЂРјРёСЂСѓРµС‚СЃСЏ РѕРґРЅРѕР·РЅР°С‡РЅРѕ
 					path[0][i_next] = i_head;
-					G = G + s_m_crit_index[i_head][j_head] - s_m_crit_index[i_head][i_next];//обновляем выигрыш
-																  //удаляем (i_temp, i_next)
+					G = G + s_m_crit_index[i_head][j_head] - s_m_crit_index[i_head][i_next];//РѕР±РЅРѕРІР»СЏРµРј РІС‹РёРіСЂС‹С€
+																  //СѓРґР°Р»СЏРµРј (i_temp, i_next)
 					path[1][i_temp] = -1;
-					//разрываем цикл
-					//выбираем вершину из цикла j_tail
+					//СЂР°Р·СЂС‹РІР°РµРј С†РёРєР»
+					//РІС‹Р±РёСЂР°РµРј РІРµСЂС€РёРЅСѓ РёР· С†РёРєР»Р° j_tail
 					count = 0;
 					F_max = -1;
 					j_tail = -1;
-					i_tail = path[1][i_next];//просматриваем вершины цикла
+					i_tail = path[1][i_next];//РїСЂРѕСЃРјР°С‚СЂРёРІР°РµРј РІРµСЂС€РёРЅС‹ С†РёРєР»Р°
 					while (count < this->get_n())
 					{
 						if (i_next != i_tail)
@@ -210,20 +210,20 @@ vector<int> GA_path::local_search(vector<int> assignment, vector<vector<int>> s_
 					}
 
 					if (count == 0)
-					{//в данном направлении нет улучшения (возвращаем метки на место)
+					{//РІ РґР°РЅРЅРѕРј РЅР°РїСЂР°РІР»РµРЅРёРё РЅРµС‚ СѓР»СѓС‡С€РµРЅРёСЏ (РІРѕР·РІСЂР°С‰Р°РµРј РјРµС‚РєРё РЅР° РјРµСЃС‚Рѕ)
 						path[1][i_head] = -1;
 						path[0][j_head] = -1;
 						path[0][i_next] = i_temp;
 						path[1][i_temp] = i_next;
 					}
-					else {//нашли улучшающее решение
-						  //добавляем (i_temp, j_tail)
+					else {//РЅР°С€Р»Рё СѓР»СѓС‡С€Р°СЋС‰РµРµ СЂРµС€РµРЅРёРµ
+						  //РґРѕР±Р°РІР»СЏРµРј (i_temp, j_tail)
 						path[1][i_temp] = j_tail;
 						i_tail = path[0][j_tail];
 						path[0][j_tail] = i_temp;
-						//удаляем (i_tail, j_tail)
+						//СѓРґР°Р»СЏРµРј (i_tail, j_tail)
 						path[1][i_tail] = -1;
-						//добавляем (i_tail, j_head)
+						//РґРѕР±Р°РІР»СЏРµРј (i_tail, j_head)
 						path[1][i_tail] = j_head;
 						path[0][j_head] = i_tail;
 						is_improve = true;
@@ -240,17 +240,17 @@ vector<int> GA_path::local_search(vector<int> assignment, vector<vector<int>> s_
 				//                    System.out.print(result[i]+" ");
 				//                    }
 				//                    System.out.println();
-				//                     System.out.println("Улучшение: " +costAssignment(c, result));
+				//                     System.out.println("РЈР»СѓС‡С€РµРЅРёРµ: " +costAssignment(c, result));
 				break;
 			}
 			else {
-				path[1][i_head] = j_head;//возвращаем дугу
+				path[1][i_head] = j_head;//РІРѕР·РІСЂР°С‰Р°РµРј РґСѓРіСѓ
 				path[0][j_head] = i_head;
 			}
 		}
 	}
 
-	//формируем перестановку (циклическая)
+	//С„РѕСЂРјРёСЂСѓРµРј РїРµСЂРµСЃС‚Р°РЅРѕРІРєСѓ (С†РёРєР»РёС‡РµСЃРєР°СЏ)
 	result[0] = 1;
 	i_temp = 0;
 	for (int i = 1; i<n; ++i)
@@ -264,12 +264,12 @@ vector<int> GA_path::local_search(vector<int> assignment, vector<vector<int>> s_
 	////                    System.out.print(result[i]+" ");
 	//                    }
 	//                    System.out.println();
-	//                     System.out.println("Итог: " +costAssignment(c, result));     
+	//                     System.out.println("РС‚РѕРі: " +costAssignment(c, result));     
 	return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////    
-//Вычисление значения особи по некоторому критерию
+//Р’С‹С‡РёСЃР»РµРЅРёРµ Р·РЅР°С‡РµРЅРёСЏ РѕСЃРѕР±Рё РїРѕ РЅРµРєРѕС‚РѕСЂРѕРјСѓ РєСЂРёС‚РµСЂРёСЋ
 ////////////////////////////////////////////////////////////////////////////////
 int GA_path::phitness(vector<vector<int>> s, vector<int> p)
 {
@@ -283,7 +283,7 @@ int GA_path::phitness(vector<vector<int>> s, vector<int> p)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//Значение векторного критерия для особи
+//Р—РЅР°С‡РµРЅРёРµ РІРµРєС‚РѕСЂРЅРѕРіРѕ РєСЂРёС‚РµСЂРёСЏ РґР»СЏ РѕСЃРѕР±Рё
 ///////////////////////////////////////////////////////////////////////////////
 vector<int> GA_path::multi_phitness(vector<int> p)
 {
@@ -296,7 +296,7 @@ vector<int> GA_path::multi_phitness(vector<int> p)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//задание матрицы весов для ребер (по всем критериям)
+//Р·Р°РґР°РЅРёРµ РјР°С‚СЂРёС†С‹ РІРµСЃРѕРІ РґР»СЏ СЂРµР±РµСЂ (РїРѕ РІСЃРµРј РєСЂРёС‚РµСЂРёСЏРј)
 ////////////////////////////////////////////////////////////////////////////////
 void GA_path::set_matrix_criteria(vector<vector<int>> s)
 {
@@ -305,32 +305,32 @@ void GA_path::set_matrix_criteria(vector<vector<int>> s)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//Построение особи с помощью рандомизатора
+//РџРѕСЃС‚СЂРѕРµРЅРёРµ РѕСЃРѕР±Рё СЃ РїРѕРјРѕС‰СЊСЋ СЂР°РЅРґРѕРјРёР·Р°С‚РѕСЂР°
 ////////////////////////////////////////////////////////////////////////////////
 vector<int> GA_path::random_individual()
 {
-	// рандомизация генератора случайных чисел
+	// СЂР°РЅРґРѕРјРёР·Р°С†РёСЏ РіРµРЅРµСЂР°С‚РѕСЂР° СЃР»СѓС‡Р°Р№РЅС‹С… С‡РёСЃРµР»
 	//unsigned rand_value = 11;
 	//srand(rand_value);
 
-	vector<int> individual(n);//строящаясяя особь
-	int jNext, iNext = 0;//вершины выбираются случайным образом с равномерным распределением
-	int count = 0;//счетчик просмотренных вершин
-	vector<bool> indicator(n);//индикатор уже размещенных вершин
+	vector<int> individual(n);//СЃС‚СЂРѕСЏС‰Р°СЏСЃСЏСЏ РѕСЃРѕР±СЊ
+	int jNext, iNext = 0;//РІРµСЂС€РёРЅС‹ РІС‹Р±РёСЂР°СЋС‚СЃСЏ СЃР»СѓС‡Р°Р№РЅС‹Рј РѕР±СЂР°Р·РѕРј СЃ СЂР°РІРЅРѕРјРµСЂРЅС‹Рј СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµРј
+	int count = 0;//СЃС‡РµС‚С‡РёРє РїСЂРѕСЃРјРѕС‚СЂРµРЅРЅС‹С… РІРµСЂС€РёРЅ
+	vector<bool> indicator(n);//РёРЅРґРёРєР°С‚РѕСЂ СѓР¶Рµ СЂР°Р·РјРµС‰РµРЅРЅС‹С… РІРµСЂС€РёРЅ
 	for (int j = 0; j < n; ++j)
 	{
 		indicator[j] = false;
 	}
 	
-	//сделано через rand(), см. ниже
-	//Random^ rnd = gcnew Random();//датчик случайных чисел
+	//СЃРґРµР»Р°РЅРѕ С‡РµСЂРµР· rand(), СЃРј. РЅРёР¶Рµ
+	//Random^ rnd = gcnew Random();//РґР°С‚С‡РёРє СЃР»СѓС‡Р°Р№РЅС‹С… С‡РёСЃРµР»
 							  ////////////////////////////////////////////////////////////////
-							  //первая вершина выбирается случайным образом
+							  //РїРµСЂРІР°СЏ РІРµСЂС€РёРЅР° РІС‹Р±РёСЂР°РµС‚СЃСЏ СЃР»СѓС‡Р°Р№РЅС‹Рј РѕР±СЂР°Р·РѕРј
 	iNext = 0;
 	individual[0] = iNext + 1;
-	indicator[iNext] = true;//помечаем вершину уже размещенной
+	indicator[iNext] = true;//РїРѕРјРµС‡Р°РµРј РІРµСЂС€РёРЅСѓ СѓР¶Рµ СЂР°Р·РјРµС‰РµРЅРЅРѕР№
 						   ////////////////////////////////////////////////////////////////
-						   //остальные вершины выбираем случайным образом с равномерным распределением
+						   //РѕСЃС‚Р°Р»СЊРЅС‹Рµ РІРµСЂС€РёРЅС‹ РІС‹Р±РёСЂР°РµРј СЃР»СѓС‡Р°Р№РЅС‹Рј РѕР±СЂР°Р·РѕРј СЃ СЂР°РІРЅРѕРјРµСЂРЅС‹Рј СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµРј
 	for (int j = 1; j < n - 1; ++j)
 	{
 		//iNext = rnd->Next(n - j) + 1;
@@ -339,24 +339,24 @@ vector<int> GA_path::random_individual()
 		count = 0;
 		for (int i = 0; i < n; ++i)
 		{
-			//если вершина еще не просмотрена, то увеличиваем счетчик
+			//РµСЃР»Рё РІРµСЂС€РёРЅР° РµС‰Рµ РЅРµ РїСЂРѕСЃРјРѕС‚СЂРµРЅР°, С‚Рѕ СѓРІРµР»РёС‡РёРІР°РµРј СЃС‡РµС‚С‡РёРє
 			if (indicator[i] == false)
 				count++;
 		
-			// номер выбранной вершины среди еще неразмещенных
+			// РЅРѕРјРµСЂ РІС‹Р±СЂР°РЅРЅРѕР№ РІРµСЂС€РёРЅС‹ СЃСЂРµРґРё РµС‰Рµ РЅРµСЂР°Р·РјРµС‰РµРЅРЅС‹С…
 			if (count == iNext)
 			{
-				jNext = i;// абсолютный номер выбранной вершины
+				jNext = i;// Р°Р±СЃРѕР»СЋС‚РЅС‹Р№ РЅРѕРјРµСЂ РІС‹Р±СЂР°РЅРЅРѕР№ РІРµСЂС€РёРЅС‹
 				break;
 			}
 		}
 		individual[j] = jNext + 1;
-		indicator[jNext] = true;//помечаем вершину уже размещенной
-	} // заполнили первые n-1 позиции
+		indicator[jNext] = true;//РїРѕРјРµС‡Р°РµРј РІРµСЂС€РёРЅСѓ СѓР¶Рµ СЂР°Р·РјРµС‰РµРЅРЅРѕР№
+	} // Р·Р°РїРѕР»РЅРёР»Рё РїРµСЂРІС‹Рµ n-1 РїРѕР·РёС†РёРё
 	
 	for (int i = 0; i < n; ++i)
 	{
-		//оставшуюся вершину размещаем в последней позиции
+		//РѕСЃС‚Р°РІС€СѓСЋСЃСЏ РІРµСЂС€РёРЅСѓ СЂР°Р·РјРµС‰Р°РµРј РІ РїРѕСЃР»РµРґРЅРµР№ РїРѕР·РёС†РёРё
 		if (indicator[i] == false)
 		{
 			individual[n - 1] = i + 1;
@@ -368,7 +368,7 @@ vector<int> GA_path::random_individual()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//Отношение Парето
+//РћС‚РЅРѕС€РµРЅРёРµ РџР°СЂРµС‚Рѕ
 ////////////////////////////////////////////////////////////////////////////////
 template <typename T>
 bool GA_path::Pareto_pref(const vector<T> a, const vector<T> b)
@@ -388,25 +388,25 @@ bool GA_path::Pareto_pref(const vector<T> a, const vector<T> b)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//Построение фронтов (без ранжированя внутри фронта)
+//РџРѕСЃС‚СЂРѕРµРЅРёРµ С„СЂРѕРЅС‚РѕРІ (Р±РµР· СЂР°РЅР¶РёСЂРѕРІР°РЅСЏ РІРЅСѓС‚СЂРё С„СЂРѕРЅС‚Р°)
 ////////////////////////////////////////////////////////////////////////////////
 vector<int> GA_path::range_front(vector<vector<int>>& pop_cur, bool flag_pop_sort)
 {
-	//вектор фронтов (используется индекс особи в популяции pop)
+	//РІРµРєС‚РѕСЂ С„СЂРѕРЅС‚РѕРІ (РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РёРЅРґРµРєСЃ РѕСЃРѕР±Рё РІ РїРѕРїСѓР»СЏС†РёРё pop)
 	vector<vector<int>> index_front;
 	vector<int> index_front_temp;
-	//вектор рангов фронтов
+	//РІРµРєС‚РѕСЂ СЂР°РЅРіРѕРІ С„СЂРѕРЅС‚РѕРІ
 	vector<int> i_rank_temp;
 	if (!flag_pop_sort)
 		i_rank_temp.reserve(pop_cur.size());
 	
-	//отсортированная популяция
+	//РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅР°СЏ РїРѕРїСѓР»СЏС†РёСЏ
 	vector<vector<int>> pop_sort;
 
 
-	//вектор: каждый элемент - вектор индексов особей, которые доминирует особь с данным индексом
+	//РІРµРєС‚РѕСЂ: РєР°Р¶РґС‹Р№ СЌР»РµРјРµРЅС‚ - РІРµРєС‚РѕСЂ РёРЅРґРµРєСЃРѕРІ РѕСЃРѕР±РµР№, РєРѕС‚РѕСЂС‹Рµ РґРѕРјРёРЅРёСЂСѓРµС‚ РѕСЃРѕР±СЊ СЃ РґР°РЅРЅС‹Рј РёРЅРґРµРєСЃРѕРј
 	vector<vector<int>> S_p(pop_cur.size(), vector<int>());
-	//вектор: каждый элемент - количество особей, которые доминируют особь с данным индексом
+	//РІРµРєС‚РѕСЂ: РєР°Р¶РґС‹Р№ СЌР»РµРјРµРЅС‚ - РєРѕР»РёС‡РµСЃС‚РІРѕ РѕСЃРѕР±РµР№, РєРѕС‚РѕСЂС‹Рµ РґРѕРјРёРЅРёСЂСѓСЋС‚ РѕСЃРѕР±СЊ СЃ РґР°РЅРЅС‹Рј РёРЅРґРµРєСЃРѕРј
 	vector<int> n_p(pop_cur.size(), 0);
 
 	for (int i = 0; i < pop_cur.size(); i++)
@@ -419,7 +419,7 @@ vector<int> GA_path::range_front(vector<vector<int>>& pop_cur, bool flag_pop_sor
 				if (Pareto_pref(multi_phitness(pop_cur[j]), multi_phitness(pop_cur[i])))
 					n_p[i]++;
 		}
-		//если особь принадлежит первому фронту
+		//РµСЃР»Рё РѕСЃРѕР±СЊ РїСЂРёРЅР°РґР»РµР¶РёС‚ РїРµСЂРІРѕРјСѓ С„СЂРѕРЅС‚Сѓ
 		if (n_p[i] == 0)
 		{
 			index_front_temp.push_back(i);
@@ -435,7 +435,7 @@ vector<int> GA_path::range_front(vector<vector<int>>& pop_cur, bool flag_pop_sor
 	}
 	index_front.push_back(index_front_temp);
 
-	//номер фронта
+	//РЅРѕРјРµСЂ С„СЂРѕРЅС‚Р°
 	int i_front = 0;
 	while (!index_front[i_front].empty())
 	{
@@ -469,9 +469,9 @@ vector<int> GA_path::range_front(vector<vector<int>>& pop_cur, bool flag_pop_sor
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//Построение crowding distance (ранжированя внутри фронта с рангом = rank)
-//flag = true - используется алгоритм пирамидальной сортировки
-//flag = false - исопользуется алгоритм быстрой сортировки
+//РџРѕСЃС‚СЂРѕРµРЅРёРµ crowding distance (СЂР°РЅР¶РёСЂРѕРІР°РЅСЏ РІРЅСѓС‚СЂРё С„СЂРѕРЅС‚Р° СЃ СЂР°РЅРіРѕРј = rank)
+//flag = true - РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ Р°Р»РіРѕСЂРёС‚Рј РїРёСЂР°РјРёРґР°Р»СЊРЅРѕР№ СЃРѕСЂС‚РёСЂРѕРІРєРё
+//flag = false - РёСЃРѕРїРѕР»СЊР·СѓРµС‚СЃСЏ Р°Р»РіРѕСЂРёС‚Рј Р±С‹СЃС‚СЂРѕР№ СЃРѕСЂС‚РёСЂРѕРІРєРё
 ////////////////////////////////////////////////////////////////////////////////
 void GA_path::crowd_dist(vector<double>& i_dist_cur, int rank, vector<int> i_rank_cur,
 	vector<vector<int>> pop_cur, bool flag_sort)
@@ -479,9 +479,9 @@ void GA_path::crowd_dist(vector<double>& i_dist_cur, int rank, vector<int> i_ran
 	if ((rank < 1) || (rank > *max_element(i_rank_cur.cbegin(), i_rank_cur.cend())))
 		return;
 	
-	//переписать через алгоритмы для контейнеров
+	//РїРµСЂРµРїРёСЃР°С‚СЊ С‡РµСЂРµР· Р°Р»РіРѕСЂРёС‚РјС‹ РґР»СЏ РєРѕРЅС‚РµР№РЅРµСЂРѕРІ
 
-	//для хранения индексов особей из фронта с рангом=rank
+	//РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РёРЅРґРµРєСЃРѕРІ РѕСЃРѕР±РµР№ РёР· С„СЂРѕРЅС‚Р° СЃ СЂР°РЅРіРѕРј=rank
 	vector<int> index_front_temp;
 	vector<vector<int>> phi_front_temp(m, vector<int>());
 	//vector<double> i_dist(pop_cur.size());
@@ -493,7 +493,7 @@ void GA_path::crowd_dist(vector<double>& i_dist_cur, int rank, vector<int> i_ran
 			index_front_temp.push_back(i);
 			for (int j = 0; j < m; j++)
 			{
-				//заполнить в отедельный массив multi_phitness(pop_cur[i])[j]
+				//Р·Р°РїРѕР»РЅРёС‚СЊ РІ РѕС‚РµРґРµР»СЊРЅС‹Р№ РјР°СЃСЃРёРІ multi_phitness(pop_cur[i])[j]
 				phi_front_temp[j].push_back(this->multi_phitness(pop_cur[i])[j]);
 			}
 			i_dist_cur[i] = 0;
@@ -508,16 +508,16 @@ void GA_path::crowd_dist(vector<double>& i_dist_cur, int rank, vector<int> i_ran
 	{
 		min_phi.push_back(phitness(s_m[i], pop_cur[index_front_temp[0]]));
 		max_phi.push_back(phitness(s_m[i], pop_cur[index_front_temp[0]]));
-		//ищем мин и макс значения
+		//РёС‰РµРј РјРёРЅ Рё РјР°РєСЃ Р·РЅР°С‡РµРЅРёСЏ
 		for (int j = 1; j < index_front_temp.size(); j++)
 		{
-			//поиск мин значения по критерию i
+			//РїРѕРёСЃРє РјРёРЅ Р·РЅР°С‡РµРЅРёСЏ РїРѕ РєСЂРёС‚РµСЂРёСЋ i
 			if (phitness(s_m[i], pop_cur[index_front_temp[j]]) < min_phi[i])
 			{
 				min_phi[i] = phitness(s_m[i], pop_cur[index_front_temp[j]]);
 				j_min[i] = j;
 			}
-			//поиск макс значения по критерию i
+			//РїРѕРёСЃРє РјР°РєСЃ Р·РЅР°С‡РµРЅРёСЏ РїРѕ РєСЂРёС‚РµСЂРёСЋ i
 			if (phitness(s_m[i], pop_cur[index_front_temp[j]]) > max_phi[i])
 			{
 				max_phi[i] = phitness(s_m[i], pop_cur[index_front_temp[j]]);
@@ -525,49 +525,49 @@ void GA_path::crowd_dist(vector<double>& i_dist_cur, int rank, vector<int> i_ran
 			}
 		}
 		
-		//инициализируем текущую пос-ть индексов особей согласано их следованию в популяции
+		//РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј С‚РµРєСѓС‰СѓСЋ РїРѕСЃ-С‚СЊ РёРЅРґРµРєСЃРѕРІ РѕСЃРѕР±РµР№ СЃРѕРіР»Р°СЃР°РЅРѕ РёС… СЃР»РµРґРѕРІР°РЅРёСЋ РІ РїРѕРїСѓР»СЏС†РёРё
 		index_front_cur_crit_temp = index_front_temp;
-		//сортируем пос-ть индексов особей в соответствии с их значениями по i-му критерию
+		//СЃРѕСЂС‚РёСЂСѓРµРј РїРѕСЃ-С‚СЊ РёРЅРґРµРєСЃРѕРІ РѕСЃРѕР±РµР№ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РёС… Р·РЅР°С‡РµРЅРёСЏРјРё РїРѕ i-РјСѓ РєСЂРёС‚РµСЂРёСЋ
 		if (flag_sort)
 		{
-			//при помощи сортировки пирамидой
+			//РїСЂРё РїРѕРјРѕС‰Рё СЃРѕСЂС‚РёСЂРѕРІРєРё РїРёСЂР°РјРёРґРѕР№
 			//heap_sort(phi_front_temp[i], index_front_cur_crit_temp, phi_front_temp[i].size());
 		}
 		else
 		{
-			//при помощи быстрой сортировки
+			//РїСЂРё РїРѕРјРѕС‰Рё Р±С‹СЃС‚СЂРѕР№ СЃРѕСЂС‚РёСЂРѕРІРєРё
 			quick_sort(phi_front_temp[i], index_front_cur_crit_temp, 0, phi_front_temp[i].size() - 1);
 		}
 		
 		i_dist_cur[index_front_cur_crit_temp[0]] = i_dist_cur[index_front_cur_crit_temp[index_front_cur_crit_temp.size()-1]] = INF;
 		
-		//вычисление расстояния для особи из pop с индеком index_front_temp[j]
+		//РІС‹С‡РёСЃР»РµРЅРёРµ СЂР°СЃСЃС‚РѕСЏРЅРёСЏ РґР»СЏ РѕСЃРѕР±Рё РёР· pop СЃ РёРЅРґРµРєРѕРј index_front_temp[j]
 		for (int j = 1; j < index_front_cur_crit_temp.size()-1; j++)
 			i_dist_cur[index_front_cur_crit_temp[j]] += (double) (this->multi_phitness( pop_cur[ index_front_cur_crit_temp[j + 1] ] )[i]
 				- this->multi_phitness( pop_cur[ index_front_cur_crit_temp[j - 1] ] )[i] ) / (max_phi[i] - min_phi[i]);
 	}
 }
 
-//НОВАЯ ФУНКЦИЯ
+//РќРћР’РђРЇ Р¤РЈРќРљР¦РРЇ
 ////////////////////////////////////////////////////////////////////////////////
-//Построение crowding distance (ранжированя внутри фронта с рангом = rank)
-//flag = true - используется алгоритм пирамидальной сортировки
-//flag = false - исопользуется алгоритм быстрой сортировки
+//РџРѕСЃС‚СЂРѕРµРЅРёРµ crowding distance (СЂР°РЅР¶РёСЂРѕРІР°РЅСЏ РІРЅСѓС‚СЂРё С„СЂРѕРЅС‚Р° СЃ СЂР°РЅРіРѕРј = rank)
+//flag = true - РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ Р°Р»РіРѕСЂРёС‚Рј РїРёСЂР°РјРёРґР°Р»СЊРЅРѕР№ СЃРѕСЂС‚РёСЂРѕРІРєРё
+//flag = false - РёСЃРѕРїРѕР»СЊР·СѓРµС‚СЃСЏ Р°Р»РіРѕСЂРёС‚Рј Р±С‹СЃС‚СЂРѕР№ СЃРѕСЂС‚РёСЂРѕРІРєРё
 ////////////////////////////////////////////////////////////////////////////////
 void GA_path::crowd_dist_new(vector<vector<int>> pop_cur, bool flag_sort)
 {
-	//предполоагается, что популяция pop_cur отсортирована
+	//РїСЂРµРґРїРѕР»РѕР°РіР°РµС‚СЃСЏ, С‡С‚Рѕ РїРѕРїСѓР»СЏС†РёСЏ pop_cur РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅР°
 
-	//ранг текущего фронта
+	//СЂР°РЅРі С‚РµРєСѓС‰РµРіРѕ С„СЂРѕРЅС‚Р°
 	int i_rank_cur = 1;
-	//превышение фронта, не полностью попавшего в новую популяцию, над размерностью популяции N 
+	//РїСЂРµРІС‹С€РµРЅРёРµ С„СЂРѕРЅС‚Р°, РЅРµ РїРѕР»РЅРѕСЃС‚СЊСЋ РїРѕРїР°РІС€РµРіРѕ РІ РЅРѕРІСѓСЋ РїРѕРїСѓР»СЏС†РёСЋ, РЅР°Рґ СЂР°Р·РјРµСЂРЅРѕСЃС‚СЊСЋ РїРѕРїСѓР»СЏС†РёРё N 
 	int num_extra = 0;
 
 	int min_phi, max_phi;
 
 
 	 
-	//для хранения индексов особей из фронта с рангом=rank
+	//РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РёРЅРґРµРєСЃРѕРІ РѕСЃРѕР±РµР№ РёР· С„СЂРѕРЅС‚Р° СЃ СЂР°РЅРіРѕРј=rank
 	vector<int> index_front_temp;
 	vector<int> index_front_temp_not_sorted;
 	
@@ -576,12 +576,12 @@ void GA_path::crowd_dist_new(vector<vector<int>> pop_cur, bool flag_sort)
 
 	if (pop_cur.size() == this->get_N())
 	{
-		//crowded dist считаем только для первых N особей, дальше не надо
+		//crowded dist СЃС‡РёС‚Р°РµРј С‚РѕР»СЊРєРѕ РґР»СЏ РїРµСЂРІС‹С… N РѕСЃРѕР±РµР№, РґР°Р»СЊС€Рµ РЅРµ РЅР°РґРѕ
 		for (int i = 0; i < pop_cur.size(); i++)
 		{
-			if ((i_rank[i] > i_rank_cur) || (i == this->get_N() - 1)) //признак окончания фронта
+			if ((i_rank[i] > i_rank_cur) || (i == this->get_N() - 1)) //РїСЂРёР·РЅР°Рє РѕРєРѕРЅС‡Р°РЅРёСЏ С„СЂРѕРЅС‚Р°
 			{
-				//если признак окончания фронта - конец вектора, то последний индекс добавляем
+				//РµСЃР»Рё РїСЂРёР·РЅР°Рє РѕРєРѕРЅС‡Р°РЅРёСЏ С„СЂРѕРЅС‚Р° - РєРѕРЅРµС† РІРµРєС‚РѕСЂР°, С‚Рѕ РїРѕСЃР»РµРґРЅРёР№ РёРЅРґРµРєСЃ РґРѕР±Р°РІР»СЏРµРј
 				if (i == this->get_N() - 1)
 					index_front_temp_not_sorted.push_back(i);
 
@@ -591,36 +591,36 @@ void GA_path::crowd_dist_new(vector<vector<int>> pop_cur, bool flag_sort)
 
 					min_phi = phitness(s_m[j], pop_cur[index_front_temp[0]]);
 					max_phi = phitness(s_m[j], pop_cur[index_front_temp[0]]);
-					//ищем мин и макс значения
+					//РёС‰РµРј РјРёРЅ Рё РјР°РєСЃ Р·РЅР°С‡РµРЅРёСЏ
 					for (int k = index_front_temp[0] + 1; k <= index_front_temp[index_front_temp.size() - 1]; k++)
 					{
-						//поиск мин значения по текущему критерию
+						//РїРѕРёСЃРє РјРёРЅ Р·РЅР°С‡РµРЅРёСЏ РїРѕ С‚РµРєСѓС‰РµРјСѓ РєСЂРёС‚РµСЂРёСЋ
 						if (phitness(s_m[j], pop_cur[k]) < min_phi)
 							min_phi = phitness(s_m[j], pop_cur[k]);
 
-						//поиск макс значения\ по текущему критерию
+						//РїРѕРёСЃРє РјР°РєСЃ Р·РЅР°С‡РµРЅРёСЏ\ РїРѕ С‚РµРєСѓС‰РµРјСѓ РєСЂРёС‚РµСЂРёСЋ
 						if (phitness(s_m[j], pop_cur[k]) > max_phi)
 							max_phi = phitness(s_m[j], pop_cur[k]);
 					}
 
-					//инициализируем текущую пос-ть индексов особей согласано их следованию в популяции
+					//РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј С‚РµРєСѓС‰СѓСЋ РїРѕСЃ-С‚СЊ РёРЅРґРµРєСЃРѕРІ РѕСЃРѕР±РµР№ СЃРѕРіР»Р°СЃР°РЅРѕ РёС… СЃР»РµРґРѕРІР°РЅРёСЋ РІ РїРѕРїСѓР»СЏС†РёРё
 					//index_front_cur_crit_temp = index_front_temp;
-					//сортируем пос-ть индексов особей в соответствии с их значениями по i-му критерию
+					//СЃРѕСЂС‚РёСЂСѓРµРј РїРѕСЃ-С‚СЊ РёРЅРґРµРєСЃРѕРІ РѕСЃРѕР±РµР№ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РёС… Р·РЅР°С‡РµРЅРёСЏРјРё РїРѕ i-РјСѓ РєСЂРёС‚РµСЂРёСЋ
 					if (flag_sort)
 					{
-						//при помощи сортировки пирамидой
-						//true - сортировка по компоненте критерия
+						//РїСЂРё РїРѕРјРѕС‰Рё СЃРѕСЂС‚РёСЂРѕРІРєРё РїРёСЂР°РјРёРґРѕР№
+						//true - СЃРѕСЂС‚РёСЂРѕРІРєР° РїРѕ РєРѕРјРїРѕРЅРµРЅС‚Рµ РєСЂРёС‚РµСЂРёСЏ
 						heap_sort(pop_cur, index_front_temp, j, index_front_temp[0], index_front_temp[index_front_temp.size() - 1]);
 					}
 					else
 					{
-						//при помощи быстрой сортировки
+						//РїСЂРё РїРѕРјРѕС‰Рё Р±С‹СЃС‚СЂРѕР№ СЃРѕСЂС‚РёСЂРѕРІРєРё
 						//quick_sort(index_front_temp, 0, index_front_temp.size() - 1);
 					}
 
 					i_dist[index_front_temp[0]] = i_dist[index_front_temp[index_front_temp.size() - 1]] = INF;
 
-					//вычисление расстояния для особи из pop с индеком index_front_temp[j]
+					//РІС‹С‡РёСЃР»РµРЅРёРµ СЂР°СЃСЃС‚РѕСЏРЅРёСЏ РґР»СЏ РѕСЃРѕР±Рё РёР· pop СЃ РёРЅРґРµРєРѕРј index_front_temp[j]
 					int prev, next;
 					for (int l = 1; l < index_front_temp.size() - 1; l++)
 					{
@@ -637,7 +637,7 @@ void GA_path::crowd_dist_new(vector<vector<int>> pop_cur, bool flag_sort)
 			}
 			else
 			{
-				//заполняем вектор индексами текущего фронта
+				//Р·Р°РїРѕР»РЅСЏРµРј РІРµРєС‚РѕСЂ РёРЅРґРµРєСЃР°РјРё С‚РµРєСѓС‰РµРіРѕ С„СЂРѕРЅС‚Р°
 				index_front_temp_not_sorted.push_back(i);
 			}
 		}
@@ -645,19 +645,19 @@ void GA_path::crowd_dist_new(vector<vector<int>> pop_cur, bool flag_sort)
 
 	if (pop_cur.size() == 2 * this->get_N())
 	{
-		//crowded dist считаем только для первых N особей, дальше не надо
+		//crowded dist СЃС‡РёС‚Р°РµРј С‚РѕР»СЊРєРѕ РґР»СЏ РїРµСЂРІС‹С… N РѕСЃРѕР±РµР№, РґР°Р»СЊС€Рµ РЅРµ РЅР°РґРѕ
 		for (int i = 0; i < pop_cur.size(); i++)
 		{
-			//считаем, сколько особей из последнего фронта не войдут в новую популяцию
-			//для них тоже считаем i_dist, но их не включаем в pop и i_rank
+			//СЃС‡РёС‚Р°РµРј, СЃРєРѕР»СЊРєРѕ РѕСЃРѕР±РµР№ РёР· РїРѕСЃР»РµРґРЅРµРіРѕ С„СЂРѕРЅС‚Р° РЅРµ РІРѕР№РґСѓС‚ РІ РЅРѕРІСѓСЋ РїРѕРїСѓР»СЏС†РёСЋ
+			//РґР»СЏ РЅРёС… С‚РѕР¶Рµ СЃС‡РёС‚Р°РµРј i_dist, РЅРѕ РёС… РЅРµ РІРєР»СЋС‡Р°РµРј РІ pop Рё i_rank
 			if (i >= this->get_N())
 				num_extra++;
 
 
-			if ((i_rank_R_t[i] > i_rank_cur) || (i == 2 * this->get_N() - 1)) //признак окончания фронта
+			if ((i_rank_R_t[i] > i_rank_cur) || (i == 2 * this->get_N() - 1)) //РїСЂРёР·РЅР°Рє РѕРєРѕРЅС‡Р°РЅРёСЏ С„СЂРѕРЅС‚Р°
 			{
 
-				//если признак окончания фронта - конец вектора, то последний индекс добавляем
+				//РµСЃР»Рё РїСЂРёР·РЅР°Рє РѕРєРѕРЅС‡Р°РЅРёСЏ С„СЂРѕРЅС‚Р° - РєРѕРЅРµС† РІРµРєС‚РѕСЂР°, С‚Рѕ РїРѕСЃР»РµРґРЅРёР№ РёРЅРґРµРєСЃ РґРѕР±Р°РІР»СЏРµРј
 				if (i == 2 * this->get_N() - 1)
 				{
 					index_front_temp_not_sorted.push_back(i);
@@ -675,36 +675,36 @@ void GA_path::crowd_dist_new(vector<vector<int>> pop_cur, bool flag_sort)
 
 					min_phi = phitness(s_m[j], pop_cur[index_front_temp[0]]);
 					max_phi = phitness(s_m[j], pop_cur[index_front_temp[0]]);
-					//ищем мин и макс значения
+					//РёС‰РµРј РјРёРЅ Рё РјР°РєСЃ Р·РЅР°С‡РµРЅРёСЏ
 					for (int k = index_front_temp[0] + 1; k <= index_front_temp[index_front_temp.size() - 1]; k++)
 					{
-						//поиск мин значения по текущему критерию
+						//РїРѕРёСЃРє РјРёРЅ Р·РЅР°С‡РµРЅРёСЏ РїРѕ С‚РµРєСѓС‰РµРјСѓ РєСЂРёС‚РµСЂРёСЋ
 						if (phitness(s_m[j], pop_cur[k]) < min_phi)
 							min_phi = phitness(s_m[j], pop_cur[k]);
 
-						//поиск макс значения\ по текущему критерию
+						//РїРѕРёСЃРє РјР°РєСЃ Р·РЅР°С‡РµРЅРёСЏ\ РїРѕ С‚РµРєСѓС‰РµРјСѓ РєСЂРёС‚РµСЂРёСЋ
 						if (phitness(s_m[j], pop_cur[k]) > max_phi)
 							max_phi = phitness(s_m[j], pop_cur[k]);
 					}
 					
-					//инициализируем текущую пос-ть индексов особей согласано их следованию в популяции
+					//РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј С‚РµРєСѓС‰СѓСЋ РїРѕСЃ-С‚СЊ РёРЅРґРµРєСЃРѕРІ РѕСЃРѕР±РµР№ СЃРѕРіР»Р°СЃР°РЅРѕ РёС… СЃР»РµРґРѕРІР°РЅРёСЋ РІ РїРѕРїСѓР»СЏС†РёРё
 					//index_front_cur_crit_temp = index_front_temp;
-					//сортируем пос-ть индексов особей в соответствии с их значениями по i-му критерию
+					//СЃРѕСЂС‚РёСЂСѓРµРј РїРѕСЃ-С‚СЊ РёРЅРґРµРєСЃРѕРІ РѕСЃРѕР±РµР№ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РёС… Р·РЅР°С‡РµРЅРёСЏРјРё РїРѕ i-РјСѓ РєСЂРёС‚РµСЂРёСЋ
 					if (flag_sort)
 					{
-						//при помощи сортировки пирамидой
-						//true - сортировка по компоненте критерия
+						//РїСЂРё РїРѕРјРѕС‰Рё СЃРѕСЂС‚РёСЂРѕРІРєРё РїРёСЂР°РјРёРґРѕР№
+						//true - СЃРѕСЂС‚РёСЂРѕРІРєР° РїРѕ РєРѕРјРїРѕРЅРµРЅС‚Рµ РєСЂРёС‚РµСЂРёСЏ
 						heap_sort(pop_cur, index_front_temp, j, index_front_temp[0], index_front_temp[index_front_temp.size() - 1]);
 					}
 					else
 					{
-						//при помощи быстрой сортировки
+						//РїСЂРё РїРѕРјРѕС‰Рё Р±С‹СЃС‚СЂРѕР№ СЃРѕСЂС‚РёСЂРѕРІРєРё
 						//quick_sort(index_front_temp, 0, index_front_temp.size() - 1);
 					}
 					
 					i_dist[index_front_temp[0]] = i_dist[index_front_temp[index_front_temp.size() - 1]] = INF;
 
-					//вычисление расстояния для особи из pop с индеком index_front_temp[j]
+					//РІС‹С‡РёСЃР»РµРЅРёРµ СЂР°СЃСЃС‚РѕСЏРЅРёСЏ РґР»СЏ РѕСЃРѕР±Рё РёР· pop СЃ РёРЅРґРµРєРѕРј index_front_temp[j]
 					int prev, next;
 					for (int l = 1; l < index_front_temp.size() - 1; l++)
 					{
@@ -724,7 +724,7 @@ void GA_path::crowd_dist_new(vector<vector<int>> pop_cur, bool flag_sort)
 			}
 			else
 			{
-				//заполняем вектор индексами текущего фронта
+				//Р·Р°РїРѕР»РЅСЏРµРј РІРµРєС‚РѕСЂ РёРЅРґРµРєСЃР°РјРё С‚РµРєСѓС‰РµРіРѕ С„СЂРѕРЅС‚Р°
 				index_front_temp_not_sorted.push_back(i);
 			}
 		}
@@ -733,22 +733,22 @@ void GA_path::crowd_dist_new(vector<vector<int>> pop_cur, bool flag_sort)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//Оператор Crowded-Comparison
-//в качестве аргументов используем индексы ососбей
+//РћРїРµСЂР°С‚РѕСЂ Crowded-Comparison
+//РІ РєР°С‡РµСЃС‚РІРµ Р°СЂРіСѓРјРµРЅС‚РѕРІ РёСЃРїРѕР»СЊР·СѓРµРј РёРЅРґРµРєСЃС‹ РѕСЃРѕСЃР±РµР№
 ////////////////////////////////////////////////////////////////////////////////
 bool GA_path::crowd_comp_oper(int i_p1, int i_p2) //(vector<int> p1, vector<int> p2)
 {
-	//индексы для особей p1, p2
+	//РёРЅРґРµРєСЃС‹ РґР»СЏ РѕСЃРѕР±РµР№ p1, p2
 	//int i_p1, i_p2;
 
-	//итератор особи p1
+	//РёС‚РµСЂР°С‚РѕСЂ РѕСЃРѕР±Рё p1
 	//vector<vector<int>>::const_iterator it_p1;
 	//it_p1 = find(pop.cbegin(), pop.cend(), p1);
-	//итератор особи p2
+	//РёС‚РµСЂР°С‚РѕСЂ РѕСЃРѕР±Рё p2
 	//vector<vector<int>>::const_iterator it_p2;
 	//it_p2 = find(pop.cbegin(), pop.cend(), p2);
 
-	//поиск индексов особей p1, p2 - не используется
+	//РїРѕРёСЃРє РёРЅРґРµРєСЃРѕРІ РѕСЃРѕР±РµР№ p1, p2 - РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ
 	/*
 	for (int i = 0; i < pop.size(); i++)
 	{
@@ -767,7 +767,7 @@ bool GA_path::crowd_comp_oper(int i_p1, int i_p2) //(vector<int> p1, vector<int>
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//Быстрая сортировка
+//Р‘С‹СЃС‚СЂР°СЏ СЃРѕСЂС‚РёСЂРѕРІРєР°
 ////////////////////////////////////////////////////////////////////////////////
 void GA_path::quick_sort(vector<int>& arr_val, vector<int>& arr_index, int left, int right)
 {
@@ -804,16 +804,16 @@ void GA_path::quick_sort(vector<int>& arr_val, vector<int>& arr_index, int left,
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//Пирамидальная сортировка
+//РџРёСЂР°РјРёРґР°Р»СЊРЅР°СЏ СЃРѕСЂС‚РёСЂРѕРІРєР°
 ////////////////////////////////////////////////////////////////////////////////
 /*
 void GA_path::heap_sort_new(vector<vector<int>>& pop_cur, int i_start, int i_stop)
 {
 	int delta = i_start;
-	// Формируем нижний ряд пирамиды
+	// Р¤РѕСЂРјРёСЂСѓРµРј РЅРёР¶РЅРёР№ СЂСЏРґ РїРёСЂР°РјРёРґС‹
 	for (int i = ((i_stop - i_start + 1) / 2) - 1; i >= 0; i--)
 		sift_down(pop_cur, this->i_dist, i, delta);
-	// Просеиваем через пирамиду остальные элементы
+	// РџСЂРѕСЃРµРёРІР°РµРј С‡РµСЂРµР· РїРёСЂР°РјРёРґСѓ РѕСЃС‚Р°Р»СЊРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹
 	for (int i = i_stop - i_start; i >= 1; i--)
 	{
 		int temp = pop_cur[delta];
@@ -830,10 +830,10 @@ void GA_path::heap_sort_new(vector<vector<int>>& pop_cur, int i_start, int i_sto
 
 void GA_path::heap_sort(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_criteria, int index_begin, int index_end)
 {
-	// Формируем нижний ряд пирамиды
+	// Р¤РѕСЂРјРёСЂСѓРµРј РЅРёР¶РЅРёР№ СЂСЏРґ РїРёСЂР°РјРёРґС‹
 	for (int i = ((index_end - index_begin + 1) / 2) - 1; i >= 0; i--)
 		sift_down(pop_cur, numbers_index, num_criteria, i, index_end - index_begin + 1, 0);
-	// Просеиваем через пирамиду остальные элементы
+	// РџСЂРѕСЃРµРёРІР°РµРј С‡РµСЂРµР· РїРёСЂР°РјРёРґСѓ РѕСЃС‚Р°Р»СЊРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹
 	for (int i = index_end - index_begin; i >= 1; i--)
 	{
 		//int temp = numbers[0];
@@ -848,10 +848,10 @@ void GA_path::heap_sort(vector<vector<int>> pop_cur, vector<int>& numbers_index,
 
 void GA_path::heap_sort(vector<int>& numbers_index, int index_begin, int index_end)
 {
-	// Формируем нижний ряд пирамиды
+	// Р¤РѕСЂРјРёСЂСѓРµРј РЅРёР¶РЅРёР№ СЂСЏРґ РїРёСЂР°РјРёРґС‹
 	for (int i = ((index_end - index_begin + 1) / 2) - 1; i >= 0; i--)
 		sift_down(numbers_index, i, index_end - index_begin + 1, index_begin);
-	// Просеиваем через пирамиду остальные элементы
+	// РџСЂРѕСЃРµРёРІР°РµРј С‡РµСЂРµР· РїРёСЂР°РјРёРґСѓ РѕСЃС‚Р°Р»СЊРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹
 	for (int i = index_end - index_begin; i >= 1; i--)
 	{
 		int temp_index = numbers_index[0];
@@ -867,17 +867,17 @@ void GA_path::heap_sort(vector<int>& numbers_index, int index_begin, int index_e
 	}
 }
 
-//Функция "просеивания" через кучу (см. в функции пирамидальной сортировки)
+//Р¤СѓРЅРєС†РёСЏ "РїСЂРѕСЃРµРёРІР°РЅРёСЏ" С‡РµСЂРµР· РєСѓС‡Сѓ (СЃРј. РІ С„СѓРЅРєС†РёРё РїРёСЂР°РјРёРґР°Р»СЊРЅРѕР№ СЃРѕСЂС‚РёСЂРѕРІРєРё)
 void GA_path::sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_criteria, int root, int bottom, int delta)
 {
-	int max_child; // индекс максимального потомка
-	int done = 0; // флаг того, что куча сформирована
-				  // Пока не дошли до последнего ряда
+	int max_child; // РёРЅРґРµРєСЃ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ РїРѕС‚РѕРјРєР°
+	int done = 0; // С„Р»Р°Рі С‚РѕРіРѕ, С‡С‚Рѕ РєСѓС‡Р° СЃС„РѕСЂРјРёСЂРѕРІР°РЅР°
+				  // РџРѕРєР° РЅРµ РґРѕС€Р»Рё РґРѕ РїРѕСЃР»РµРґРЅРµРіРѕ СЂСЏРґР°
 	while ( (root * 2 + 1 < bottom) && (!done) )
 	{
-		if ( root * 2 + 2 == bottom)    // если мы в последнем ряду, 
-			max_child = root * 2 + 1;    // запоминаем левый потомок
-									// иначе запоминаем больший потомок из двух
+		if ( root * 2 + 2 == bottom)    // РµСЃР»Рё РјС‹ РІ РїРѕСЃР»РµРґРЅРµРј СЂСЏРґСѓ, 
+			max_child = root * 2 + 1;    // Р·Р°РїРѕРјРёРЅР°РµРј Р»РµРІС‹Р№ РїРѕС‚РѕРјРѕРє
+									// РёРЅР°С‡Рµ Р·Р°РїРѕРјРёРЅР°РµРј Р±РѕР»СЊС€РёР№ РїРѕС‚РѕРјРѕРє РёР· РґРІСѓС…
 		else
 		{
 				if (phitness(s_m[num_criteria], pop_cur[numbers_index[delta + root * 2 + 1]]) > 
@@ -886,20 +886,20 @@ void GA_path::sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index,
 				else
 					max_child = root * 2 + 2;
 		}
-		// если элемент вершины меньше максимального потомка
+		// РµСЃР»Рё СЌР»РµРјРµРЅС‚ РІРµСЂС€РёРЅС‹ РјРµРЅСЊС€Рµ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ РїРѕС‚РѕРјРєР°
 			if (phitness(s_m[num_criteria], pop_cur[numbers_index[delta + root]]) <
 					phitness(s_m[num_criteria], pop_cur[numbers_index[delta + max_child]]))
 			{
-				//int temp = numbers[delta + root]; // меняем их местами
-				int temp_index = numbers_index[delta + root]; // меняем индексы местами		
+				//int temp = numbers[delta + root]; // РјРµРЅСЏРµРј РёС… РјРµСЃС‚Р°РјРё
+				int temp_index = numbers_index[delta + root]; // РјРµРЅСЏРµРј РёРЅРґРµРєСЃС‹ РјРµСЃС‚Р°РјРё		
 				//numbers[delta + root] = numbers[delta + max_child];
 				numbers_index[delta + root] = numbers_index[delta + max_child];
 				//numbers[delta + max_child] = temp;
 				numbers_index[delta + max_child] = temp_index;
 				root = max_child;
 			}
-			else // иначе
-				done = 1; // пирамида сформирована
+			else // РёРЅР°С‡Рµ
+				done = 1; // РїРёСЂР°РјРёРґР° СЃС„РѕСЂРјРёСЂРѕРІР°РЅР°
 		
 	}
 }
@@ -907,14 +907,14 @@ void GA_path::sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index,
 
 void GA_path::sift_down(vector<int>& numbers_index, int root, int bottom, int delta)
 {
-	int max_child; // индекс максимального потомка
-	int done = 0; // флаг того, что куча сформирована
-				  // Пока не дошли до последнего ряда
+	int max_child; // РёРЅРґРµРєСЃ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ РїРѕС‚РѕРјРєР°
+	int done = 0; // С„Р»Р°Рі С‚РѕРіРѕ, С‡С‚Рѕ РєСѓС‡Р° СЃС„РѕСЂРјРёСЂРѕРІР°РЅР°
+				  // РџРѕРєР° РЅРµ РґРѕС€Р»Рё РґРѕ РїРѕСЃР»РµРґРЅРµРіРѕ СЂСЏРґР°
 	while ((root * 2 + 1 < bottom) && (!done))
 	{
-		if (root * 2 + 2 == bottom)    // если мы в последнем ряду, 
-			max_child = root * 2 + 1;    // запоминаем левый потомок
-										 // иначе запоминаем больший потомок из двух
+		if (root * 2 + 2 == bottom)    // РµСЃР»Рё РјС‹ РІ РїРѕСЃР»РµРґРЅРµРј СЂСЏРґСѓ, 
+			max_child = root * 2 + 1;    // Р·Р°РїРѕРјРёРЅР°РµРј Р»РµРІС‹Р№ РїРѕС‚РѕРјРѕРє
+										 // РёРЅР°С‡Рµ Р·Р°РїРѕРјРёРЅР°РµРј Р±РѕР»СЊС€РёР№ РїРѕС‚РѕРјРѕРє РёР· РґРІСѓС…
 		else
 		{		
 				if (i_dist[delta + root * 2 + 1] < i_dist[delta + root * 2 + 2])
@@ -922,11 +922,11 @@ void GA_path::sift_down(vector<int>& numbers_index, int root, int bottom, int de
 				else
 					max_child = root * 2 + 2;
 		}
-		// если элемент вершины меньше максимального потомка
+		// РµСЃР»Рё СЌР»РµРјРµРЅС‚ РІРµСЂС€РёРЅС‹ РјРµРЅСЊС€Рµ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ РїРѕС‚РѕРјРєР°
 			if (i_dist[delta + root] > i_dist[delta + max_child])
 			{
-				int temp_index = numbers_index[root]; // меняем индексы местами
-				double temp = i_dist[delta + root]; // меняем их местами
+				int temp_index = numbers_index[root]; // РјРµРЅСЏРµРј РёРЅРґРµРєСЃС‹ РјРµСЃС‚Р°РјРё
+				double temp = i_dist[delta + root]; // РјРµРЅСЏРµРј РёС… РјРµСЃС‚Р°РјРё
 
 				numbers_index[root] = numbers_index[max_child];
 				i_dist[delta + root] = i_dist[delta + max_child];
@@ -936,34 +936,34 @@ void GA_path::sift_down(vector<int>& numbers_index, int root, int bottom, int de
 
 				root = max_child;
 			}
-			else // иначе
-				done = 1; // пирамида сформирована
+			else // РёРЅР°С‡Рµ
+				done = 1; // РїРёСЂР°РјРёРґР° СЃС„РѕСЂРјРёСЂРѕРІР°РЅР°
 	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//Турнирная селекция
+//РўСѓСЂРЅРёСЂРЅР°СЏ СЃРµР»РµРєС†РёСЏ
 ////////////////////////////////////////////////////////////////////////////////
 int GA_path::tourn_selection()
 {
 	int j;
-	int i_best = (rand() % this->get_N()); //лучшая особь в турнире
-	//!!!вопрос: сколько раз надо пройти цикл? (сейчас 10)
+	int i_best = (rand() % this->get_N()); //Р»СѓС‡С€Р°СЏ РѕСЃРѕР±СЊ РІ С‚СѓСЂРЅРёСЂРµ
+	//!!!РІРѕРїСЂРѕСЃ: СЃРєРѕР»СЊРєРѕ СЂР°Р· РЅР°РґРѕ РїСЂРѕР№С‚Рё С†РёРєР»? (СЃРµР№С‡Р°СЃ 10)
 	for (int s = this->get_tourn_size(); s>0; s--)
 	{
 		j = (rand() % this->get_N());
-		if ( crowd_comp_oper(j, i_best) ) //исп. croweded-comp oper
+		if ( crowd_comp_oper(j, i_best) ) //РёСЃРї. croweded-comp oper
 			i_best = j;
 	}
 	return i_best;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//Мутация
+//РњСѓС‚Р°С†РёСЏ
 ////////////////////////////////////////////////////////////////////////////////
 void GA_path::mutation(int i_p1, int i_p2, vector<int>& p1_temp, vector<int>& p2_temp)
 {
-	// рандомизация генератора случайных чисел
+	// СЂР°РЅРґРѕРјРёР·Р°С†РёСЏ РіРµРЅРµСЂР°С‚РѕСЂР° СЃР»СѓС‡Р°Р№РЅС‹С… С‡РёСЃРµР»
 	//unsigned rand_value = 11;
 	//srand(rand_value);
 
@@ -975,19 +975,19 @@ void GA_path::mutation(int i_p1, int i_p2, vector<int>& p1_temp, vector<int>& p2
 	p1_temp[this->pop[i_p1][n - 1] - 1] = this->pop[i_p1][0] - 1;
 	p2_temp[this->pop[i_p2][n - 1] - 1] = this->pop[i_p2][0] - 1;
 	
-	//мутация
+	//РјСѓС‚Р°С†РёСЏ
 	double rand_mut = (double)rand() / RAND_MAX;
 	if ( rand_mut < this->get_p_mut() )
 	{
 		rand_mut = (double)rand() / RAND_MAX;
 		if ( rand_mut < 0.5 )
 		{
-			//3-замена по 1-му критерию
+			//3-Р·Р°РјРµРЅР° РїРѕ 1-РјСѓ РєСЂРёС‚РµСЂРёСЋ
 			p1_temp = random_change2(p1_temp, 1, this->s_m[0], this->s_aver[0], 50);
 		}
 		else
 		{ 
-			//3-замена по 2-му критерию
+			//3-Р·Р°РјРµРЅР° РїРѕ 2-РјСѓ РєСЂРёС‚РµСЂРёСЋ
 			p1_temp = random_change2(p1_temp, 1, this->s_m[1], this->s_aver[1], 50);
 		}
 	}
@@ -1009,19 +1009,19 @@ void GA_path::mutation(int i_p1, int i_p2, vector<int>& p1_temp, vector<int>& p2
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//3-opt замена в мутации
+//3-opt Р·Р°РјРµРЅР° РІ РјСѓС‚Р°С†РёРё
 ////////////////////////////////////////////////////////////////////////////////
 vector<int> GA_path::random_change2(vector<int> assignment, int N_change, vector<vector<int>> c,
 	int c_aver, int alpha)
 {
 	int G = 0, x = -1, y_1 = -1, F = 0, F_max = -1, C = 0;
-	//используется при выборе дуги для образования цикла
+	//РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РїСЂРё РІС‹Р±РѕСЂРµ РґСѓРіРё РґР»СЏ РѕР±СЂР°Р·РѕРІР°РЅРёСЏ С†РёРєР»Р°
 	vector<vector<int>> F_cicle(2, vector<int>(n));
 	vector<int> result(n);
-	vector<vector<int>> path(2, vector<int>(n));//хранит предков и потомков по циклу
-	vector<vector<boolean>> view(n, vector<boolean>(n));//метки просмотренных дуг 
+	vector<vector<int>> path(2, vector<int>(n));//С…СЂР°РЅРёС‚ РїСЂРµРґРєРѕРІ Рё РїРѕС‚РѕРјРєРѕРІ РїРѕ С†РёРєР»Сѓ
+	vector<vector<boolean>> view(n, vector<boolean>(n));//РјРµС‚РєРё РїСЂРѕСЃРјРѕС‚СЂРµРЅРЅС‹С… РґСѓРі 
 	
-	// рандомизация генератора случайных чисел
+	// СЂР°РЅРґРѕРјРёР·Р°С†РёСЏ РіРµРЅРµСЂР°С‚РѕСЂР° СЃР»СѓС‡Р°Р№РЅС‹С… С‡РёСЃРµР»
 	//unsigned rand_value = 11;
 	//srand(rand_value);
 	
@@ -1034,35 +1034,35 @@ vector<int> GA_path::random_change2(vector<int> assignment, int N_change, vector
 		view[i][i] = true;
 	}
 	//          interMatrix(n,2,path);
-	i_head = rand() % n;//случайным образом выбирается начальная вершина (i_head - это конец пути)
-	x = j_head = path[1][i_head]; //(j_head - это начало пути) 
-	path[1][i_head] = -1;//удаляем дугу
+	i_head = rand() % n;//СЃР»СѓС‡Р°Р№РЅС‹Рј РѕР±СЂР°Р·РѕРј РІС‹Р±РёСЂР°РµС‚СЃСЏ РЅР°С‡Р°Р»СЊРЅР°СЏ РІРµСЂС€РёРЅР° (i_head - СЌС‚Рѕ РєРѕРЅРµС† РїСѓС‚Рё)
+	x = j_head = path[1][i_head]; //(j_head - СЌС‚Рѕ РЅР°С‡Р°Р»Рѕ РїСѓС‚Рё) 
+	path[1][i_head] = -1;//СѓРґР°Р»СЏРµРј РґСѓРіСѓ
 	path[0][j_head] = -1;
-	view[i_head][j_head] = true;//помечаем дугу просмотренной
+	view[i_head][j_head] = true;//РїРѕРјРµС‡Р°РµРј РґСѓРіСѓ РїСЂРѕСЃРјРѕС‚СЂРµРЅРЅРѕР№
 	
-	for (int i = 0; i < n; ++i)//с началом замыкаемся в конце
+	for (int i = 0; i < n; ++i)//СЃ РЅР°С‡Р°Р»РѕРј Р·Р°РјС‹РєР°РµРјСЃСЏ РІ РєРѕРЅС†Рµ
 	{
-		view[i][j_head] = true;//помечаем дугу просмотренной   
+		view[i][j_head] = true;//РїРѕРјРµС‡Р°РµРј РґСѓРіСѓ РїСЂРѕСЃРјРѕС‚СЂРµРЅРЅРѕР№   
 	}
-	//          printf("i_head= %d",i_head);//имеем гамильтонов путь
+	//          printf("i_head= %d",i_head);//РёРјРµРµРј РіР°РјРёР»СЊС‚РѕРЅРѕРІ РїСѓС‚СЊ
 
 	//          printf("Deleted (%d, %d), i_head, j_head);
 	for (int iter = 0; iter<N_change; ++iter)
 	{
 		//              printf("iter = %d", iter);
-		//добавляем дугу для образования цикла 
+		//РґРѕР±Р°РІР»СЏРµРј РґСѓРіСѓ РґР»СЏ РѕР±СЂР°Р·РѕРІР°РЅРёСЏ С†РёРєР»Р° 
 		//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-		//вычисляем приспособленность F_cicle для каждой вершины
+		//РІС‹С‡РёСЃР»СЏРµРј РїСЂРёСЃРїРѕСЃРѕР±Р»РµРЅРЅРѕСЃС‚СЊ F_cicle РґР»СЏ РєР°Р¶РґРѕР№ РІРµСЂС€РёРЅС‹
 		count = 0;
 		for (int i = 0; i < n; ++i)
 		{
 			F_cicle[0][i] = i;
 			F_cicle[1][i] = -n * c_aver;
 
-			//дуги-кондидаты на создание цикла
+			//РґСѓРіРё-РєРѕРЅРґРёРґР°С‚С‹ РЅР° СЃРѕР·РґР°РЅРёРµ С†РёРєР»Р°
 			if (view[i_head][i] == false && view[path[0][i]][i] == false)
 			{
-				F_cicle[1][i] = c[path[0][i]][i];//удаление дуги
+				F_cicle[1][i] = c[path[0][i]][i];//СѓРґР°Р»РµРЅРёРµ РґСѓРіРё
 				C = 1;
 				y_1 = i;
 				while (y_1 != i_head)
@@ -1070,12 +1070,12 @@ vector<int> GA_path::random_change2(vector<int> assignment, int N_change, vector
 					C++;
 					y_1 = path[1][y_1];
 				}
-				F_cicle[1][i] = F_cicle[1][i] + c_aver * C;//+длина цикла
+				F_cicle[1][i] = F_cicle[1][i] + c_aver * C;//+РґР»РёРЅР° С†РёРєР»Р°
 				count++;
 			}
 		}
 		//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-		//сортируем   F_cicle по убыванию 
+		//СЃРѕСЂС‚РёСЂСѓРµРј   F_cicle РїРѕ СѓР±С‹РІР°РЅРёСЋ 
 		F = -1; F_max = -1;
 		i_next = -1;
 		while (F_max == -1)
@@ -1083,7 +1083,7 @@ vector<int> GA_path::random_change2(vector<int> assignment, int N_change, vector
 			F_max = 1;
 			for (int i = 0; i < n - 1; ++i)
 			{
-				if (F_cicle[1][i]<F_cicle[1][i + 1])//меняем местами
+				if (F_cicle[1][i]<F_cicle[1][i + 1])//РјРµРЅСЏРµРј РјРµСЃС‚Р°РјРё
 				{
 					F = F_cicle[1][i];
 					i_next = F_cicle[0][i];
@@ -1096,13 +1096,13 @@ vector<int> GA_path::random_change2(vector<int> assignment, int N_change, vector
 			}
 		}
 		//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-		// МОЖЕТ ЛИ ЗДЕСЬ БЫТЬ НОЛЬ????
+		// РњРћР–Р•Рў Р›Р Р—Р”Р•РЎР¬ Р‘Р«РўР¬ РќРћР›Р¬????
 		if (count == 0)
 		{
-			//              printf("Экстренная остановка при создании цикла");
+			//              printf("Р­РєСЃС‚СЂРµРЅРЅР°СЏ РѕСЃС‚Р°РЅРѕРІРєР° РїСЂРё СЃРѕР·РґР°РЅРёРё С†РёРєР»Р°");
 			break;
-		}//из i_head не получится сделать цикл
-		 //выбираем одну вершину из возможных, случайным образом
+		}//РёР· i_head РЅРµ РїРѕР»СѓС‡РёС‚СЃСЏ СЃРґРµР»Р°С‚СЊ С†РёРєР»
+		 //РІС‹Р±РёСЂР°РµРј РѕРґРЅСѓ РІРµСЂС€РёРЅСѓ РёР· РІРѕР·РјРѕР¶РЅС‹С…, СЃР»СѓС‡Р°Р№РЅС‹Рј РѕР±СЂР°Р·РѕРј
 		F_max = (int)((alpha*n) / 100);
 		if (F_max>count) { F_max = count; }
 		F = rand() % F_max;
@@ -1119,24 +1119,24 @@ vector<int> GA_path::random_change2(vector<int> assignment, int N_change, vector
 		//          }
 		//          System.out.println("i_next= "+i_next);
 		//          interMatrix(n,2,path);
-		//добавляем дугу и тем самым создаем цикл
-		//добавляем (i_head, i_next)
+		//РґРѕР±Р°РІР»СЏРµРј РґСѓРіСѓ Рё С‚РµРј СЃР°РјС‹Рј СЃРѕР·РґР°РµРј С†РёРєР»
+		//РґРѕР±Р°РІР»СЏРµРј (i_head, i_next)
 		path[1][i_head] = i_next;
-		i_temp = path[0][i_next];//дуга для удаления формируется однозначно
+		i_temp = path[0][i_next];//РґСѓРіР° РґР»СЏ СѓРґР°Р»РµРЅРёСЏ С„РѕСЂРјРёСЂСѓРµС‚СЃСЏ РѕРґРЅРѕР·РЅР°С‡РЅРѕ
 		path[0][i_next] = i_head;
-		view[i_head][i_next] = true;//помечаем дугу просмотренной
-		G = G + c[i_head][x] - c[i_head][i_next];//обновляем выигрыш
+		view[i_head][i_next] = true;//РїРѕРјРµС‡Р°РµРј РґСѓРіСѓ РїСЂРѕСЃРјРѕС‚СЂРµРЅРЅРѕР№
+		G = G + c[i_head][x] - c[i_head][i_next];//РѕР±РЅРѕРІР»СЏРµРј РІС‹РёРіСЂС‹С€
 												 //          printf("i_temp = %d", i_temp);
-												 //удаляем (i_temp, i_next)
+												 //СѓРґР°Р»СЏРµРј (i_temp, i_next)
 		path[1][i_temp] = -1;
-		view[i_temp][i_next] = true;//помечаем дугу просмотренной
+		view[i_temp][i_next] = true;//РїРѕРјРµС‡Р°РµРј РґСѓРіСѓ РїСЂРѕСЃРјРѕС‚СЂРµРЅРЅРѕР№
 									//          interMatrix(n,2,path);
 									//          printf("Added (%d, %d)", i_head, i_next);
 									//          printf("Added (%d, %d)", i_temp, i_next);
-									//разрываем цикл
-									//выбираем  вершину из цикла j_tail жадным способом
+									//СЂР°Р·СЂС‹РІР°РµРј С†РёРєР»
+									//РІС‹Р±РёСЂР°РµРј  РІРµСЂС€РёРЅСѓ РёР· С†РёРєР»Р° j_tail Р¶Р°РґРЅС‹Рј СЃРїРѕСЃРѕР±РѕРј
 		count = 0; F_max = -n * c_aver; j_tail = -1;
-		i_tail = i_head;//просматриваем вершины цикла
+		i_tail = i_head;//РїСЂРѕСЃРјР°С‚СЂРёРІР°РµРј РІРµСЂС€РёРЅС‹ С†РёРєР»Р°
 		while (count<n)
 		{
 			if (view[i_temp][i_tail] == false && view[path[0][i_tail]][i_tail] == false)
@@ -1154,18 +1154,18 @@ vector<int> GA_path::random_change2(vector<int> assignment, int N_change, vector
 			if (i_tail == i_head)
 				break;
 		}
-		//          printf("count = &d", count);// МОЖЕТ ЛИ ЗДЕСЬ БЫТЬ НОЛЬ????
-		if (count == 0) //не удалось сделать шаг
+		//          printf("count = &d", count);// РњРћР–Р•Рў Р›Р Р—Р”Р•РЎР¬ Р‘Р«РўР¬ РќРћР›Р¬????
+		if (count == 0) //РЅРµ СѓРґР°Р»РѕСЃСЊ СЃРґРµР»Р°С‚СЊ С€Р°Рі
 		{
-			//возвращаем все на место и останавливаемся
+			//РІРѕР·РІСЂР°С‰Р°РµРј РІСЃРµ РЅР° РјРµСЃС‚Рѕ Рё РѕСЃС‚Р°РЅР°РІР»РёРІР°РµРјСЃСЏ
 			path[1][i_head] = -1;
 			path[0][j_head] = -1;
 			path[0][i_next] = i_temp;
 			path[1][i_temp] = i_next;
-			//          printf("Экстренная остановка при поиске вершины в цикле");
+			//          printf("Р­РєСЃС‚СЂРµРЅРЅР°СЏ РѕСЃС‚Р°РЅРѕРІРєР° РїСЂРё РїРѕРёСЃРєРµ РІРµСЂС€РёРЅС‹ РІ С†РёРєР»Рµ");
 			break;
 		}
-		//выбираем случайную вершину из цикла j_tail
+		//РІС‹Р±РёСЂР°РµРј СЃР»СѓС‡Р°Р№РЅСѓСЋ РІРµСЂС€РёРЅСѓ РёР· С†РёРєР»Р° j_tail
 		//          i_tail=rnd.nextInt(count)+1; j_tail=-1;
 		//          System.out.println("j_tail= "+j_tail+" F_max= "+F_max );
 		//          count=0;
@@ -1177,27 +1177,27 @@ vector<int> GA_path::random_change2(vector<int> assignment, int N_change, vector
 		//          }
 		//          System.out.println("j_tail= "+j_tail);
 		//          interMatrix(n,2,path);
-		//добавляем (i_temp, j_tail)
+		//РґРѕР±Р°РІР»СЏРµРј (i_temp, j_tail)
 		path[1][i_temp] = j_tail;
 		i_tail = path[0][j_tail];
 		path[0][j_tail] = i_temp;
-		view[i_temp][j_tail] = true;//помечаем дугу просмотренной
-									//удаляем (i_tail, j_tail)
+		view[i_temp][j_tail] = true;//РїРѕРјРµС‡Р°РµРј РґСѓРіСѓ РїСЂРѕСЃРјРѕС‚СЂРµРЅРЅРѕР№
+									//СѓРґР°Р»СЏРµРј (i_tail, j_tail)
 		path[1][i_tail] = -1;
-		view[i_tail][j_tail] = true;//помечаем дугу просмотренной
+		view[i_tail][j_tail] = true;//РїРѕРјРµС‡Р°РµРј РґСѓРіСѓ РїСЂРѕСЃРјРѕС‚СЂРµРЅРЅРѕР№
 									//          printf("Added (%d, %d)", i_temp, j_tail);
 									//          printf("Deleted (%d, %d)", i_tail, j_tail);
 		i_head = i_tail; x = j_tail;
-		G = G + c[i_temp][i_next] - c[i_temp][j_tail];//обновляем пошаговый
+		G = G + c[i_temp][i_next] - c[i_temp][j_tail];//РѕР±РЅРѕРІР»СЏРµРј РїРѕС€Р°РіРѕРІС‹Р№
 													  //          printf("i_tail = %d", i_tail);
 													  //          interMatrix(n,2,path);
 	}
-	//добавляем (i_head, j_head)
+	//РґРѕР±Р°РІР»СЏРµРј (i_head, j_head)
 	path[1][i_head] = j_head;
-	path[0][j_head] = i_head;//замыкаем цикл
+	path[0][j_head] = i_head;//Р·Р°РјС‹РєР°РµРј С†РёРєР»
 							 //          printf("Added (%d, %d)", i_head, j_head);
 							 //          interMatrix(n,2,path);
-							 //формируем перестановку (циклическая)
+							 //С„РѕСЂРјРёСЂСѓРµРј РїРµСЂРµСЃС‚Р°РЅРѕРІРєСѓ (С†РёРєР»РёС‡РµСЃРєР°СЏ)
 							 //          result[0]=1; i_temp=0;
 							 //          for(int i=1;i<n;++i){
 							 //          result[i]= path[1][i_temp];
@@ -1210,15 +1210,15 @@ vector<int> GA_path::random_change2(vector<int> assignment, int N_change, vector
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//мутация обмена
+//РјСѓС‚Р°С†РёСЏ РѕР±РјРµРЅР°
 ////////////////////////////////////////////////////////////////////////////////
 vector<int> GA_path::exchange_mutation(vector<int> p)
 {
-	//p -- особь для мутации
-	// с вероятностью 1 меняем содержимое двух позиций (4 дуги меняется в итоге)
+	//p -- РѕСЃРѕР±СЊ РґР»СЏ РјСѓС‚Р°С†РёРё
+	// СЃ РІРµСЂРѕСЏС‚РЅРѕСЃС‚СЊСЋ 1 РјРµРЅСЏРµРј СЃРѕРґРµСЂР¶РёРјРѕРµ РґРІСѓС… РїРѕР·РёС†РёР№ (4 РґСѓРіРё РјРµРЅСЏРµС‚СЃСЏ РІ РёС‚РѕРіРµ)
 
-	int i_m1;//первая позиция для обмена
-	int i_m2;//вторая позиция для обмена
+	int i_m1;//РїРµСЂРІР°СЏ РїРѕР·РёС†РёСЏ РґР»СЏ РѕР±РјРµРЅР°
+	int i_m2;//РІС‚РѕСЂР°СЏ РїРѕР·РёС†РёСЏ РґР»СЏ РѕР±РјРµРЅР°
 	int p_temp;
 	
 	i_m1 = rand() % (n - 1) + 1;
@@ -1233,7 +1233,7 @@ vector<int> GA_path::exchange_mutation(vector<int> p)
 }////////////////////////////////////////////////////////////////////////////////  
 
  ////////////////////////////////////////////////////////////////////////////////
- //<< julia:  новый оператор кроссинговера
+ //<< julia:  РЅРѕРІС‹Р№ РѕРїРµСЂР°С‚РѕСЂ РєСЂРѕСЃСЃРёРЅРіРѕРІРµСЂР°
  ////////////////////////////////////////////////////////////////////////////////
 vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2)
 {
@@ -1241,38 +1241,38 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 	//            System.out.print(p1[i] + " ");
 	//        }
 	//        System.out.println();
-	//        //второй родитель
+	//        //РІС‚РѕСЂРѕР№ СЂРѕРґРёС‚РµР»СЊ
 	//        for (int i = 0; i < p2.length; ++i) {
 	//            System.out.print(p2[i] + " ");
 	//        }
 	//        System.out.println();
 
-	vector<vector<int>> list_in(n, vector<int>(3));//входящие вершины
-	vector<vector<int>> list_out(n, vector<int>(4));//исходящие вершины
-	vector<int> child(n);//исходящие вершины
-						 // заменить 2 на m?
-	vector<vector<int>> arc_weights(n, vector<int>(2));//веса дуг
-	vector<int> vertex_number(n);//исходящие вершины
-								 // заполнение flag?
+	vector<vector<int>> list_in(n, vector<int>(3));//РІС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹
+	vector<vector<int>> list_out(n, vector<int>(4));//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹
+	vector<int> child(n);//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹
+						 // Р·Р°РјРµРЅРёС‚СЊ 2 РЅР° m?
+	vector<vector<int>> arc_weights(n, vector<int>(2));//РІРµСЃР° РґСѓРі
+	vector<int> vertex_number(n);//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹
+								 // Р·Р°РїРѕР»РЅРµРЅРёРµ flag?
 	vector<bool> flag;
 
 
 	int vertex, vertex_prev, vertexN, i_parts, i1, i_temp;
 	vertex = 1; vertexN = 0;
 
-	// рандомизация генератора случайных чисел
+	// СЂР°РЅРґРѕРјРёР·Р°С†РёСЏ РіРµРЅРµСЂР°С‚РѕСЂР° СЃР»СѓС‡Р°Р№РЅС‹С… С‡РёСЃРµР»
 	//unsigned rand_value = 11;
 	//srand(rand_value);
 
 	////////////////////////////////////////////////////////////////////////////////   
-	/////!заполняем списки!/////
+	/////!Р·Р°РїРѕР»РЅСЏРµРј СЃРїРёСЃРєРё!/////
 	//++++++++++++++++++++++++++
 	for (int i = 0; i < p1.size() - 1; ++i)
 	{
 		//++++++++++++++++++++++++++
 		//++++++++++++++++++++++++++
-		//списки
-		//исходящие вершины для p1[i]
+		//СЃРїРёСЃРєРё
+		//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p1[i]
 		if (list_out[p1[i] - 1][0] == 0)
 		{
 			list_out[p1[i] - 1][0] = 1;
@@ -1283,7 +1283,7 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 			list_out[p1[i] - 1][0] = 2;
 			list_out[p1[i] - 1][2] = p1[i + 1];
 		}
-		//входящие вершины для p1[i+1]
+		//РІС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p1[i+1]
 		if (list_in[p1[i + 1] - 1][0] == 0)
 		{
 			list_in[p1[i + 1] - 1][0] = 1;
@@ -1294,7 +1294,7 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 			list_in[p1[i + 1] - 1][0] = 2;
 			list_in[p1[i + 1] - 1][2] = p1[i];
 		}
-		//исходящие вершины для p2[i]
+		//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p2[i]
 		if (list_out[p2[i] - 1][0] == 0)
 		{
 			list_out[p2[i] - 1][0] = 1;
@@ -1305,7 +1305,7 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 			list_out[p2[i] - 1][0] = 2;
 			list_out[p2[i] - 1][2] = p2[i + 1];
 		}
-		//входящие вершины для p2[i+1]
+		//РІС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p2[i+1]
 		if (list_in[p2[i + 1] - 1][0] == 0)
 		{
 			list_in[p2[i + 1] - 1][0] = 1;
@@ -1318,9 +1318,9 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 		}
 	}
 
-	//для TSP нужно добавить
-	//         //списки
-	//        //исходящие вершиныля p1[n-1]
+	//РґР»СЏ TSP РЅСѓР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ
+	//         //СЃРїРёСЃРєРё
+	//        //РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹Р»СЏ p1[n-1]
 	if (list_out[p1[p1.size() - 1] - 1][0] == 0)
 	{
 		list_out[p1[p1.size() - 1] - 1][0] = 1;
@@ -1331,7 +1331,7 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 		list_out[p1[p1.size() - 1] - 1][0] = 2;
 		list_out[p1[p1.size() - 1] - 1][2] = p1[0];
 	}
-	//входящие вершины для p1[0]
+	//РІС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p1[0]
 	if (list_in[p1[0] - 1][0] == 0)
 	{
 		list_in[p1[0] - 1][0] = 1;
@@ -1342,7 +1342,7 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 		list_in[p1[0] - 1][0] = 2;
 		list_in[p1[0] - 1][2] = p1[p1.size() - 1];
 	}
-	//исходящие вершины для p2[n-1]
+	//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p2[n-1]
 	if (list_out[p2[p2.size() - 1] - 1][0] == 0)
 	{
 		list_out[p2[p2.size() - 1] - 1][0] = 1;
@@ -1353,7 +1353,7 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 		list_out[p2[p2.size() - 1] - 1][0] = 2;
 		list_out[p2[p2.size() - 1] - 1][2] = p2[0];
 	}
-	//входящие вершины для p2[0]
+	//РІС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p2[0]
 	if (list_in[p2[0] - 1][0] == 0)
 	{
 		list_in[p2[0] - 1][0] = 1;
@@ -1366,7 +1366,7 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 	}
 	//++++++++++++++++++++++++++
 	//++++++++++++++++++++++++++
-	/////!заполняем списки!///// 
+	/////!Р·Р°РїРѕР»РЅСЏРµРј СЃРїРёСЃРєРё!///// 
 	////////////////////////////////////////////////////////////////////////////////
 	//       
 	//           
@@ -1397,8 +1397,8 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 	child[0] = vertex;
 	for (vertexN = 1; vertexN < n; vertexN++)
 	{
-		list_out[vertex - 1][3] = 1;//помечаем вершину как удаленную
-									//удаляем текущую вершину из list_in
+		list_out[vertex - 1][3] = 1;//РїРѕРјРµС‡Р°РµРј РІРµСЂС€РёРЅСѓ РєР°Рє СѓРґР°Р»РµРЅРЅСѓСЋ
+									//СѓРґР°Р»СЏРµРј С‚РµРєСѓС‰СѓСЋ РІРµСЂС€РёРЅСѓ РёР· list_in
 		if (list_out[vertex - 1][0] == 1)
 		{
 			list_in[list_out[vertex - 1][1] - 1][0]--;
@@ -1435,7 +1435,7 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 		//           System.out.println();
 		//          }
 		//         System.out.println();
-		//удаляем текущую вершину из list_out  
+		//СѓРґР°Р»СЏРµРј С‚РµРєСѓС‰СѓСЋ РІРµСЂС€РёРЅСѓ РёР· list_out  
 		if (list_in[vertex - 1][0] == 1)
 		{
 			list_out[list_in[vertex - 1][1] - 1][0] --;
@@ -1482,7 +1482,7 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 		//           System.out.println();
 		//          }
 		//         System.out.println(vertex);
-		//выбираем следующую вершину
+		//РІС‹Р±РёСЂР°РµРј СЃР»РµРґСѓСЋС‰СѓСЋ РІРµСЂС€РёРЅСѓ
 		//vertex=-1;
 
 		vertex_prev = vertex;
@@ -1595,7 +1595,7 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 							}
 						}
 					}
-					//конец if (list_out[vertex - 1][0] == 2)
+					//РєРѕРЅРµС† if (list_out[vertex - 1][0] == 2)
 				}
 			}
 		}
@@ -1635,9 +1635,9 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 	return child;
 }
 
-//СТРАРЫЙ ОПЕРАТОР
+//РЎРўР РђР Р«Р™ РћРџР•Р РђРўРћР 
 //////////////////////////////////////////////////////////////////
-//рандомизированный кроссинговер, основанный на наследовании дуг
+//СЂР°РЅРґРѕРјРёР·РёСЂРѕРІР°РЅРЅС‹Р№ РєСЂРѕСЃСЃРёРЅРіРѕРІРµСЂ, РѕСЃРЅРѕРІР°РЅРЅС‹Р№ РЅР° РЅР°СЃР»РµРґРѕРІР°РЅРёРё РґСѓРі
 //////////////////////////////////////////////////////////////////
 vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> p2)
 {
@@ -1645,32 +1645,32 @@ vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> 
 	//            System.out.print(p1[i] + " ");
 	//        }
 	//        System.out.println();
-	//        //второй родитель
+	//        //РІС‚РѕСЂРѕР№ СЂРѕРґРёС‚РµР»СЊ
 	//        for (int i = 0; i < p2.length; ++i) {
 	//            System.out.print(p2[i] + " ");
 	//        }
 	//        System.out.println();
 
-	vector<vector<int>> list_in(n, vector<int>(4));//входящие вершины
-	vector<vector<int>> list_out(n, vector<int>(4));//исходящие вершины
-	vector<int> child(n);//исходящие вершины
+	vector<vector<int>> list_in(n, vector<int>(4));//РІС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹
+	vector<vector<int>> list_out(n, vector<int>(4));//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹
+	vector<int> child(n);//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹
 
 	int vertex, vertexN;
 	vertex = 1; vertexN = 0;
 	
-	// рандомизация генератора случайных чисел
+	// СЂР°РЅРґРѕРјРёР·Р°С†РёСЏ РіРµРЅРµСЂР°С‚РѕСЂР° СЃР»СѓС‡Р°Р№РЅС‹С… С‡РёСЃРµР»
 	//unsigned rand_value = 11;
 	//srand(rand_value);
 
 	////////////////////////////////////////////////////////////////////////////////   
-	/////!заполняем списки!/////
+	/////!Р·Р°РїРѕР»РЅСЏРµРј СЃРїРёСЃРєРё!/////
 	//++++++++++++++++++++++++++
 	for (int i = 0; i < p1.size() - 1; ++i)
 	{
 		//++++++++++++++++++++++++++
 		//++++++++++++++++++++++++++
-		//списки
-		//исходящие вершины для p1[i]
+		//СЃРїРёСЃРєРё
+		//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p1[i]
 		if (list_out[p1[i] - 1][0] == 0)
 		{
 			list_out[p1[i] - 1][0] = 1;
@@ -1681,7 +1681,7 @@ vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> 
 			list_out[p1[i] - 1][0] = 2;
 			list_out[p1[i] - 1][2] = p1[i + 1];
 		}
-		//входящие вершины для p1[i+1]
+		//РІС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p1[i+1]
 		if (list_in[p1[i + 1] - 1][0] == 0)
 		{
 			list_in[p1[i + 1] - 1][0] = 1;
@@ -1692,7 +1692,7 @@ vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> 
 			list_in[p1[i + 1] - 1][0] = 2;
 			list_in[p1[i + 1] - 1][2] = p1[i];
 		}
-		//исходящие вершины для p2[i]
+		//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p2[i]
 		if (list_out[p2[i] - 1][0] == 0)
 		{
 			list_out[p2[i] - 1][0] = 1;
@@ -1703,7 +1703,7 @@ vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> 
 			list_out[p2[i] - 1][0] = 2;
 			list_out[p2[i] - 1][2] = p2[i + 1];
 		}
-		//входящие вершины для p2[i+1]
+		//РІС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p2[i+1]
 		if (list_in[p2[i + 1] - 1][0] == 0)
 		{
 			list_in[p2[i + 1] - 1][0] = 1;
@@ -1716,9 +1716,9 @@ vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> 
 		}
 	}
 
-	//для TSP нужно добавить
-	//         //списки
-	//        //исходящие вершиныля p1[n-1]
+	//РґР»СЏ TSP РЅСѓР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ
+	//         //СЃРїРёСЃРєРё
+	//        //РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹Р»СЏ p1[n-1]
 	if (list_out[p1[p1.size() - 1] - 1][0] == 0)
 	{
 		list_out[p1[p1.size() - 1] - 1][0] = 1;
@@ -1729,7 +1729,7 @@ vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> 
 		list_out[p1[p1.size() - 1] - 1][0] = 2;
 		list_out[p1[p1.size() - 1] - 1][2] = p1[0];
 	}
-	//входящие вершины для p1[0]
+	//РІС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p1[0]
 	if (list_in[p1[0] - 1][0] == 0)
 	{
 		list_in[p1[0] - 1][0] = 1;
@@ -1740,7 +1740,7 @@ vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> 
 		list_in[p1[0] - 1][0] = 2;
 		list_in[p1[0] - 1][2] = p1[p1.size() - 1];
 	}
-	//исходящие вершины для p2[n-1]
+	//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p2[n-1]
 	if (list_out[p2[p2.size() - 1] - 1][0] == 0)
 	{
 		list_out[p2[p2.size() - 1] - 1][0] = 1;
@@ -1751,7 +1751,7 @@ vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> 
 		list_out[p2[p2.size() - 1] - 1][0] = 2;
 		list_out[p2[p2.size() - 1] - 1][2] = p2[0];
 	}
-	//входящие вершины для p2[0]
+	//РІС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p2[0]
 	if (list_in[p2[0] - 1][0] == 0)
 	{
 		list_in[p2[0] - 1][0] = 1;
@@ -1764,7 +1764,7 @@ vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> 
 	}
 	//++++++++++++++++++++++++++
 	//++++++++++++++++++++++++++
-	/////!заполняем списки!///// 
+	/////!Р·Р°РїРѕР»РЅСЏРµРј СЃРїРёСЃРєРё!///// 
 	////////////////////////////////////////////////////////////////////////////////
 	//       
 	//           
@@ -1795,8 +1795,8 @@ vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> 
 	child[0] = vertex;
 	for (vertexN = 1; vertexN < n; vertexN++)
 	{
-		list_out[vertex - 1][3] = 1;//помечаем вершину как удаленную
-									//удаляем текущую вершину из list_in
+		list_out[vertex - 1][3] = 1;//РїРѕРјРµС‡Р°РµРј РІРµСЂС€РёРЅСѓ РєР°Рє СѓРґР°Р»РµРЅРЅСѓСЋ
+									//СѓРґР°Р»СЏРµРј С‚РµРєСѓС‰СѓСЋ РІРµСЂС€РёРЅСѓ РёР· list_in
 		if (list_out[vertex - 1][0] == 1)
 		{
 			list_in[list_out[vertex - 1][1] - 1][0]--;
@@ -1830,7 +1830,7 @@ vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> 
 		//           System.out.println();
 		//          }
 		//         System.out.println();
-		//удаляем текущую вершину из list_out  
+		//СѓРґР°Р»СЏРµРј С‚РµРєСѓС‰СѓСЋ РІРµСЂС€РёРЅСѓ РёР· list_out  
 		if (list_in[vertex - 1][0] == 1)
 		{
 			list_out[list_in[vertex - 1][1] - 1][0] --;
@@ -1877,7 +1877,7 @@ vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> 
 		//           System.out.println();
 		//          }
 		//         System.out.println(vertex);
-		//выбираем следующую вершину
+		//РІС‹Р±РёСЂР°РµРј СЃР»РµРґСѓСЋС‰СѓСЋ РІРµСЂС€РёРЅСѓ
 		//vertex=-1;
 		if (list_out[vertex - 1][0] == 0)
 		{
@@ -1934,7 +1934,7 @@ vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> 
 							}
 						}
 					}
-					//конец if (list_out[vertex - 1][0] == 2)
+					//РєРѕРЅРµС† if (list_out[vertex - 1][0] == 2)
 				}
 			}
 		}
@@ -1976,36 +1976,36 @@ vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> 
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// << julia: оператор кроссинговера 
+// << julia: РѕРїРµСЂР°С‚РѕСЂ РєСЂРѕСЃСЃРёРЅРіРѕРІРµСЂР° 
 ////////////////////////////////////////////////////////////////////////////////
 vector<int> GA_path::DPX(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2)
 {
-	vector<vector<int>> list_out(n, vector<int>(3));//исходящие вершины
-	vector<vector<int>>  parts(n, vector<int>(3));//блоки с общими дугами
-// заменить 2 на m?	
-	vector<vector<int>> arc_weights(n, vector<int>(2));//веса дуг
-	vector<int> block_number(n);//потомок
-	vector<int> child(n);//потомок
-// заполнение flag?
+	vector<vector<int>> list_out(n, vector<int>(3));//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹
+	vector<vector<int>>  parts(n, vector<int>(3));//Р±Р»РѕРєРё СЃ РѕР±С‰РёРјРё РґСѓРіР°РјРё
+// Р·Р°РјРµРЅРёС‚СЊ 2 РЅР° m?	
+	vector<vector<int>> arc_weights(n, vector<int>(2));//РІРµСЃР° РґСѓРі
+	vector<int> block_number(n);//РїРѕС‚РѕРјРѕРє
+	vector<int> child(n);//РїРѕС‚РѕРјРѕРє
+// Р·Р°РїРѕР»РЅРµРЅРёРµ flag?
 	vector<bool> flag;
 
-	int N_parts, i_parts;//число блоков
+	int N_parts, i_parts;//С‡РёСЃР»Рѕ Р±Р»РѕРєРѕРІ
 	int i1, i_temp, i_count, block;
 
-	// рандомизация генератора случайных чисел
+	// СЂР°РЅРґРѕРјРёР·Р°С†РёСЏ РіРµРЅРµСЂР°С‚РѕСЂР° СЃР»СѓС‡Р°Р№РЅС‹С… С‡РёСЃРµР»
 	//unsigned rand_value = 11;
 	//srand(rand_value);
 
 
 	////////////////////////////////////////////////////////////////////////////////   
-	/////!заполняем списки!/////
+	/////!Р·Р°РїРѕР»РЅСЏРµРј СЃРїРёСЃРєРё!/////
 	//++++++++++++++++++++++++++
 	for (int i = 0; i < p1.size() - 1; ++i)
 	{
 		//++++++++++++++++++++++++++
 		//++++++++++++++++++++++++++
-		//списки
-		//исходящие вершины для p1[i]
+		//СЃРїРёСЃРєРё
+		//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p1[i]
 		if (list_out[p1[i] - 1][0] == 0)
 		{
 			list_out[p1[i] - 1][0] = 1;
@@ -2018,7 +2018,7 @@ vector<int> GA_path::DPX(vector< vector <vector<int> > > s, vector<int> p1, vect
 		}
 
 
-		//исходящие вершины для p2[i]
+		//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p2[i]
 		if (list_out[p2[i] - 1][0] == 0)
 		{
 			list_out[p2[i] - 1][0] = 1;
@@ -2032,7 +2032,7 @@ vector<int> GA_path::DPX(vector< vector <vector<int> > > s, vector<int> p1, vect
 
 	}
 
-	//исходящие вершины для p1[n-1]
+	//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p1[n-1]
 	if (list_out[p1[p1.size() - 1] - 1][0] == 0)
 	{
 		list_out[p1[p1.size() - 1] - 1][0] = 1;
@@ -2044,7 +2044,7 @@ vector<int> GA_path::DPX(vector< vector <vector<int> > > s, vector<int> p1, vect
 		list_out[p1[p1.size() - 1] - 1][2] = p1[0];
 	}
 
-	//исходящие вершины для p2[n-1]
+	//РёСЃС…РѕРґСЏС‰РёРµ РІРµСЂС€РёРЅС‹ РґР»СЏ p2[n-1]
 	if (list_out[p2[p2.size() - 1] - 1][0] == 0)
 	{
 		list_out[p2[p2.size() - 1] - 1][0] = 1;
@@ -2058,10 +2058,10 @@ vector<int> GA_path::DPX(vector< vector <vector<int> > > s, vector<int> p1, vect
 
 	//++++++++++++++++++++++++++
 	//++++++++++++++++++++++++++
-	/////!заполняем списки!///// 
+	/////!Р·Р°РїРѕР»РЅСЏРµРј СЃРїРёСЃРєРё!///// 
 	////////////////////////////////////////////////////////////////////////////////
 
-	//формируем блоки дуг, общие для родителей
+	//С„РѕСЂРјРёСЂСѓРµРј Р±Р»РѕРєРё РґСѓРі, РѕР±С‰РёРµ РґР»СЏ СЂРѕРґРёС‚РµР»РµР№
 	N_parts = 0;
 	parts[0][0] = p1[0];
 	parts[0][1] = -1;
@@ -2108,7 +2108,7 @@ vector<int> GA_path::DPX(vector< vector <vector<int> > > s, vector<int> p1, vect
 		}
 	}
 
-	//начинаем строить потомка
+	//РЅР°С‡РёРЅР°РµРј СЃС‚СЂРѕРёС‚СЊ РїРѕС‚РѕРјРєР°
 	i_count = 0;
 	i_temp = 1;
 
@@ -2121,7 +2121,7 @@ vector<int> GA_path::DPX(vector< vector <vector<int> > > s, vector<int> p1, vect
 	child[i_count] = i_temp;
 	i_count++;
 
-	//склейка блоков
+	//СЃРєР»РµР№РєР° Р±Р»РѕРєРѕРІ
 	for (int t = 1; t < N_parts; ++t)
 	{
 		//for (int i = 0; i < N_parts; ++i)
@@ -2129,7 +2129,7 @@ vector<int> GA_path::DPX(vector< vector <vector<int> > > s, vector<int> p1, vect
 		//	System.out.println(parts[i][0] + " " + parts[i][1] + " " + parts[i][2] + "; " + i);
 		//}
 
-		i_parts = 0; //число доступных блоков для первого блока
+		i_parts = 0; //С‡РёСЃР»Рѕ РґРѕСЃС‚СѓРїРЅС‹С… Р±Р»РѕРєРѕРІ РґР»СЏ РїРµСЂРІРѕРіРѕ Р±Р»РѕРєР°
 		for (int i = 1; i < N_parts; ++i)
 		{
 			if (parts[i][2] == 0 && list_out[parts[0][1] - 1][1] != parts[i][0] && list_out[parts[0][1] - 1][2] != parts[i][0])
@@ -2141,7 +2141,7 @@ vector<int> GA_path::DPX(vector< vector <vector<int> > > s, vector<int> p1, vect
 			}
 		}
 		if (i_parts == 0)
-		{ //если доступных блоков нет
+		{ //РµСЃР»Рё РґРѕСЃС‚СѓРїРЅС‹С… Р±Р»РѕРєРѕРІ РЅРµС‚
 			i_parts = 0;
 			for (int i = 1; i < N_parts; ++i)
 			{
@@ -2153,7 +2153,7 @@ vector<int> GA_path::DPX(vector< vector <vector<int> > > s, vector<int> p1, vect
 					i_parts++;
 				}
 			}
-		} //if(i_parts==0) в результате i_parts == (1 or 2)
+		} //if(i_parts==0) РІ СЂРµР·СѓР»СЊС‚Р°С‚Рµ i_parts == (1 or 2)
 
 		flag = flag_Pareto_sol(i_parts, arc_weights);
 		i1 = 0;
@@ -2194,7 +2194,7 @@ vector<int> GA_path::DPX(vector< vector <vector<int> > > s, vector<int> p1, vect
 
 		child[i_count] = i_temp;
 		i_count++;
-	}//склейка блоков
+	}//СЃРєР»РµР№РєР° Р±Р»РѕРєРѕРІ
 
 	if (parts[0][0] != 1)
 	{
@@ -2228,12 +2228,12 @@ vector<int> GA_path::DPX(vector< vector <vector<int> > > s, vector<int> p1, vect
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
-// << julia: Используется в функциях DEC_new и DCX
+// << julia: РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ С„СѓРЅРєС†РёСЏС… DEC_new Рё DCX
 ////////////////////////////////////////////////////////////////////////////////
 vector<bool> GA_path::flag_Pareto_sol(int k, vector<vector<int>> s)
 {
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-	// заполнение flag?
+	// Р·Р°РїРѕР»РЅРµРЅРёРµ flag?
 	vector<bool> flag_S(k, false);
 
 	if (k == 1)
@@ -2247,7 +2247,7 @@ vector<bool> GA_path::flag_Pareto_sol(int k, vector<vector<int>> s)
 		int j = 1;
 
 		while (i != -1 && j != -1)
-		{ //строим фронт Парето
+		{ //СЃС‚СЂРѕРёРј С„СЂРѕРЅС‚ РџР°СЂРµС‚Рѕ
 			if ((s[i][0] <= s[j][0]) && (s[i][1] <= s[j][1]))
 			{
 				flag = true;
@@ -2258,24 +2258,24 @@ vector<bool> GA_path::flag_Pareto_sol(int k, vector<vector<int>> s)
 
 			if (flag == true)
 			{
-				//доминирование есть 
-				//для решений с одинаковыми значениями по всем критериям оставляем один экземпляр
+				//РґРѕРјРёРЅРёСЂРѕРІР°РЅРёРµ РµСЃС‚СЊ 
+				//РґР»СЏ СЂРµС€РµРЅРёР№ СЃ РѕРґРёРЅР°РєРѕРІС‹РјРё Р·РЅР°С‡РµРЅРёСЏРјРё РїРѕ РІСЃРµРј РєСЂРёС‚РµСЂРёСЏРј РѕСЃС‚Р°РІР»СЏРµРј РѕРґРёРЅ СЌРєР·РµРјРїР»СЏСЂ
 
-				flag_S[j] = true; //удаляем j
+				flag_S[j] = true; //СѓРґР°Р»СЏРµРј j
 				jprev = j;
-				j = next(j, k, flag_S); //переходим к следующему j
+				j = next(j, k, flag_S); //РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ j
 
 				if (jprev == j)
 				{
 					iprev = i;
-					i = next(i, k, flag_S); //переходим к следующему i
+					i = next(i, k, flag_S); //РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ i
 					if (iprev == i)
 					{
 						i = -1;
 					}
 					else {
 						jprev = j = i;
-						j = next(i, k, flag_S); //переходим к следующему j
+						j = next(i, k, flag_S); //РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ j
 						if (jprev == j)
 						{
 							j = -1;
@@ -2284,9 +2284,9 @@ vector<bool> GA_path::flag_Pareto_sol(int k, vector<vector<int>> s)
 				}
 			}
 			else {
-				//доминирования нет
+				//РґРѕРјРёРЅРёСЂРѕРІР°РЅРёСЏ РЅРµС‚
 
-				//есть ли доминирование j > i?
+				//РµСЃС‚СЊ Р»Рё РґРѕРјРёРЅРёСЂРѕРІР°РЅРёРµ j > i?
 				flag = true;
 				if ((s[j][0] <= s[i][0]) && (s[j][1] <= s[i][1]))
 				{
@@ -2297,17 +2297,17 @@ vector<bool> GA_path::flag_Pareto_sol(int k, vector<vector<int>> s)
 				}
 
 				if (flag == true) {
-					//доминирование есть
-					flag_S[i] = true; //удаляем i
+					//РґРѕРјРёРЅРёСЂРѕРІР°РЅРёРµ РµСЃС‚СЊ
+					flag_S[i] = true; //СѓРґР°Р»СЏРµРј i
 					iprev = i;
-					i = next(i, k, flag_S); //переходим к следующему i
+					i = next(i, k, flag_S); //РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ i
 					if (iprev == i)
 					{
 						i = -1;
 					}
 					else {
 						jprev = j = i;
-						j = next(i, k, flag_S); //переходим к следующему j
+						j = next(i, k, flag_S); //РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ j
 						if (jprev == j)
 						{
 							j = -1;
@@ -2316,18 +2316,18 @@ vector<bool> GA_path::flag_Pareto_sol(int k, vector<vector<int>> s)
 				}
 				else {
 					jprev = j;
-					j = next(j, k, flag_S); //переходим к следующему j
+					j = next(j, k, flag_S); //РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ j
 					if (jprev == j)
 					{
 						iprev = i;
-						i = next(i, k, flag_S); //переходим к следующему i
+						i = next(i, k, flag_S); //РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ i
 						if (iprev == i)
 						{
 							i = -1;
 						}
 						else {
 							jprev = j = i;
-							j = next(i, k, flag_S); //переходим к следующему j
+							j = next(i, k, flag_S); //РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ j
 							if (jprev == j)
 							{
 								j = -1;
@@ -2337,13 +2337,13 @@ vector<bool> GA_path::flag_Pareto_sol(int k, vector<vector<int>> s)
 				} //else
 			} //else
 		} //while
-	} // большой else
+	} // Р±РѕР»СЊС€РѕР№ else
 
 	return flag_S;
 
 }
 
-//поиск следующего активного элемента
+//РїРѕРёСЃРє СЃР»РµРґСѓСЋС‰РµРіРѕ Р°РєС‚РёРІРЅРѕРіРѕ СЌР»РµРјРµРЅС‚Р°
 int GA_path::next(int j, int k, vector<bool> flag_S)
 {
 	int j_next = j;
@@ -2360,45 +2360,45 @@ int GA_path::next(int j, int k, vector<bool> flag_S)
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
-//Построение особи Венгерским методом + склейка циклов
+//РџРѕСЃС‚СЂРѕРµРЅРёРµ РѕСЃРѕР±Рё Р’РµРЅРіРµСЂСЃРєРёРј РјРµС‚РѕРґРѕРј + СЃРєР»РµР№РєР° С†РёРєР»РѕРІ
 ////////////////////////////////////////////////////////////////////////////////
 vector<int> GA_path::patching_algorithm(vector<vector<int>> s, int c_max, boolean orig_or_mod)
 {
 	vector<int> assignment;
 	
-	//ставим бесконечность по диагонали
+	//СЃС‚Р°РІРёРј Р±РµСЃРєРѕРЅРµС‡РЅРѕСЃС‚СЊ РїРѕ РґРёР°РіРѕРЅР°Р»Рё
 	for (int i = 0; i < n; ++i)
 		s[i][i] = (c_max + 1) * n;
 	
-	//***вывод на экран матрицы стоимостей
+	//***РІС‹РІРѕРґ РЅР° СЌРєСЂР°РЅ РјР°С‚СЂРёС†С‹ СЃС‚РѕРёРјРѕСЃС‚РµР№
 	//        interMatrix(n,n,c);
 	
-	//решение задачи о назначениях
+	//СЂРµС€РµРЅРёРµ Р·Р°РґР°С‡Рё Рѕ РЅР°Р·РЅР°С‡РµРЅРёСЏС…
 	this->is_AP_solution_opt = false;
 	assignment = Hungarian_method(n, n, s);
 	//        interPermutation(n, assignment);
-	//***стоимость найденного назначения
+	//***СЃС‚РѕРёРјРѕСЃС‚СЊ РЅР°Р№РґРµРЅРЅРѕРіРѕ РЅР°Р·РЅР°С‡РµРЅРёСЏ
 	//        System.out.println("CostAssignment= "+costAssignment(n, c, assignment));
 
 	////////////////////////////////////////////////////////////////////////
-	//ищем циклы///////////////////////////////////////////////////////////// 
-	int count_cycles = 0;//число циклов
-	int count_vertex_in_current_cycle = 0;//число вершин в текущем цикле
-	vector<int> head_cycles(n);//начало цикла
-	vector<int> length_cycles(n);//число вершин в цикле
-	vector<int> cost_cycles(n);//длина цикла 
-	vector<int> cycle_vertex(n);//принадлежность вершин циклам (for  modif alg)
-	//vector<bool> view(n,false);//индикатор того просмотрена ли вершина при поиске циклов
+	//РёС‰РµРј С†РёРєР»С‹///////////////////////////////////////////////////////////// 
+	int count_cycles = 0;//С‡РёСЃР»Рѕ С†РёРєР»РѕРІ
+	int count_vertex_in_current_cycle = 0;//С‡РёСЃР»Рѕ РІРµСЂС€РёРЅ РІ С‚РµРєСѓС‰РµРј С†РёРєР»Рµ
+	vector<int> head_cycles(n);//РЅР°С‡Р°Р»Рѕ С†РёРєР»Р°
+	vector<int> length_cycles(n);//С‡РёСЃР»Рѕ РІРµСЂС€РёРЅ РІ С†РёРєР»Рµ
+	vector<int> cost_cycles(n);//РґР»РёРЅР° С†РёРєР»Р° 
+	vector<int> cycle_vertex(n);//РїСЂРёРЅР°РґР»РµР¶РЅРѕСЃС‚СЊ РІРµСЂС€РёРЅ С†РёРєР»Р°Рј (for  modif alg)
+	//vector<bool> view(n,false);//РёРЅРґРёРєР°С‚РѕСЂ С‚РѕРіРѕ РїСЂРѕСЃРјРѕС‚СЂРµРЅР° Р»Рё РІРµСЂС€РёРЅР° РїСЂРё РїРѕРёСЃРєРµ С†РёРєР»РѕРІ
 	bool* view = new bool[n];
 	for (int i = 0; i < n; i++)
 		view[i] = false;
 	bool temp;
-	int i_head = 1, i_tail, i_headM, i_tailM, i_max, i_temp;// начало и конец текущего цикла i_head=1, i_tail
+	int i_head = 1, i_tail, i_headM, i_tailM, i_max, i_temp;// РЅР°С‡Р°Р»Рѕ Рё РєРѕРЅРµС† С‚РµРєСѓС‰РµРіРѕ С†РёРєР»Р° i_head=1, i_tail
 															////////////////////////////////////////////////////////////////////////
-															//процедура поиска циклов в перестановке////////////////////////////////
+															//РїСЂРѕС†РµРґСѓСЂР° РїРѕРёСЃРєР° С†РёРєР»РѕРІ РІ РїРµСЂРµСЃС‚Р°РЅРѕРІРєРµ////////////////////////////////
 	while (i_head != -1)
 	{
-		//ищем начало очередного цикла
+		//РёС‰РµРј РЅР°С‡Р°Р»Рѕ РѕС‡РµСЂРµРґРЅРѕРіРѕ С†РёРєР»Р°
 		i_head = i_tail = -1;
 		for (int i = 0; i < n; ++i)
 		{
@@ -2406,13 +2406,13 @@ vector<int> GA_path::patching_algorithm(vector<vector<int>> s, int c_max, boolea
 			{
 				i_head = i;
 				i_tail = assignment[i];
-				cycle_vertex[i] = count_cycles;//номер цикла для вершины (for  modif alg)
+				cycle_vertex[i] = count_cycles;//РЅРѕРјРµСЂ С†РёРєР»Р° РґР»СЏ РІРµСЂС€РёРЅС‹ (for  modif alg)
 				view[i] = true;
 				head_cycles[count_cycles] = i_head;
 				break;
 			}
 		}
-		//нашли новый цикл
+		//РЅР°С€Р»Рё РЅРѕРІС‹Р№ С†РёРєР»
 		if (i_head != -1)
 		{
 			count_vertex_in_current_cycle = 1;
@@ -2420,7 +2420,7 @@ vector<int> GA_path::patching_algorithm(vector<vector<int>> s, int c_max, boolea
 			while (i_head != i_tail)
 			{
 				view[i_tail] = true;
-				cycle_vertex[i_tail] = count_cycles;//номер цикла для вершины (for  modif alg)
+				cycle_vertex[i_tail] = count_cycles;//РЅРѕРјРµСЂ С†РёРєР»Р° РґР»СЏ РІРµСЂС€РёРЅС‹ (for  modif alg)
 				cost_cycles[count_cycles] += s[i_tail][assignment[i_tail]];
 				i_tail = assignment[i_tail];
 				count_vertex_in_current_cycle++;
@@ -2429,22 +2429,22 @@ vector<int> GA_path::patching_algorithm(vector<vector<int>> s, int c_max, boolea
 			count_cycles++;
 		}
 	}
-	//***вывод информации о циклах   
+	//***РІС‹РІРѕРґ РёРЅС„РѕСЂРјР°С†РёРё Рѕ С†РёРєР»Р°С…   
 	printf("Number of cycles: %d\n", count_cycles);
 	//        interPermutation(countCycles, headCycles);
 	//        interPermutation(countCycles, lengthCycles);
 	//        interPermutation(countCycles, costCycles);
-	//        interPermutation(n, CycleVertex);//нужно только для модифицированного метода
-	//процедура поиска циклов в перестановке////////////////////////////////
+	//        interPermutation(n, CycleVertex);//РЅСѓР¶РЅРѕ С‚РѕР»СЊРєРѕ РґР»СЏ РјРѕРґРёС„РёС†РёСЂРѕРІР°РЅРЅРѕРіРѕ РјРµС‚РѕРґР°
+	//РїСЂРѕС†РµРґСѓСЂР° РїРѕРёСЃРєР° С†РёРєР»РѕРІ РІ РїРµСЂРµСЃС‚Р°РЅРѕРІРєРµ////////////////////////////////
 	////////////////////////////////////////////////////////////////////////
 
 	////////////////////////////////////////////////////////////////////////
-	//склеиваем циклы///////////////////////////////////////////////////////
+	//СЃРєР»РµРёРІР°РµРј С†РёРєР»С‹///////////////////////////////////////////////////////
 	if (count_cycles > 1)
 	{
-		//ищем цикл с максимальным весом!
-		i_max = -1;//номер самого длинного цикла, нумерация с 0
-		i_tail = -1;//длина самого большого цикла (сумма длин дуг)
+		//РёС‰РµРј С†РёРєР» СЃ РјР°РєСЃРёРјР°Р»СЊРЅС‹Рј РІРµСЃРѕРј!
+		i_max = -1;//РЅРѕРјРµСЂ СЃР°РјРѕРіРѕ РґР»РёРЅРЅРѕРіРѕ С†РёРєР»Р°, РЅСѓРјРµСЂР°С†РёСЏ СЃ 0
+		i_tail = -1;//РґР»РёРЅР° СЃР°РјРѕРіРѕ Р±РѕР»СЊС€РѕРіРѕ С†РёРєР»Р° (СЃСѓРјРјР° РґР»РёРЅ РґСѓРі)
 		for (int i = 0; i < count_cycles; ++i)
 		{
 			if (cost_cycles[i] > i_tail)
@@ -2453,11 +2453,11 @@ vector<int> GA_path::patching_algorithm(vector<vector<int>> s, int c_max, boolea
 				i_max = i;
 			}
 		}
-		if (length_cycles[i_max] < count_cycles - 1) //не хватает вершин в цикле
+		if (length_cycles[i_max] < count_cycles - 1) //РЅРµ С…РІР°С‚Р°РµС‚ РІРµСЂС€РёРЅ РІ С†РёРєР»Рµ
 		{
-			//пытаемся найти самый длинный цикл по числу вершин
-			i_max = -1;//номер самого длинного цикла, нумерация с 0
-			i_tail = 0;//длина самого большого цикла (число вершин)
+			//РїС‹С‚Р°РµРјСЃСЏ РЅР°Р№С‚Рё СЃР°РјС‹Р№ РґР»РёРЅРЅС‹Р№ С†РёРєР» РїРѕ С‡РёСЃР»Сѓ РІРµСЂС€РёРЅ
+			i_max = -1;//РЅРѕРјРµСЂ СЃР°РјРѕРіРѕ РґР»РёРЅРЅРѕРіРѕ С†РёРєР»Р°, РЅСѓРјРµСЂР°С†РёСЏ СЃ 0
+			i_tail = 0;//РґР»РёРЅР° СЃР°РјРѕРіРѕ Р±РѕР»СЊС€РѕРіРѕ С†РёРєР»Р° (С‡РёСЃР»Рѕ РІРµСЂС€РёРЅ)
 			for (int i = 0; i < count_cycles; ++i)
 			{
 				if (length_cycles[i] > i_tail)
@@ -2467,24 +2467,24 @@ vector<int> GA_path::patching_algorithm(vector<vector<int>> s, int c_max, boolea
 				}
 			}
 		}
-		//***вывод на экран
-		//            System.out.println("Номер самого длинного цикла "+i_max);
+		//***РІС‹РІРѕРґ РЅР° СЌРєСЂР°РЅ
+		//            System.out.println("РќРѕРјРµСЂ СЃР°РјРѕРіРѕ РґР»РёРЅРЅРѕРіРѕ С†РёРєР»Р° "+i_max);
 		if ( (length_cycles[i_max] < count_cycles - 1) || !orig_or_mod)
 		{
 			////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////
 			//modified patching process
 			// lengthCycles[i_max]<countCycles-1
-			//сначала все вершины непомеченные
+			//СЃРЅР°С‡Р°Р»Р° РІСЃРµ РІРµСЂС€РёРЅС‹ РЅРµРїРѕРјРµС‡РµРЅРЅС‹Рµ
 			for (int i = 0; i < n; ++i)
 				view[i] = false;
 
 			int i_min;
-			//постепенно склеиваем циклы
+			//РїРѕСЃС‚РµРїРµРЅРЅРѕ СЃРєР»РµРёРІР°РµРј С†РёРєР»С‹
 			for (int iter = 0; iter<count_cycles - 1; ++iter)
 			{
-				i_min = 0;//самый короткий цикл 
-				i_tail = cost_cycles[0];//длина самого короткого цикла 
+				i_min = 0;//СЃР°РјС‹Р№ РєРѕСЂРѕС‚РєРёР№ С†РёРєР» 
+				i_tail = cost_cycles[0];//РґР»РёРЅР° СЃР°РјРѕРіРѕ РєРѕСЂРѕС‚РєРѕРіРѕ С†РёРєР»Р° 
 				for (int i = 1; i < count_cycles; ++i)
 				{
 					if (cost_cycles[i] < i_tail)
@@ -2494,10 +2494,10 @@ vector<int> GA_path::patching_algorithm(vector<vector<int>> s, int c_max, boolea
 					}
 				}
 				
-				//***вывод на экран
-				//               System.out.println("Короткий цикл "+i_min);
-				i_tail = (c_max + 1)*n + 1;//самая большая стоимость назначения
-				i_head = i_headM = -1;//вершины для обмена
+				//***РІС‹РІРѕРґ РЅР° СЌРєСЂР°РЅ
+				//               System.out.println("РљРѕСЂРѕС‚РєРёР№ С†РёРєР» "+i_min);
+				i_tail = (c_max + 1)*n + 1;//СЃР°РјР°СЏ Р±РѕР»СЊС€Р°СЏ СЃС‚РѕРёРјРѕСЃС‚СЊ РЅР°Р·РЅР°С‡РµРЅРёСЏ
+				i_head = i_headM = -1;//РІРµСЂС€РёРЅС‹ РґР»СЏ РѕР±РјРµРЅР°
 				for (int i = 0; i < n; ++i)
 				{
 					if ( (cycle_vertex[i] == i_min) && (!view[i]) )
@@ -2513,7 +2513,7 @@ vector<int> GA_path::patching_algorithm(vector<vector<int>> s, int c_max, boolea
 								{
 									i_head = i;
 									i_headM = j;
-									i_tail = i_tailM;//стоимость обмена
+									i_tail = i_tailM;//СЃС‚РѕРёРјРѕСЃС‚СЊ РѕР±РјРµРЅР°
 								}
 								//                System.out.println(i+" "+j+" "+i_tail+" "+i_tailM);                
 
@@ -2522,12 +2522,12 @@ vector<int> GA_path::patching_algorithm(vector<vector<int>> s, int c_max, boolea
 					}
 				}
 
-				//склеиваем циклы с вершинами  i_head и i_headM
-				//                System.out.println("Склейка циклов ("+i_head+", "+i_headM+") ="+i_tail);
-				view[i_head] = view[i_headM] = true;//помечаем выбранные вершины
+				//СЃРєР»РµРёРІР°РµРј С†РёРєР»С‹ СЃ РІРµСЂС€РёРЅР°РјРё  i_head Рё i_headM
+				//                System.out.println("РЎРєР»РµР№РєР° С†РёРєР»РѕРІ ("+i_head+", "+i_headM+") ="+i_tail);
+				view[i_head] = view[i_headM] = true;//РїРѕРјРµС‡Р°РµРј РІС‹Р±СЂР°РЅРЅС‹Рµ РІРµСЂС€РёРЅС‹
 				i_max = cycle_vertex[i_headM];
-				cost_cycles[i_min] += cost_cycles[i_max] + i_tail;//увличиваем стоимость цикла i_min
-				cost_cycles[i_max] = (c_max + 1)*n + 1;//исключаем цикл i_max из рассмотрения
+				cost_cycles[i_min] += cost_cycles[i_max] + i_tail;//СѓРІР»РёС‡РёРІР°РµРј СЃС‚РѕРёРјРѕСЃС‚СЊ С†РёРєР»Р° i_min
+				cost_cycles[i_max] = (c_max + 1)*n + 1;//РёСЃРєР»СЋС‡Р°РµРј С†РёРєР» i_max РёР· СЂР°СЃСЃРјРѕС‚СЂРµРЅРёСЏ
 				
 				for (int i = 0; i < n; ++i)
 					if (cycle_vertex[i] == i_max)
@@ -2542,7 +2542,7 @@ vector<int> GA_path::patching_algorithm(vector<vector<int>> s, int c_max, boolea
 				//        interPermutation(n, assignment);
 				//        System.out.println("CostAssignment= "+costAssignment(n, c, assignment));
 			}
-			//***вывод на экран решения задачи коммивояжера       
+			//***РІС‹РІРѕРґ РЅР° СЌРєСЂР°РЅ СЂРµС€РµРЅРёСЏ Р·Р°РґР°С‡Рё РєРѕРјРјРёРІРѕСЏР¶РµСЂР°       
 			//        interPermutation(n, assignment);
 			//        System.out.println("CostAssignment= "+costAssignment(n, c, assignment));
 
@@ -2553,20 +2553,20 @@ vector<int> GA_path::patching_algorithm(vector<vector<int>> s, int c_max, boolea
 		{
 			//original patching process    
 			////////////////////////////////////////////////////////////////////
-			//процедура склейки циклов//////////////////////////////////////////
+			//РїСЂРѕС†РµРґСѓСЂР° СЃРєР»РµР№РєРё С†РёРєР»РѕРІ//////////////////////////////////////////
 
-			//формируем матрицу для вспомогательной задачи о назначениях
-			// строки соответсвуют маленьким циклам, а столбцы - вершинам большого цикла
-			// i_head - номер самого длинного цикла, нумерация с нуля   
+			//С„РѕСЂРјРёСЂСѓРµРј РјР°С‚СЂРёС†Сѓ РґР»СЏ РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅРѕР№ Р·Р°РґР°С‡Рё Рѕ РЅР°Р·РЅР°С‡РµРЅРёСЏС…
+			// СЃС‚СЂРѕРєРё СЃРѕРѕС‚РІРµС‚СЃРІСѓСЋС‚ РјР°Р»РµРЅСЊРєРёРј С†РёРєР»Р°Рј, Р° СЃС‚РѕР»Р±С†С‹ - РІРµСЂС€РёРЅР°Рј Р±РѕР»СЊС€РѕРіРѕ С†РёРєР»Р°
+			// i_head - РЅРѕРјРµСЂ СЃР°РјРѕРіРѕ РґР»РёРЅРЅРѕРіРѕ С†РёРєР»Р°, РЅСѓРјРµСЂР°С†РёСЏ СЃ РЅСѓР»СЏ   
 			vector<vector<int>> c_temp(count_cycles - 1, vector<int>(length_cycles[i_max]));
-			vector<int> column(length_cycles[i_max]);//элементы большого цикла
-			vector<vector<int>> row(count_cycles - 1, vector<int>(length_cycles[i_max]));//наилучшие элементы маленького цикла
-			i_headM = head_cycles[i_max];//текущая вершина большого цикла
+			vector<int> column(length_cycles[i_max]);//СЌР»РµРјРµРЅС‚С‹ Р±РѕР»СЊС€РѕРіРѕ С†РёРєР»Р°
+			vector<vector<int>> row(count_cycles - 1, vector<int>(length_cycles[i_max]));//РЅР°РёР»СѓС‡С€РёРµ СЌР»РµРјРµРЅС‚С‹ РјР°Р»РµРЅСЊРєРѕРіРѕ С†РёРєР»Р°
+			i_headM = head_cycles[i_max];//С‚РµРєСѓС‰Р°СЏ РІРµСЂС€РёРЅР° Р±РѕР»СЊС€РѕРіРѕ С†РёРєР»Р°
 			
 			for (int j = 0; j < length_cycles[i_max]; ++j)
 			{
-				column[j] = i_headM;//элементы соответствующие столбцам;
-				i_temp = 0;//порядковый номер очередного маленького цикла, нумерация с 0
+				column[j] = i_headM;//СЌР»РµРјРµРЅС‚С‹ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРµ СЃС‚РѕР»Р±С†Р°Рј;
+				i_temp = 0;//РїРѕСЂСЏРґРєРѕРІС‹Р№ РЅРѕРјРµСЂ РѕС‡РµСЂРµРґРЅРѕРіРѕ РјР°Р»РµРЅСЊРєРѕРіРѕ С†РёРєР»Р°, РЅСѓРјРµСЂР°С†РёСЏ СЃ 0
 				for (int i = 0; i < count_cycles; ++i)
 				{
 					if (i != i_max)
@@ -2596,29 +2596,29 @@ vector<int> GA_path::patching_algorithm(vector<vector<int>> s, int c_max, boolea
 				}
 				i_headM = assignment[i_headM];
 			}
-			//***вывод на экран вспомогательной матрицы
+			//***РІС‹РІРѕРґ РЅР° СЌРєСЂР°РЅ РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅРѕР№ РјР°С‚СЂРёС†С‹
 			//              interMatrix(lengthCycles[i_max],countCycles-1,c_temp);
 			//              interPermutation(lengthCycles[i_max], column);
 			//              interMatrix(lengthCycles[i_max],countCycles-1,row);
 			
-			//вспомогательная матрица готова, решаем задачу о назначениях
+			//РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅР°СЏ РјР°С‚СЂРёС†Р° РіРѕС‚РѕРІР°, СЂРµС€Р°РµРј Р·Р°РґР°С‡Сѓ Рѕ РЅР°Р·РЅР°С‡РµРЅРёСЏС…
 			head_cycles = Hungarian_method(length_cycles[i_max], count_cycles - 1, c_temp);
 			
-			//вывод на экран решения вспомогательной задачи о назначениях
+			//РІС‹РІРѕРґ РЅР° СЌРєСЂР°РЅ СЂРµС€РµРЅРёСЏ РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅРѕР№ Р·Р°РґР°С‡Рё Рѕ РЅР°Р·РЅР°С‡РµРЅРёСЏС…
 			//              interPermutation(countCycles-1, headCycles);
 			
-			//склеиваем циклы
+			//СЃРєР»РµРёРІР°РµРј С†РёРєР»С‹
 			for (int i = 0; i < count_cycles - 1; ++i)
 			{
 				i_head = assignment[row[i][head_cycles[i]]];
 				assignment[row[i][head_cycles[i]]] = assignment[column[head_cycles[i]]];
 				assignment[column[head_cycles[i]]] = i_head;
 			}
-			//***вывод на экран решения задачи коммивояжера
+			//***РІС‹РІРѕРґ РЅР° СЌРєСЂР°РЅ СЂРµС€РµРЅРёСЏ Р·Р°РґР°С‡Рё РєРѕРјРјРёРІРѕСЏР¶РµСЂР°
 			//              interPermutation(n, assignment);
 			//              System.out.println("CostAssignment= "+costAssignment(n, c, assignment));
 			
-			//процедура склейки циклов//////////////////////////////////////////
+			//РїСЂРѕС†РµРґСѓСЂР° СЃРєР»РµР№РєРё С†РёРєР»РѕРІ//////////////////////////////////////////
 			//////////////////////////////////////////////////////////////////////// 
 		}
 	}
@@ -2628,12 +2628,12 @@ vector<int> GA_path::patching_algorithm(vector<vector<int>> s, int c_max, boolea
 		//countCycles=1
 		this->is_AP_solution_opt = true;
 		////
-		////            System.out.println("Оптимальное решение задачи о назначениях есть"
-		////                    + " циклическая перестановка - цикл коммивояжера найден!");
+		////            System.out.println("РћРїС‚РёРјР°Р»СЊРЅРѕРµ СЂРµС€РµРЅРёРµ Р·Р°РґР°С‡Рё Рѕ РЅР°Р·РЅР°С‡РµРЅРёСЏС… РµСЃС‚СЊ"
+		////                    + " С†РёРєР»РёС‡РµСЃРєР°СЏ РїРµСЂРµСЃС‚Р°РЅРѕРІРєР° - С†РёРєР» РєРѕРјРјРёРІРѕСЏР¶РµСЂР° РЅР°Р№РґРµРЅ!");
 	}
 
 	////////////////////////////////////////////////////////////////////////
-	//возвращаем нули по диагонали
+	//РІРѕР·РІСЂР°С‰Р°РµРј РЅСѓР»Рё РїРѕ РґРёР°РіРѕРЅР°Р»Рё
 	for (int i = 0; i < n; ++i)
 		s[i][i] = 0;
 
@@ -2642,13 +2642,13 @@ vector<int> GA_path::patching_algorithm(vector<vector<int>> s, int c_max, boolea
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//Венгерский метод
+//Р’РµРЅРіРµСЂСЃРєРёР№ РјРµС‚РѕРґ
 ////////////////////////////////////////////////////////////////////////////////
 vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 {
-	//m - число строк, n - число столбцов (m<=n), cost[i][j] - стоимость назначения j на должность i
-	//ИСХОДНЫЕ ДАННЫЕ////////////////////////////////////////////////
-	vector<vector<int>> c(n, vector<int>(n));//стоимость назначения
+	//m - С‡РёСЃР»Рѕ СЃС‚СЂРѕРє, n - С‡РёСЃР»Рѕ СЃС‚РѕР»Р±С†РѕРІ (m<=n), cost[i][j] - СЃС‚РѕРёРјРѕСЃС‚СЊ РЅР°Р·РЅР°С‡РµРЅРёСЏ j РЅР° РґРѕР»Р¶РЅРѕСЃС‚СЊ i
+	//РРЎРҐРћР”РќР«Р• Р”РђРќРќР«Р•////////////////////////////////////////////////
+	vector<vector<int>> c(n, vector<int>(n));//СЃС‚РѕРёРјРѕСЃС‚СЊ РЅР°Р·РЅР°С‡РµРЅРёСЏ
 	vector<int> result(m);
 	
 	for (int i = 0; i < n; ++i)
@@ -2659,9 +2659,9 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 				c[i][j] = 0;
 
 	// interMatrix(n,n,c);
-	//ПЕРЕМЕННЫЕ ДЛЯ АЛГОРИТМА
-	vector<int> zero(n);//для подсчета числа нулей в строках
-	vector<int> column(n);//для пометок строк и столбцов
+	//РџР•Р Р•РњР•РќРќР«Р• Р”Р›РЇ РђР›Р“РћР РРўРњРђ
+	vector<int> zero(n);//РґР»СЏ РїРѕРґСЃС‡РµС‚Р° С‡РёСЃР»Р° РЅСѓР»РµР№ РІ СЃС‚СЂРѕРєР°С…
+	vector<int> column(n);//РґР»СЏ РїРѕРјРµС‚РѕРє СЃС‚СЂРѕРє Рё СЃС‚РѕР»Р±С†РѕРІ
 	vector<int> row(n);
 	bool* row_temp = new bool[n];
 	bool* column_temp = new bool[n];
@@ -2670,8 +2670,8 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 	int c_min, c_max, i_min, j_zero;
 	
 	/////////////////////////////////////////////////////////////
-	//АЛГОРИТМ////////////////////////////////////////////////////
-	//шаг 1. вычитание минимальных элементов из строк и столбцов
+	//РђР›Р“РћР РРўРњ////////////////////////////////////////////////////
+	//С€Р°Рі 1. РІС‹С‡РёС‚Р°РЅРёРµ РјРёРЅРёРјР°Р»СЊРЅС‹С… СЌР»РµРјРµРЅС‚РѕРІ РёР· СЃС‚СЂРѕРє Рё СЃС‚РѕР»Р±С†РѕРІ
 	for (int i = 0; i < n; ++i)
 	{
 		c_min = c[i][0];
@@ -2696,12 +2696,12 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	//НАЧАЛО АЛГОРИТМА//
+	//РќРђР§РђР›Рћ РђР›Р“РћР РРўРњРђ//
 	while (true)
 	{
 		//////////////////////////////////////////////////////////////////////////     
-		//шаг 2. преоразование решения
-		//считаем число нулей в каждой строке и максимальный элемент матрицы
+		//С€Р°Рі 2. РїСЂРµРѕСЂР°Р·РѕРІР°РЅРёРµ СЂРµС€РµРЅРёСЏ
+		//СЃС‡РёС‚Р°РµРј С‡РёСЃР»Рѕ РЅСѓР»РµР№ РІ РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРµ Рё РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№ СЌР»РµРјРµРЅС‚ РјР°С‚СЂРёС†С‹
 		c_max = 0;
 		for (int i = 0; i < n; ++i)
 		{
@@ -2717,7 +2717,7 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 		}
 
 		///////////////////////////////////////////////////////////////////////// 
-		//поиск строк с минимальным числом нулей
+		//РїРѕРёСЃРє СЃС‚СЂРѕРє СЃ РјРёРЅРёРјР°Р»СЊРЅС‹Рј С‡РёСЃР»РѕРј РЅСѓР»РµР№
 		while (true)
 		{
 			c_min = n + 1;
@@ -2729,12 +2729,12 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 					c_min = zero[i];
 				}
 	
-			//нашли строку с нулями i_min (закрашиваем и вычеркиваем нули)
+			//РЅР°С€Р»Рё СЃС‚СЂРѕРєСѓ СЃ РЅСѓР»СЏРјРё i_min (Р·Р°РєСЂР°С€РёРІР°РµРј Рё РІС‹С‡РµСЂРєРёРІР°РµРј РЅСѓР»Рё)
 			if (c_min != n + 1)
 			{
 				/////////////////////////////
-				zero[i_min] = n + 1;//помечаем строку как просмотренную
-									//первый ноль j_min в строке закрашиваем - 0
+				zero[i_min] = n + 1;//РїРѕРјРµС‡Р°РµРј СЃС‚СЂРѕРєСѓ РєР°Рє РїСЂРѕСЃРјРѕС‚СЂРµРЅРЅСѓСЋ
+									//РїРµСЂРІС‹Р№ РЅРѕР»СЊ j_min РІ СЃС‚СЂРѕРєРµ Р·Р°РєСЂР°С€РёРІР°РµРј - 0
 				j_zero = -2;
 				for (int j = 0; j < n; ++j)
 				{
@@ -2744,12 +2744,12 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 						break;
 					}
 				}
-				//остальные нули в строке вычеркиваем - c_max+1
+				//РѕСЃС‚Р°Р»СЊРЅС‹Рµ РЅСѓР»Рё РІ СЃС‚СЂРѕРєРµ РІС‹С‡РµСЂРєРёРІР°РµРј - c_max+1
 				for (int j = j_zero + 1; j < n; ++j)
 					if (c[i_min][j] == 0)
 						c[i_min][j] = c_max + 1;
 				
-				//остальные нули в столбце  j_zero  вычеркиваем - c_max+1
+				//РѕСЃС‚Р°Р»СЊРЅС‹Рµ РЅСѓР»Рё РІ СЃС‚РѕР»Р±С†Рµ  j_zero  РІС‹С‡РµСЂРєРёРІР°РµРј - c_max+1
 				for (int i = 0; i < n; ++i)
 					if ( (c[i][j_zero] == 0) && (i != i_min) )
 					{
@@ -2758,15 +2758,15 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 					}
 			
 				////////////////////////////
-			}//нашли строку с нулями i_min
+			}//РЅР°С€Р»Рё СЃС‚СЂРѕРєСѓ СЃ РЅСѓР»СЏРјРё i_min
 			else {
 				break;
 			}
 		}
-		//все строки с меткой zero[i]=n+1 содержат закрашенные нули 
+		//РІСЃРµ СЃС‚СЂРѕРєРё СЃ РјРµС‚РєРѕР№ zero[i]=n+1 СЃРѕРґРµСЂР¶Р°С‚ Р·Р°РєСЂР°С€РµРЅРЅС‹Рµ РЅСѓР»Рё 
 		///////////////////////////////////////////////////////////////////////// 
 
-		//шаг 3. поиск минимального числа прямых, проходящих через все нули (зачеркнутые и закрашенные) 
+		//С€Р°Рі 3. РїРѕРёСЃРє РјРёРЅРёРјР°Р»СЊРЅРѕРіРѕ С‡РёСЃР»Р° РїСЂСЏРјС‹С…, РїСЂРѕС…РѕРґСЏС‰РёС… С‡РµСЂРµР· РІСЃРµ РЅСѓР»Рё (Р·Р°С‡РµСЂРєРЅСѓС‚С‹Рµ Рё Р·Р°РєСЂР°С€РµРЅРЅС‹Рµ) 
 		to_go = false;
 		to_go_temp = false;
 		for (int i = 0; i < n; ++i)
@@ -2777,7 +2777,7 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 		}
 
 		for (int i = 0; i < n; ++i)
-			// строка, где нет отмеченных элементов получает метку 0
+			// СЃС‚СЂРѕРєР°, РіРґРµ РЅРµС‚ РѕС‚РјРµС‡РµРЅРЅС‹С… СЌР»РµРјРµРЅС‚РѕРІ РїРѕР»СѓС‡Р°РµС‚ РјРµС‚РєСѓ 0
 			if (zero[i] != n + 1)
 			{
 				row[i] = 0;
@@ -2788,9 +2788,9 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 
 		if (!to_go)
 		{
-			//выписываем решение задачи
-			//            System.out.println("Задача решена!"); 
-			//cost_opt=0;//значение целевой функции
+			//РІС‹РїРёСЃС‹РІР°РµРј СЂРµС€РµРЅРёРµ Р·Р°РґР°С‡Рё
+			//            System.out.println("Р—Р°РґР°С‡Р° СЂРµС€РµРЅР°!"); 
+			//cost_opt=0;//Р·РЅР°С‡РµРЅРёРµ С†РµР»РµРІРѕР№ С„СѓРЅРєС†РёРё
 			for (int i = 0; i < m; ++i)
 				for (int j = 0; j < n; ++j)
 					if (c[i][j] == 0)
@@ -2798,10 +2798,10 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 			break;
 		}
 		///////////////////////////////////////////////////////////////////////// 
-		while (to_go) // если to_go=false, то решениие найдено
+		while (to_go) // РµСЃР»Рё to_go=false, С‚Рѕ СЂРµС€РµРЅРёРёРµ РЅР°Р№РґРµРЅРѕ
 		{
 			to_go = false;
-			//помечаем новые столбцы
+			//РїРѕРјРµС‡Р°РµРј РЅРѕРІС‹Рµ СЃС‚РѕР»Р±С†С‹
 			for (int i = 0; i < n; ++i)
 				if ( (row[i] >= 0) && (!row_temp[i]) )
 				{
@@ -2811,13 +2811,13 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 							column[j] = (i + 1);
 							to_go = true;
 						}
-					row_temp[i] = true;//строка просмотрена
+					row_temp[i] = true;//СЃС‚СЂРѕРєР° РїСЂРѕСЃРјРѕС‚СЂРµРЅР°
 				}
 			
-			if (to_go) //если появились новые столбцы
+			if (to_go) //РµСЃР»Рё РїРѕСЏРІРёР»РёСЃСЊ РЅРѕРІС‹Рµ СЃС‚РѕР»Р±С†С‹
 			{
 				to_go = false;
-				//помечаем новые строки
+				//РїРѕРјРµС‡Р°РµРј РЅРѕРІС‹Рµ СЃС‚СЂРѕРєРё
 				for (int j = 0; j < n; ++j)
 				{
 					if ( (column[j]>0) && (!column_temp[j]) )
@@ -2826,17 +2826,17 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 						for (int i = 0; i < n; ++i)
 							if ( (c[i][j] == 0) && (!row_temp[i]))
 							{
-								i_min++;//в столбце есть закрашенный ноль
+								i_min++;//РІ СЃС‚РѕР»Р±С†Рµ РµСЃС‚СЊ Р·Р°РєСЂР°С€РµРЅРЅС‹Р№ РЅРѕР»СЊ
 								row[i] = (j + 1);
 								to_go = true;
 							}
-						column_temp[j] = true;//столбец просмотрен
+						column_temp[j] = true;//СЃС‚РѕР»Р±РµС† РїСЂРѕСЃРјРѕС‚СЂРµРЅ
 											 /////////////////////////////////////////////////////////////
-											 //аугментальная цепь///////////////////////////////////////
+											 //Р°СѓРіРјРµРЅС‚Р°Р»СЊРЅР°СЏ С†РµРїСЊ///////////////////////////////////////
 											 /////////////////////////////////////////////////////////////
 
-						if (i_min == 0) //в столбце j нет закрашенных нулей - найдена аугментальная цепь
-						{				//заменяем  закрашенные нули зачеркнутыми и наоборот вдоль цепи
+						if (i_min == 0) //РІ СЃС‚РѕР»Р±С†Рµ j РЅРµС‚ Р·Р°РєСЂР°С€РµРЅРЅС‹С… РЅСѓР»РµР№ - РЅР°Р№РґРµРЅР° Р°СѓРіРјРµРЅС‚Р°Р»СЊРЅР°СЏ С†РµРїСЊ
+						{				//Р·Р°РјРµРЅСЏРµРј  Р·Р°РєСЂР°С€РµРЅРЅС‹Рµ РЅСѓР»Рё Р·Р°С‡РµСЂРєРЅСѓС‚С‹РјРё Рё РЅР°РѕР±РѕСЂРѕС‚ РІРґРѕР»СЊ С†РµРїРё
 							i_min = j;
 							while (i_min >= 0)
 							{
@@ -2852,7 +2852,7 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 								}
 							}
 
-							//стираем старые метки 
+							//СЃС‚РёСЂР°РµРј СЃС‚Р°СЂС‹Рµ РјРµС‚РєРё 
 							/////////////////// ///////////////////////////////////////////////////////////
 							to_go = false;
 							for (int i = 0; i < n; ++i)
@@ -2863,7 +2863,7 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 							}
 
 							for (int i = 0; i < n; ++i)
-								// строка, где нет отмеченных элементов получает метку 0
+								// СЃС‚СЂРѕРєР°, РіРґРµ РЅРµС‚ РѕС‚РјРµС‡РµРЅРЅС‹С… СЌР»РµРјРµРЅС‚РѕРІ РїРѕР»СѓС‡Р°РµС‚ РјРµС‚РєСѓ 0
 								if (zero[i] != n + 1)
 								{
 									row[i] = 0;
@@ -2873,9 +2873,9 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 
 							if (!to_go) 
 							{
-								//выписываем решение задачи
-								//                                System.out.println("Задача решена внутри!");
-								//cost_opt = 0;//значение целевой функции
+								//РІС‹РїРёСЃС‹РІР°РµРј СЂРµС€РµРЅРёРµ Р·Р°РґР°С‡Рё
+								//                                System.out.println("Р—Р°РґР°С‡Р° СЂРµС€РµРЅР° РІРЅСѓС‚СЂРё!");
+								//cost_opt = 0;//Р·РЅР°С‡РµРЅРёРµ С†РµР»РµРІРѕР№ С„СѓРЅРєС†РёРё
 								for (int i = 0; i < m; ++i)
 									for (int j1 = 0; j1 < n; ++j1)
 										if (c[i][j1] == 0)
@@ -2883,22 +2883,22 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 								to_go_temp = true;
 							}
 							////////////////////////////////////////////////////////////////////////
-							break;//останавливаем цикл по столбцам
+							break;//РѕСЃС‚Р°РЅР°РІР»РёРІР°РµРј С†РёРєР» РїРѕ СЃС‚РѕР»Р±С†Р°Рј
 						}
 						/////////////////////////////////////////////////////////////
-						//аугментальная цепь///////////////////////////////////////
+						//Р°СѓРіРјРµРЅС‚Р°Р»СЊРЅР°СЏ С†РµРїСЊ///////////////////////////////////////
 						/////////////////////////////////////////////////////////////
 					}
 				}
-			}//if (to_go) {//если появились новые столбцы
+			}//if (to_go) {//РµСЃР»Рё РїРѕСЏРІРёР»РёСЃСЊ РЅРѕРІС‹Рµ СЃС‚РѕР»Р±С†С‹
 		}// while (to_go) {
 		 
-		// для вычеркивания нужные строки row[i]=-1; нужные столбцы column[j]>0
+		// РґР»СЏ РІС‹С‡РµСЂРєРёРІР°РЅРёСЏ РЅСѓР¶РЅС‹Рµ СЃС‚СЂРѕРєРё row[i]=-1; РЅСѓР¶РЅС‹Рµ СЃС‚РѕР»Р±С†С‹ column[j]>0
 		///////////////////////////////////////////////////////////////////////// 
-		if (to_go_temp) //если задача решена при поиске аугментальной цепи
+		if (to_go_temp) //РµСЃР»Рё Р·Р°РґР°С‡Р° СЂРµС€РµРЅР° РїСЂРё РїРѕРёСЃРєРµ Р°СѓРіРјРµРЅС‚Р°Р»СЊРЅРѕР№ С†РµРїРё
 			break; 
 		
-		//поиск мин элемента из невычеркнутых
+		//РїРѕРёСЃРє РјРёРЅ СЌР»РµРјРµРЅС‚Р° РёР· РЅРµРІС‹С‡РµСЂРєРЅСѓС‚С‹С…
 		c_min = c_max + 1;
 		for (int j = 0; j < n; ++j)
 		{
@@ -2912,13 +2912,13 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 						c_min = c[i][j];
 			}
 		}
-		//прибавляем мин элемент к вычеркнутым столбцам
+		//РїСЂРёР±Р°РІР»СЏРµРј РјРёРЅ СЌР»РµРјРµРЅС‚ Рє РІС‹С‡РµСЂРєРЅСѓС‚С‹Рј СЃС‚РѕР»Р±С†Р°Рј
 		for (int j = 0; j < n; ++j)
 			if (column[j] > 0)
 				for (int i = 0; i < n; ++i)
 					c[i][j] = c[i][j] + c_min;
 		
-		//вычитаем мин элемент из невычеркнутых строк
+		//РІС‹С‡РёС‚Р°РµРј РјРёРЅ СЌР»РµРјРµРЅС‚ РёР· РЅРµРІС‹С‡РµСЂРєРЅСѓС‚С‹С… СЃС‚СЂРѕРє
 		for (int i = 0; i < n; ++i)
 			if (row[i] >= 0)
 				for (int j = 0; j < n; ++j)
@@ -2926,7 +2926,7 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 		
 		////////////////////////////////////////////  
 		//////////////////////////////////////////////////////////////////////////
-		//КОНЕЦ АЛГОРИТМА//
+		//РљРћРќР•Р¦ РђР›Р“РћР РРўРњРђ//
 	}
 	return result;
 	//////////////////////////////////////////////////////////////////////////   
@@ -2934,7 +2934,7 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//Построение аппроксимации мн-ва Парето (значения векторного критерия, без повторов)
+//РџРѕСЃС‚СЂРѕРµРЅРёРµ Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё РјРЅ-РІР° РџР°СЂРµС‚Рѕ (Р·РЅР°С‡РµРЅРёСЏ РІРµРєС‚РѕСЂРЅРѕРіРѕ РєСЂРёС‚РµСЂРёСЏ, Р±РµР· РїРѕРІС‚РѕСЂРѕРІ)
 ////////////////////////////////////////////////////////////////////////////////
 void GA_path::build_phi_P_approx()
 {
@@ -2959,7 +2959,7 @@ void GA_path::build_phi_P_approx()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//Расстояние от особи (из аппроксимации) до ближайшего вектора в мн-ве Парето
+//Р Р°СЃСЃС‚РѕСЏРЅРёРµ РѕС‚ РѕСЃРѕР±Рё (РёР· Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё) РґРѕ Р±Р»РёР¶Р°Р№С€РµРіРѕ РІРµРєС‚РѕСЂР° РІ РјРЅ-РІРµ РџР°СЂРµС‚Рѕ
 ////////////////////////////////////////////////////////////////////////////////
 double GA_path::dist_p_to_nearest_set(vector<int> phi_p, vector<vector<int>> phi_set)
 {
@@ -2986,7 +2986,7 @@ double GA_path::dist_p_to_nearest_set(vector<int> phi_p, vector<vector<int>> phi
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//Вычисление метрики - сходимость первого мн-ва ко второму мн-ву
+//Р’С‹С‡РёСЃР»РµРЅРёРµ РјРµС‚СЂРёРєРё - СЃС…РѕРґРёРјРѕСЃС‚СЊ РїРµСЂРІРѕРіРѕ РјРЅ-РІР° РєРѕ РІС‚РѕСЂРѕРјСѓ РјРЅ-РІСѓ
 ////////////////////////////////////////////////////////////////////////////////
 double GA_path::dist_convergence(vector<vector<int>> first_set, vector<vector<int>> second_set, bool flag_count)
 {
@@ -3007,7 +3007,7 @@ double GA_path::dist_convergence(vector<vector<int>> first_set, vector<vector<in
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//Cреднеквадратическое отклонение метрики "сходимость аппроксимации к мн-ву Парето"
+//CСЂРµРґРЅРµРєРІР°РґСЂР°С‚РёС‡РµСЃРєРѕРµ РѕС‚РєР»РѕРЅРµРЅРёРµ РјРµС‚СЂРёРєРё "СЃС…РѕРґРёРјРѕСЃС‚СЊ Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё Рє РјРЅ-РІСѓ РџР°СЂРµС‚Рѕ"
 ////////////////////////////////////////////////////////////////////////////////
 double GA_path::standard_devation_conver_approx_to_P_set(vector<vector<int>> P_set, double dist_conver)
 {
@@ -3020,26 +3020,26 @@ double GA_path::standard_devation_conver_approx_to_P_set(vector<vector<int>> P_s
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//Вычисление метрики - аппроксимации множества Парето
+//Р’С‹С‡РёСЃР»РµРЅРёРµ РјРµС‚СЂРёРєРё - Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё РјРЅРѕР¶РµСЃС‚РІР° РџР°СЂРµС‚Рѕ
 ////////////////////////////////////////////////////////////////////////////////
 void GA_path::evaluate_metric_of_approx(StreamWriter^ sw, vector<vector<int>> phi_Pareto_set, bool flag_count)
 {
-	//метрика - сходимость аппрокимации к мн-ву Парето
+	//РјРµС‚СЂРёРєР° - СЃС…РѕРґРёРјРѕСЃС‚СЊ Р°РїРїСЂРѕРєРёРјР°С†РёРё Рє РјРЅ-РІСѓ РџР°СЂРµС‚Рѕ
 	this->dist_conver_approx_to_P_set_val = this->dist_convergence(this->phi_P_approx, phi_Pareto_set, flag_count);
 
 	
 	printf("Metric 'Convergence appoximation to Pareto set':\n");
-	//вывод первой метрики
+	//РІС‹РІРѕРґ РїРµСЂРІРѕР№ РјРµС‚СЂРёРєРё
 	sw->Write("{0:F4};", dist_conver_approx_to_P_set_val);
 	//sw_short->WriteLine("{0:F4}", dist_conver_approx_to_P_set_val);
 	printf("%.4f\n", dist_conver_approx_to_P_set_val);
 
-	//метрика - сходимость мн-ва Парето к его аппрокимации
+	//РјРµС‚СЂРёРєР° - СЃС…РѕРґРёРјРѕСЃС‚СЊ РјРЅ-РІР° РџР°СЂРµС‚Рѕ Рє РµРіРѕ Р°РїРїСЂРѕРєРёРјР°С†РёРё
 	this->dist_conver_P_set_to_approx_val = this->dist_convergence(phi_Pareto_set, this->phi_P_approx, false);
 
 	
 	printf("Metric 'Convergence Pareto set to appoximation':\n");
-	//вывод второй метрики и кол-ва точек в мн-ве Парето
+	//РІС‹РІРѕРґ РІС‚РѕСЂРѕР№ РјРµС‚СЂРёРєРё Рё РєРѕР»-РІР° С‚РѕС‡РµРє РІ РјРЅ-РІРµ РџР°СЂРµС‚Рѕ
 	sw->Write("{0:F4};{1};", dist_conver_P_set_to_approx_val, this->phi_P_approx.size());
 	//sw_short->WriteLine("{0:F4}", dist_conver_P_set_to_approx_val);
 	printf("%.4f\n", dist_conver_P_set_to_approx_val);
@@ -3049,17 +3049,17 @@ void GA_path::evaluate_metric_of_approx(StreamWriter^ sw, vector<vector<int>> ph
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//эксперимент по сужению мн-ва Парето
+//СЌРєСЃРїРµСЂРёРјРµРЅС‚ РїРѕ СЃСѓР¶РµРЅРёСЋ РјРЅ-РІР° РџР°СЂРµС‚Рѕ
 ////////////////////////////////////////////////////////////////////////////////
 vector<double> GA_path::experiment_reduction(StreamWriter^ sw, String^ problem_name_str,
 								double h, int num_steps, double teta_start, unsigned quantum_inf)
 {
-	//коэффициенты относительной важности
+	//РєРѕСЌС„С„РёС†РёРµРЅС‚С‹ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕР№ РІР°Р¶РЅРѕСЃС‚Рё
 	double teta_1 = teta_start;
-	double teta_2 = teta_start; //используется, если задано два кванта
-	//число строк в "таблице"
-	//1 - один "квант информации"
-	//num_steps - два "кванта информации"
+	double teta_2 = teta_start; //РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ, РµСЃР»Рё Р·Р°РґР°РЅРѕ РґРІР° РєРІР°РЅС‚Р°
+	//С‡РёСЃР»Рѕ СЃС‚СЂРѕРє РІ "С‚Р°Р±Р»РёС†Рµ"
+	//1 - РѕРґРёРЅ "РєРІР°РЅС‚ РёРЅС„РѕСЂРјР°С†РёРё"
+	//num_steps - РґРІР° "РєРІР°РЅС‚Р° РёРЅС„РѕСЂРјР°С†РёРё"
 	int num_rows = 1;
 	
 	vector<vector<double>> new_phi_P_approx;
@@ -3079,12 +3079,12 @@ vector<double> GA_path::experiment_reduction(StreamWriter^ sw, String^ problem_n
 	//sw_short->Write(problem_name_str + ";");
 	//sw_short->Write("{0};", this->phi_P_approx.size());
 
-	//вывод сужения множества Парето
-	//если num_rows = num_steps (два "кванта информации"), то каждый вывод для пары (teta_1, teta_2)
+	//РІС‹РІРѕРґ СЃСѓР¶РµРЅРёСЏ РјРЅРѕР¶РµСЃС‚РІР° РџР°СЂРµС‚Рѕ
+	//РµСЃР»Рё num_rows = num_steps (РґРІР° "РєРІР°РЅС‚Р° РёРЅС„РѕСЂРјР°С†РёРё"), С‚Рѕ РєР°Р¶РґС‹Р№ РІС‹РІРѕРґ РґР»СЏ РїР°СЂС‹ (teta_1, teta_2)
 	if ( quantum_inf == (_1ST_2ND_ + _2ND_1ST_) )
 		num_rows = num_steps;
 
-	//если задан один "квант информации", то внешний цикл выполнятеся только один раз
+	//РµСЃР»Рё Р·Р°РґР°РЅ РѕРґРёРЅ "РєРІР°РЅС‚ РёРЅС„РѕСЂРјР°С†РёРё", С‚Рѕ РІРЅРµС€РЅРёР№ С†РёРєР» РІС‹РїРѕР»РЅСЏС‚РµСЃСЏ С‚РѕР»СЊРєРѕ РѕРґРёРЅ СЂР°Р·
 	for (int j = 1; j <= num_rows; j++)
 	{
 		teta_1 = teta_start;
@@ -3093,13 +3093,13 @@ vector<double> GA_path::experiment_reduction(StreamWriter^ sw, String^ problem_n
 		{
 			teta_1 += h;
 
-			//проверка на непротиворечивость информации
+			//РїСЂРѕРІРµСЂРєР° РЅР° РЅРµРїСЂРѕС‚РёРІРѕСЂРµС‡РёРІРѕСЃС‚СЊ РёРЅС„РѕСЂРјР°С†РёРё
 			if ( ( ((double)((int)(teta_1*10+0.5))/10) + ((double)((int)(teta_2*10+0.5))/10) >= 1) && (quantum_inf == _1ST_2ND_ + _2ND_1ST_) )
 				break;
 			
-			//пересчитываем векторы в новом вектороном критерии (значения вещественные, т.к. teta вещественные)
+			//РїРµСЂРµСЃС‡РёС‚С‹РІР°РµРј РІРµРєС‚РѕСЂС‹ РІ РЅРѕРІРѕРј РІРµРєС‚РѕСЂРѕРЅРѕРј РєСЂРёС‚РµСЂРёРё (Р·РЅР°С‡РµРЅРёСЏ РІРµС‰РµСЃС‚РІРµРЅРЅС‹Рµ, С‚.Рє. teta РІРµС‰РµСЃС‚РІРµРЅРЅС‹Рµ)
 			new_phi_P_approx = this->build_new_phi_P_approx(this->phi_P_approx, teta_1, teta_2, quantum_inf);
-			//находим мн-во Парето в новом критеритериальном пр-ве
+			//РЅР°С…РѕРґРёРј РјРЅ-РІРѕ РџР°СЂРµС‚Рѕ РІ РЅРѕРІРѕРј РєСЂРёС‚РµСЂРёС‚РµСЂРёР°Р»СЊРЅРѕРј РїСЂ-РІРµ
 			phi_P_approx_reduced = this->build_phi_P_enum(new_phi_P_approx);
 
 			if ( quantum_inf == (_1ST_2ND_ + _2ND_1ST_) )
@@ -3122,7 +3122,7 @@ vector<double> GA_path::experiment_reduction(StreamWriter^ sw, String^ problem_n
 			sw->WriteLine("{0}", phi_P_approx_reduced.size());
 			sw->WriteLine();
 
-			//выводим процент отброшенных точек
+			//РІС‹РІРѕРґРёРј РїСЂРѕС†РµРЅС‚ РѕС‚Р±СЂРѕС€РµРЅРЅС‹С… С‚РѕС‡РµРє
 			index_reduced_temp.push_back(((double)(this->phi_P_approx.size() - phi_P_approx_reduced.size()) / this->phi_P_approx.size()) * 100);
 			//sw_short->Write("{0:F2};", reduced_index);
 
@@ -3140,7 +3140,7 @@ vector<double> GA_path::experiment_reduction(StreamWriter^ sw, String^ problem_n
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//Аппрокимации мн-ва Парето (без повтроов) относительного "нового" критерия
+//РђРїРїСЂРѕРєРёРјР°С†РёРё РјРЅ-РІР° РџР°СЂРµС‚Рѕ (Р±РµР· РїРѕРІС‚СЂРѕРѕРІ) РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕРіРѕ "РЅРѕРІРѕРіРѕ" РєСЂРёС‚РµСЂРёСЏ
 ////////////////////////////////////////////////////////////////////////////////
 vector<vector<double>> GA_path::build_new_phi_P_approx(vector<vector<int>> init_phi_P_approx, double teta_1, double teta_2, unsigned quantum_inf)
 {
@@ -3150,17 +3150,17 @@ vector<vector<double>> GA_path::build_new_phi_P_approx(vector<vector<int>> init_
 	{
 		switch (quantum_inf)
 		{
-		//1-ый критерий важнее 2-го с коффициентом teta_1
+		//1-С‹Р№ РєСЂРёС‚РµСЂРёР№ РІР°Р¶РЅРµРµ 2-РіРѕ СЃ РєРѕС„С„РёС†РёРµРЅС‚РѕРј teta_1
 		case _1ST_2ND_:
 			new_phi_temp[i][0] = init_phi_P_approx[i][0];
 			new_phi_temp[i][1] = teta_1*init_phi_P_approx[i][0] + (1 - teta_1)*init_phi_P_approx[i][1];
 			break;
-		//2-ой критерий важнее 1-го с коэффициентом teta_1
+		//2-РѕР№ РєСЂРёС‚РµСЂРёР№ РІР°Р¶РЅРµРµ 1-РіРѕ СЃ РєРѕСЌС„С„РёС†РёРµРЅС‚РѕРј teta_1
 		case _2ND_1ST_:
 			new_phi_temp[i][0] = (1 - teta_1)*init_phi_P_approx[i][0] + teta_1*init_phi_P_approx[i][1];
 			new_phi_temp[i][1] = init_phi_P_approx[i][1];
 			break;
-		//1-ый критерий важнее 2-го с коэффициентом teta_1 + 2-ой критерий важнее 1-го с коэффициентом teta_2
+		//1-С‹Р№ РєСЂРёС‚РµСЂРёР№ РІР°Р¶РЅРµРµ 2-РіРѕ СЃ РєРѕСЌС„С„РёС†РёРµРЅС‚РѕРј teta_1 + 2-РѕР№ РєСЂРёС‚РµСЂРёР№ РІР°Р¶РЅРµРµ 1-РіРѕ СЃ РєРѕСЌС„С„РёС†РёРµРЅС‚РѕРј teta_2
 		case _1ST_2ND_+_2ND_1ST_:
 			new_phi_temp[i][0] = (1 - teta_2)*init_phi_P_approx[i][0] + teta_2*init_phi_P_approx[i][1];
 			new_phi_temp[i][1] = teta_1*init_phi_P_approx[i][0] + (1 - teta_1)*init_phi_P_approx[i][1];
@@ -3172,7 +3172,7 @@ vector<vector<double>> GA_path::build_new_phi_P_approx(vector<vector<int>> init_
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//построение мн-ва Парето перебором
+//РїРѕСЃС‚СЂРѕРµРЅРёРµ РјРЅ-РІР° РџР°СЂРµС‚Рѕ РїРµСЂРµР±РѕСЂРѕРј
 ////////////////////////////////////////////////////////////////////////////////
 vector<vector<double>> GA_path::build_phi_P_enum(vector<vector<double>> init_set)
 {
@@ -3213,19 +3213,19 @@ vector<vector<double>> GA_path::build_phi_P_enum(vector<vector<double>> init_set
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//Вывод результатов эксперимента по сужению множества Парето
+//Р’С‹РІРѕРґ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ СЌРєСЃРїРµСЂРёРјРµРЅС‚Р° РїРѕ СЃСѓР¶РµРЅРёСЋ РјРЅРѕР¶РµСЃС‚РІР° РџР°СЂРµС‚Рѕ
 ////////////////////////////////////////////////////////////////////////////////
 void print_exp_red(StreamWriter^ sw_4, String^ quantum_inf_name_str, vector<vector<double>> index_reduced, vector<int> total_num_P_approx)
 {
-	//ТАБЛИЦА
-	//заголовок
+	//РўРђР‘Р›РР¦Рђ
+	//Р·Р°РіРѕР»РѕРІРѕРє
 	sw_4->WriteLine(quantum_inf_name_str);
 	sw_4->Write(";Points in approx of Pareto set;");
 	for (int j = 1; j <= index_reduced[0].size(); j++)
 		sw_4->Write("{0:F1};", 0.1*j);
 	sw_4->WriteLine();
 
-	//процент "отброшенных" точек
+	//РїСЂРѕС†РµРЅС‚ "РѕС‚Р±СЂРѕС€РµРЅРЅС‹С…" С‚РѕС‡РµРє
 	for (int i = 0; i < index_reduced.size(); i++)
 	{
 		//sw_4->Write(vec_problem_name_str[i]);
@@ -3235,8 +3235,8 @@ void print_exp_red(StreamWriter^ sw_4, String^ quantum_inf_name_str, vector<vect
 		sw_4->WriteLine();
 	}
 
-	//статистика
-	//среднее
+	//СЃС‚Р°С‚РёСЃС‚РёРєР°
+	//СЃСЂРµРґРЅРµРµ
 	sw_4->Write("Aver;");
 	double aver_num = 0;
 	int max_num = total_num_P_approx[0];
@@ -3263,7 +3263,7 @@ void print_exp_red(StreamWriter^ sw_4, String^ quantum_inf_name_str, vector<vect
 	}
 	sw_4->WriteLine();
 
-	//минимум
+	//РјРёРЅРёРјСѓРј
 	sw_4->Write("Min;");
 	sw_4->Write("{0};", min_num);
 
@@ -3280,7 +3280,7 @@ void print_exp_red(StreamWriter^ sw_4, String^ quantum_inf_name_str, vector<vect
 	}
 	sw_4->WriteLine();
 
-	//максимум
+	//РјР°РєСЃРёРјСѓРј
 	sw_4->Write("Max;");
 	sw_4->Write("{0};", max_num);
 
@@ -3301,12 +3301,12 @@ void print_exp_red(StreamWriter^ sw_4, String^ quantum_inf_name_str, vector<vect
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//Вывод результатов эксперимента по сужению множества Парето (два "кванта информации")
+//Р’С‹РІРѕРґ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ СЌРєСЃРїРµСЂРёРјРµРЅС‚Р° РїРѕ СЃСѓР¶РµРЅРёСЋ РјРЅРѕР¶РµСЃС‚РІР° РџР°СЂРµС‚Рѕ (РґРІР° "РєРІР°РЅС‚Р° РёРЅС„РѕСЂРјР°С†РёРё")
 ////////////////////////////////////////////////////////////////////////////////
 void print_exp_red_two(StreamWriter^ sw_4, String^ problem_name_str, vector<double> index_reduced, int num_steps, double total_num_P_approx)
 {
-	//ТАБЛИЦА
-	//заголовок
+	//РўРђР‘Р›РР¦Рђ
+	//Р·Р°РіРѕР»РѕРІРѕРє
 	sw_4->WriteLine(problem_name_str);
 	sw_4->WriteLine(";Points in approx of Pareto set; {0}", total_num_P_approx);
 	sw_4->WriteLine("2nd-1st; 1st-2nd");
@@ -3316,9 +3316,9 @@ void print_exp_red_two(StreamWriter^ sw_4, String^ problem_name_str, vector<doub
 	sw_4->WriteLine();
 
 
-	//индекс контейнера процент "отброшенных" точек (index_reduced)
+	//РёРЅРґРµРєСЃ РєРѕРЅС‚РµР№РЅРµСЂР° РїСЂРѕС†РµРЅС‚ "РѕС‚Р±СЂРѕС€РµРЅРЅС‹С…" С‚РѕС‡РµРє (index_reduced)
 	int k = 0;
-	//процент "отброшенных" точек
+	//РїСЂРѕС†РµРЅС‚ "РѕС‚Р±СЂРѕС€РµРЅРЅС‹С…" С‚РѕС‡РµРє
 	for (int i = 0; i < num_steps; i++)
 	{
 		sw_4->Write("{0:F1};", i*0.1);
@@ -3336,8 +3336,8 @@ void print_exp_red_two(StreamWriter^ sw_4, String^ problem_name_str, vector<doub
 	}
 
 	/*
-	//статистика
-	//среднее
+	//СЃС‚Р°С‚РёСЃС‚РёРєР°
+	//СЃСЂРµРґРЅРµРµ
 	sw_4->Write("Aver;");
 	double aver_num = 0;
 	int max_num = total_num_P_approx[0];
@@ -3364,7 +3364,7 @@ void print_exp_red_two(StreamWriter^ sw_4, String^ problem_name_str, vector<doub
 	}
 	sw_4->WriteLine();
 
-	//минимум
+	//РјРёРЅРёРјСѓРј
 	sw_4->Write("Min;");
 	sw_4->Write("{0};", min_num);
 
@@ -3381,7 +3381,7 @@ void print_exp_red_two(StreamWriter^ sw_4, String^ problem_name_str, vector<doub
 	}
 	sw_4->WriteLine();
 
-	//максимум
+	//РјР°РєСЃРёРјСѓРј
 	sw_4->Write("Max;");
 	sw_4->Write("{0};", max_num);
 
@@ -3404,11 +3404,11 @@ void print_exp_red_two(StreamWriter^ sw_4, String^ problem_name_str, vector<doub
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//Чтение множества Парето из файла
+//Р§С‚РµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° РџР°СЂРµС‚Рѕ РёР· С„Р°Р№Р»Р°
 ////////////////////////////////////////////////////////////////////////////////
 vector<vector<int>> GA_path::read_Pareto_set_from_file(String^ file_name_source_str, String^ problem_name_str)
 {
-	//вектор назначения
+	//РІРµРєС‚РѕСЂ РЅР°Р·РЅР°С‡РµРЅРёСЏ
 	vector<vector<int>> vector_dest;
 
 	StreamReader^ sr = gcnew StreamReader(file_name_source_str);
@@ -3423,9 +3423,9 @@ vector<vector<int>> GA_path::read_Pareto_set_from_file(String^ file_name_source_
 	while (cur_line_str != Pareto_set_name_csv_str)
 		cur_line_str = sr->ReadLine();
 
-	//заполнение множества Парето (вектор vector_dest)
+	//Р·Р°РїРѕР»РЅРµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° РџР°СЂРµС‚Рѕ (РІРµРєС‚РѕСЂ vector_dest)
 	vector<vector<int>> vector_dest_temp;
-	int i = 0; //индекс строки
+	int i = 0; //РёРЅРґРµРєСЃ СЃС‚СЂРѕРєРё
 	vector<int> vec_temp(2);
 	string str_temp = "";
 
@@ -3435,8 +3435,8 @@ vector<vector<int>> GA_path::read_Pareto_set_from_file(String^ file_name_source_
 		if (cur_line_str[0] == 'N')
 			break;
 
-		int j = 0; //индекс столбца
-		//разбираем текущую строку
+		int j = 0; //РёРЅРґРµРєСЃ СЃС‚РѕР»Р±С†Р°
+		//СЂР°Р·Р±РёСЂР°РµРј С‚РµРєСѓС‰СѓСЋ СЃС‚СЂРѕРєСѓ
 		for (int k = 0; k < cur_line_str->Length; k++)
 		{
 			if (cur_line_str[k] == ';')
@@ -3475,23 +3475,23 @@ void time_format(unsigned long long result_time, String^ title, StreamWriter^ sw
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//метод локального поиска - не нужен
+//РјРµС‚РѕРґ Р»РѕРєР°Р»СЊРЅРѕРіРѕ РїРѕРёСЃРєР° - РЅРµ РЅСѓР¶РµРЅ
 ////////////////////////////////////////////////////////////////////////////////
 /*
 vector<int> GA_path::local_search_fast(vector<int> assignment, vector<vector<int>> c,
 								vector<vector<int>> vertex, vector<int> vertex_initial, int alpha)
 {
-	//alpha число просматриваемых кондидатов для i_next
+	//alpha С‡РёСЃР»Рѕ РїСЂРѕСЃРјР°С‚СЂРёРІР°РµРјС‹С… РєРѕРЅРґРёРґР°С‚РѕРІ РґР»СЏ i_next
 	//         System.out.println(Nchange);
 	int G = 0, F = 0, F_max = -1;
 	vector<int> result(n);
 	vector<vector<int>> path(n);
-	vector<bool> tabu(n);//метки для запретных вершин 
+	vector<bool> tabu(n);//РјРµС‚РєРё РґР»СЏ Р·Р°РїСЂРµС‚РЅС‹С… РІРµСЂС€РёРЅ 
 
-									//            Random rnd = new Random();//датчик случайных чисел
+									//            Random rnd = new Random();//РґР°С‚С‡РёРє СЃР»СѓС‡Р°Р№РЅС‹С… С‡РёСЃРµР»
 	int i_head = -1, j_head = -1, i_next = -1, i_temp = -1, i_tail = -1, j_tail = -1, count = 0;
 	bool isImprove = true;
-	//создаем очередь вершин
+	//СЃРѕР·РґР°РµРј РѕС‡РµСЂРµРґСЊ РІРµСЂС€РёРЅ
 	queue<int> queue_vertex;
 	for (int i = 0; i < n - 1; ++i) {
 		QueueVertex.offer(vertexInitial[i]);
@@ -3505,36 +3505,36 @@ vector<int> GA_path::local_search_fast(vector<int> assignment, vector<vector<int
 	path[0][assignment[0] - 1] = assignment[n - 1] - 1;
 
 
-	//        while (isImprove) {//пока есть улучшения - движемся вперед!
-	//          i_head=rnd.nextInt(n);//случайным образом выбирается начальная вершина (i_head - это конец пути)
-	isImproveLS = false;//для проверки есть ли улучшение в локальном поиске
-	while (QueueVertex.peek() != null) {//возвращает без удаления элемент из начала очереди
-		i_head = QueueVertex.poll();//возвращает с удалением элемент из начала очереди
+	//        while (isImprove) {//РїРѕРєР° РµСЃС‚СЊ СѓР»СѓС‡С€РµРЅРёСЏ - РґРІРёР¶РµРјСЃСЏ РІРїРµСЂРµРґ!
+	//          i_head=rnd.nextInt(n);//СЃР»СѓС‡Р°Р№РЅС‹Рј РѕР±СЂР°Р·РѕРј РІС‹Р±РёСЂР°РµС‚СЃСЏ РЅР°С‡Р°Р»СЊРЅР°СЏ РІРµСЂС€РёРЅР° (i_head - СЌС‚Рѕ РєРѕРЅРµС† РїСѓС‚Рё)
+	isImproveLS = false;//РґР»СЏ РїСЂРѕРІРµСЂРєРё РµСЃС‚СЊ Р»Рё СѓР»СѓС‡С€РµРЅРёРµ РІ Р»РѕРєР°Р»СЊРЅРѕРј РїРѕРёСЃРєРµ
+	while (QueueVertex.peek() != null) {//РІРѕР·РІСЂР°С‰Р°РµС‚ Р±РµР· СѓРґР°Р»РµРЅРёСЏ СЌР»РµРјРµРЅС‚ РёР· РЅР°С‡Р°Р»Р° РѕС‡РµСЂРµРґРё
+		i_head = QueueVertex.poll();//РІРѕР·РІСЂР°С‰Р°РµС‚ СЃ СѓРґР°Р»РµРЅРёРµРј СЌР»РµРјРµРЅС‚ РёР· РЅР°С‡Р°Р»Р° РѕС‡РµСЂРµРґРё
 									//            for (int i_head = 0; i_head < n; i_head++) {
 		isImprove = false;
-		j_head = path[1][i_head]; //(j_head - это начало пути) 
-		path[1][i_head] = -1;//удаляем дугу
+		j_head = path[1][i_head]; //(j_head - СЌС‚Рѕ РЅР°С‡Р°Р»Рѕ РїСѓС‚Рё) 
+		path[1][i_head] = -1;//СѓРґР°Р»СЏРµРј РґСѓРіСѓ
 		path[0][j_head] = -1;
-		//добавляем дугу для образования цикла 
+		//РґРѕР±Р°РІР»СЏРµРј РґСѓРіСѓ РґР»СЏ РѕР±СЂР°Р·РѕРІР°РЅРёСЏ С†РёРєР»Р° 
 		for (int i_t = 0; i_t < alpha; ++i_t) {
 			i_next = vertex[i_head][i_t];
 			if (i_head != i_next && j_head != i_next) {
 				if (c[i_head][j_head]>c[i_head][i_next]) {
-					G = 0;//начальный выигрыш
-						  //добавляем дугу и тем самым создаем цикл
-						  //добавляем (i_head, i_next)
+					G = 0;//РЅР°С‡Р°Р»СЊРЅС‹Р№ РІС‹РёРіСЂС‹С€
+						  //РґРѕР±Р°РІР»СЏРµРј РґСѓРіСѓ Рё С‚РµРј СЃР°РјС‹Рј СЃРѕР·РґР°РµРј С†РёРєР»
+						  //РґРѕР±Р°РІР»СЏРµРј (i_head, i_next)
 					path[1][i_head] = i_next;
-					i_temp = path[0][i_next];//дуга для удаления формируется однозначно
+					i_temp = path[0][i_next];//РґСѓРіР° РґР»СЏ СѓРґР°Р»РµРЅРёСЏ С„РѕСЂРјРёСЂСѓРµС‚СЃСЏ РѕРґРЅРѕР·РЅР°С‡РЅРѕ
 					path[0][i_next] = i_head;
-					G = G + c[i_head][j_head] - c[i_head][i_next];//обновляем выигрыш
-																  //удаляем (i_temp, i_next)
+					G = G + c[i_head][j_head] - c[i_head][i_next];//РѕР±РЅРѕРІР»СЏРµРј РІС‹РёРіСЂС‹С€
+																  //СѓРґР°Р»СЏРµРј (i_temp, i_next)
 					path[1][i_temp] = -1;
-					//разрываем цикл
-					//выбираем вершину из цикла j_tail
+					//СЂР°Р·СЂС‹РІР°РµРј С†РёРєР»
+					//РІС‹Р±РёСЂР°РµРј РІРµСЂС€РёРЅСѓ РёР· С†РёРєР»Р° j_tail
 					count = 0;
 					F_max = -1;
 					j_tail = -1;
-					i_tail = path[1][i_next];//просматриваем вершины цикла, i_tail - кандидат
+					i_tail = path[1][i_next];//РїСЂРѕСЃРјР°С‚СЂРёРІР°РµРј РІРµСЂС€РёРЅС‹ С†РёРєР»Р°, i_tail - РєР°РЅРґРёРґР°С‚
 					while (count < n) {
 						if (i_next != i_tail && c[i_head][j_head] + c[i_temp][i_next]>c[i_head][i_next] + c[i_temp][i_tail]) { // 
 							F = G + c[i_temp][i_next] - c[i_temp][i_tail] + c[path[0][i_tail]][i_tail] - c[path[0][i_tail]][j_head];
@@ -3551,35 +3551,35 @@ vector<int> GA_path::local_search_fast(vector<int> assignment, vector<vector<int
 							break;
 						}
 					}
-					if (count == 0) {//в данном направлении нет улучшения (возвращаем метки на место)
+					if (count == 0) {//РІ РґР°РЅРЅРѕРј РЅР°РїСЂР°РІР»РµРЅРёРё РЅРµС‚ СѓР»СѓС‡С€РµРЅРёСЏ (РІРѕР·РІСЂР°С‰Р°РµРј РјРµС‚РєРё РЅР° РјРµСЃС‚Рѕ)
 						path[1][i_head] = -1;
 						path[0][j_head] = -1;
 						path[0][i_next] = i_temp;
 						path[1][i_temp] = i_next;
 					}
-					else {//нашли улучшающее решение
-						  //добавляем (i_temp, j_tail)
+					else {//РЅР°С€Р»Рё СѓР»СѓС‡С€Р°СЋС‰РµРµ СЂРµС€РµРЅРёРµ
+						  //РґРѕР±Р°РІР»СЏРµРј (i_temp, j_tail)
 						path[1][i_temp] = j_tail;
 						i_tail = path[0][j_tail];
 						path[0][j_tail] = i_temp;
-						//удаляем (i_tail, j_tail)
+						//СѓРґР°Р»СЏРµРј (i_tail, j_tail)
 						path[1][i_tail] = -1;
-						//добавляем (i_tail, j_head)
+						//РґРѕР±Р°РІР»СЏРµРј (i_tail, j_head)
 						path[1][i_tail] = j_head;
 						path[0][j_head] = i_tail;
 						isImprove = true;
-						isImproveLS = true;//решение локально улучшено
+						isImproveLS = true;//СЂРµС€РµРЅРёРµ Р»РѕРєР°Р»СЊРЅРѕ СѓР»СѓС‡С€РµРЅРѕ
 						break;
 					}
 				}
-				else { break; }//дальше не рассматриваем варианты
+				else { break; }//РґР°Р»СЊС€Рµ РЅРµ СЂР°СЃСЃРјР°С‚СЂРёРІР°РµРј РІР°СЂРёР°РЅС‚С‹
 			}
 
 		}
 		if (isImprove == true) {
-			//если успех, то возвращаем i_head в конец очереди
+			//РµСЃР»Рё СѓСЃРїРµС…, С‚Рѕ РІРѕР·РІСЂР°С‰Р°РµРј i_head РІ РєРѕРЅРµС† РѕС‡РµСЂРµРґРё
 			QueueVertex.offer(i_head);
-			//если  вершина какого-либо удаленного ребера в черном списке, то возвращаем ее в очередь
+			//РµСЃР»Рё  РІРµСЂС€РёРЅР° РєР°РєРѕРіРѕ-Р»РёР±Рѕ СѓРґР°Р»РµРЅРЅРѕРіРѕ СЂРµР±РµСЂР° РІ С‡РµСЂРЅРѕРј СЃРїРёСЃРєРµ, С‚Рѕ РІРѕР·РІСЂР°С‰Р°РµРј РµРµ РІ РѕС‡РµСЂРµРґСЊ
 			if (tabu[j_head] == true) { tabu[j_head] = false; QueueVertex.offer(j_head); }
 			if (tabu[i_next] == true) { tabu[i_next] = false; QueueVertex.offer(i_next); }
 			if (tabu[i_temp] == true) { tabu[i_temp] = false; QueueVertex.offer(i_temp); }
@@ -3590,19 +3590,19 @@ vector<int> GA_path::local_search_fast(vector<int> assignment, vector<vector<int
 			//                    System.out.print(result[i]+" ");
 			//                    }
 			//                    System.out.println();
-			//                     System.out.println("Улучшение: " +costAssignment(c, result));
+			//                     System.out.println("РЈР»СѓС‡С€РµРЅРёРµ: " +costAssignment(c, result));
 			//                    break;
 		}
 		else {
-			//если неудача, то помещаем i_head в черный список
+			//РµСЃР»Рё РЅРµСѓРґР°С‡Р°, С‚Рѕ РїРѕРјРµС‰Р°РµРј i_head РІ С‡РµСЂРЅС‹Р№ СЃРїРёСЃРѕРє
 			tabu[i_head] = true;
-			path[1][i_head] = j_head;//возвращаем дугу
+			path[1][i_head] = j_head;//РІРѕР·РІСЂР°С‰Р°РµРј РґСѓРіСѓ
 			path[0][j_head] = i_head;
 		}
 	}
 	//        }
 	if (isImproveLS == true) {
-		//формируем перестановку (циклическая)
+		//С„РѕСЂРјРёСЂСѓРµРј РїРµСЂРµСЃС‚Р°РЅРѕРІРєСѓ (С†РёРєР»РёС‡РµСЃРєР°СЏ)
 		result[0] = 1; i_temp = 0;
 		for (int i = 1; i<n; ++i) {
 			result[i] = path[1][i_temp] + 1;
@@ -3613,25 +3613,25 @@ vector<int> GA_path::local_search_fast(vector<int> assignment, vector<vector<int
 		////                    System.out.print(result[i]+" ");
 		//                    }
 		//                    System.out.println();
-		//                     System.out.println("Итог: " +costAssignment(c, result));     
+		//                     System.out.println("РС‚РѕРі: " +costAssignment(c, result));     
 		return result;
 	}
-	else {//решение является локальным оптимумом
+	else {//СЂРµС€РµРЅРёРµ СЏРІР»СЏРµС‚СЃСЏ Р»РѕРєР°Р»СЊРЅС‹Рј РѕРїС‚РёРјСѓРјРѕРј
 		return assignment;
 	}
 }
 */
 
-//эксперимент по сужения (старая версия)
+//СЌРєСЃРїРµСЂРёРјРµРЅС‚ РїРѕ СЃСѓР¶РµРЅРёСЏ (СЃС‚Р°СЂР°СЏ РІРµСЂСЃРёСЏ)
 /*
-//параметры "кванта информации" и шаг эксперимента
+//РїР°СЂР°РјРµС‚СЂС‹ "РєРІР°РЅС‚Р° РёРЅС„РѕСЂРјР°С†РёРё" Рё С€Р°Рі СЌРєСЃРїРµСЂРёРјРµРЅС‚Р°
 int w_1, w_2, h;
-//коэффициент относительной важности
+//РєРѕСЌС„С„РёС†РёРµРЅС‚ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕР№ РІР°Р¶РЅРѕСЃС‚Рё
 double teta;
 vector<vector<int>> new_phi_P_approx;
 vector<vector<int>> phi_P_approx_reduced;
 
-//поиск min и max значений по каждому критерию в аппроксимации мн-ва Парето
+//РїРѕРёСЃРє min Рё max Р·РЅР°С‡РµРЅРёР№ РїРѕ РєР°Р¶РґРѕРјСѓ РєСЂРёС‚РµСЂРёСЋ РІ Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё РјРЅ-РІР° РџР°СЂРµС‚Рѕ
 vector<int> max_phi_P_approx(ga.get_m());
 vector<int> min_phi_P_approx(ga.get_m());
 
@@ -3649,7 +3649,7 @@ for (int i = 0; i < ga.get_m(); i++)
 	}
 }
 
-//грань конуса увеличиваем от 90+h градусов до диагонали (max_1-min_1, max_2-min_2)
+//РіСЂР°РЅСЊ РєРѕРЅСѓСЃР° СѓРІРµР»РёС‡РёРІР°РµРј РѕС‚ 90+h РіСЂР°РґСѓСЃРѕРІ РґРѕ РґРёР°РіРѕРЅР°Р»Рё (max_1-min_1, max_2-min_2)
 w_1 = max_phi_P_approx[0] - min_phi_P_approx[0];
 int h_temp = (max_phi_P_approx[1] - min_phi_P_approx[1]) / 10;
 h = (h_temp > 1) ? h_temp : 1;
@@ -3669,7 +3669,7 @@ for (int i = h; i <= max_phi_P_approx[1] - min_phi_P_approx[1]; i = i + h)
 	sw_1->WriteLine("w_2; {0}", w_2);
 	sw_1->WriteLine("teta; {0:F3}", teta);
 
-	//сужение множества Парето (векторный критерий)
+	//СЃСѓР¶РµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° РџР°СЂРµС‚Рѕ (РІРµРєС‚РѕСЂРЅС‹Р№ РєСЂРёС‚РµСЂРёР№)
 	sw->WriteLine("Number of vectors in the Pareto set");
 	sw->WriteLine("{0}", ga.phi_P_approx.size());
 
@@ -3697,7 +3697,7 @@ for (int i = h; i <= max_phi_P_approx[1] - min_phi_P_approx[1]; i = i + h)
 }
 
 
-//грань конуса увеличиваем от диагонали (max_1-min_1, max_2-min_2) до 180-h градусов
+//РіСЂР°РЅСЊ РєРѕРЅСѓСЃР° СѓРІРµР»РёС‡РёРІР°РµРј РѕС‚ РґРёР°РіРѕРЅР°Р»Рё (max_1-min_1, max_2-min_2) РґРѕ 180-h РіСЂР°РґСѓСЃРѕРІ
 w_2 = max_phi_P_approx[1] - min_phi_P_approx[1];
 h_temp = (max_phi_P_approx[0] - min_phi_P_approx[0]) / 10;
 h = (h_temp > 1) ? h_temp : 1;
@@ -3720,7 +3720,7 @@ for (int j = max_phi_P_approx[0] - min_phi_P_approx[0]; j > 0; j = j - h)
 	sw_1->WriteLine("w_2; {0}", w_2);
 	sw_1->WriteLine("teta; {0:F3}", teta);
 
-	//сужение множества Парето (векторный критерий)
+	//СЃСѓР¶РµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° РџР°СЂРµС‚Рѕ (РІРµРєС‚РѕСЂРЅС‹Р№ РєСЂРёС‚РµСЂРёР№)
 	sw->WriteLine("Number of vectors in the Pareto set");
 	sw->WriteLine("{0}", ga.phi_P_approx.size());
 

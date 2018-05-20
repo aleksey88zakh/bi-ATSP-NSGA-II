@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 #include <vector>
 #include <windows.h>
@@ -9,20 +9,20 @@
 #include <direct.h>
 
 #define ITER_MAX 200
-#define MODIF true //ПОМЕНЯТЬ!!!
+#define MODIF true //РџРћРњР•РќРЇРўР¬!!!
 
-//эксперимент по сужению
-//число шагов для teta
+//СЌРєСЃРїРµСЂРёРјРµРЅС‚ РїРѕ СЃСѓР¶РµРЅРёСЋ
+//С‡РёСЃР»Рѕ С€Р°РіРѕРІ РґР»СЏ teta
 #define NUM_STEPS_TETA 9
-//размер контейнера для хранения процента сужения (два "кванта")
+//СЂР°Р·РјРµСЂ РєРѕРЅС‚РµР№РЅРµСЂР° РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РїСЂРѕС†РµРЅС‚Р° СЃСѓР¶РµРЅРёСЏ (РґРІР° "РєРІР°РЅС‚Р°")
 #define SIZE_EXCL_TETA (NUM_STEPS_TETA-1)*NUM_STEPS_TETA/2
-//"кванты информации"
+//"РєРІР°РЅС‚С‹ РёРЅС„РѕСЂРјР°С†РёРё"
 #define _1ST_2ND_ 1
 #define _2ND_1ST_ 2
 
-//частота вывода при оценке аппроксимации (число итераций)
+//С‡Р°СЃС‚РѕС‚Р° РІС‹РІРѕРґР° РїСЂРё РѕС†РµРЅРєРµ Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё (С‡РёСЃР»Рѕ РёС‚РµСЂР°С†РёР№)
 #define FREQ_SHOW_COMP 20
-//частота вывода при сужении (число итераций)
+//С‡Р°СЃС‚РѕС‚Р° РІС‹РІРѕРґР° РїСЂРё СЃСѓР¶РµРЅРёРё (С‡РёСЃР»Рѕ РёС‚РµСЂР°С†РёР№)
 #define FREQ_SHOW_RED 100
 
 
@@ -30,7 +30,7 @@ using namespace std;
 using namespace System;
 using namespace System::IO;
 
-//операторы кроссинговера
+//РѕРїРµСЂР°С‚РѕСЂС‹ РєСЂРѕСЃСЃРёРЅРіРѕРІРµСЂР°
 public enum class recomb_oper {DEC_new, DPX};
 
 
@@ -40,100 +40,100 @@ public:
 	GA_path();
 	GA_path(int n, int N, int m, int s_max_N);
 	~GA_path();
-	vector<vector<int>> pop;//популяция
-	vector<vector<vector<int>>> s_m;//матрица значений по каждому критерию
-	vector<vector<int>> phi;//пригодность особей (векторный критерий)
-	vector<int> i_rank;//ранг фронта по Парето
-	vector<double> i_dist;//расстояние (для ранжирования внутри форнта)
-	vector<int> s_aver;//средняя величина элемента матрицы (по каждому критерию)
+	vector<vector<int>> pop;//РїРѕРїСѓР»СЏС†РёСЏ
+	vector<vector<vector<int>>> s_m;//РјР°С‚СЂРёС†Р° Р·РЅР°С‡РµРЅРёР№ РїРѕ РєР°Р¶РґРѕРјСѓ РєСЂРёС‚РµСЂРёСЋ
+	vector<vector<int>> phi;//РїСЂРёРіРѕРґРЅРѕСЃС‚СЊ РѕСЃРѕР±РµР№ (РІРµРєС‚РѕСЂРЅС‹Р№ РєСЂРёС‚РµСЂРёР№)
+	vector<int> i_rank;//СЂР°РЅРі С„СЂРѕРЅС‚Р° РїРѕ РџР°СЂРµС‚Рѕ
+	vector<double> i_dist;//СЂР°СЃСЃС‚РѕСЏРЅРёРµ (РґР»СЏ СЂР°РЅР¶РёСЂРѕРІР°РЅРёСЏ РІРЅСѓС‚СЂРё С„РѕСЂРЅС‚Р°)
+	vector<int> s_aver;//СЃСЂРµРґРЅСЏСЏ РІРµР»РёС‡РёРЅР° СЌР»РµРјРµРЅС‚Р° РјР°С‚СЂРёС†С‹ (РїРѕ РєР°Р¶РґРѕРјСѓ РєСЂРёС‚РµСЂРёСЋ)
 
-	//родители + потомки (R_t = P_t + Q_t)
+	//СЂРѕРґРёС‚РµР»Рё + РїРѕС‚РѕРјРєРё (R_t = P_t + Q_t)
 	vector<vector<int>> pop_R_t;
-	//вектор рангов фронтов для R_t
+	//РІРµРєС‚РѕСЂ СЂР°РЅРіРѕРІ С„СЂРѕРЅС‚РѕРІ РґР»СЏ R_t
 	vector<int> i_rank_R_t;
-	//вектор (для ранжирования внутри форнта) для R_t
+	//РІРµРєС‚РѕСЂ (РґР»СЏ СЂР°РЅР¶РёСЂРѕРІР°РЅРёСЏ РІРЅСѓС‚СЂРё С„РѕСЂРЅС‚Р°) РґР»СЏ R_t
 	vector<double> i_dist_R_t;
 
-	///!!! уточнить про порядок start_time
+	///!!! СѓС‚РѕС‡РЅРёС‚СЊ РїСЂРѕ РїРѕСЂСЏРґРѕРє start_time
 	void init_pop(vector<vector<vector<int>>> s, int S_max, unsigned long long start_time,
 		vector<int> p1, vector<int> p2, vector<int> p3, vector<int> p4);
-		//vector<vector<int>> vertex, vector<int> vertex_initial); - пока не используем
-	//построение особи с помощью рандомизатора
+		//vector<vector<int>> vertex, vector<int> vertex_initial); - РїРѕРєР° РЅРµ РёСЃРїРѕР»СЊР·СѓРµРј
+	//РїРѕСЃС‚СЂРѕРµРЅРёРµ РѕСЃРѕР±Рё СЃ РїРѕРјРѕС‰СЊСЋ СЂР°РЅРґРѕРјРёР·Р°С‚РѕСЂР°
 	vector<int> random_individual();
-	//заполнение матриц расстояний
+	//Р·Р°РїРѕР»РЅРµРЅРёРµ РјР°С‚СЂРёС† СЂР°СЃСЃС‚РѕСЏРЅРёР№
 	void set_matrix_criteria(vector<vector<int>> s);
-	//значение векторного критерия для особи
+	//Р·РЅР°С‡РµРЅРёРµ РІРµРєС‚РѕСЂРЅРѕРіРѕ РєСЂРёС‚РµСЂРёСЏ РґР»СЏ РѕСЃРѕР±Рё
 	vector<int> multi_phitness(vector<int> p);
-	//отношение Парето
+	//РѕС‚РЅРѕС€РµРЅРёРµ РџР°СЂРµС‚Рѕ
 	template <typename T>
 	bool Pareto_pref(vector<T> a, vector<T> b);
-	//функция строит ранжировнные фронты популяции pop_cur парето-оптимальных решений (без crowding distance)
+	//С„СѓРЅРєС†РёСЏ СЃС‚СЂРѕРёС‚ СЂР°РЅР¶РёСЂРѕРІРЅРЅС‹Рµ С„СЂРѕРЅС‚С‹ РїРѕРїСѓР»СЏС†РёРё pop_cur РїР°СЂРµС‚Рѕ-РѕРїС‚РёРјР°Р»СЊРЅС‹С… СЂРµС€РµРЅРёР№ (Р±РµР· crowding distance)
 	vector<int> range_front(vector<vector<int>>& pop, bool flag_sort_pop);
-	//вычисляет расстояния для особей из популяции pop_cur с рангом rank (ранг от 1 до макс элмента i_rank)
+	//РІС‹С‡РёСЃР»СЏРµС‚ СЂР°СЃСЃС‚РѕСЏРЅРёСЏ РґР»СЏ РѕСЃРѕР±РµР№ РёР· РїРѕРїСѓР»СЏС†РёРё pop_cur СЃ СЂР°РЅРіРѕРј rank (СЂР°РЅРі РѕС‚ 1 РґРѕ РјР°РєСЃ СЌР»РјРµРЅС‚Р° i_rank)
 	void crowd_dist(vector<double>& i_dist_cur, int rank, vector<int> i_rank_cur, vector<vector<int>> pop_cur, bool flag_sort);
-	//НОВАЯ вычисляет расстояния для особей из популяции pop_cur с рангом rank (ранг от 1 до макс элмента i_rank)
+	//РќРћР’РђРЇ РІС‹С‡РёСЃР»СЏРµС‚ СЂР°СЃСЃС‚РѕСЏРЅРёСЏ РґР»СЏ РѕСЃРѕР±РµР№ РёР· РїРѕРїСѓР»СЏС†РёРё pop_cur СЃ СЂР°РЅРіРѕРј rank (СЂР°РЅРі РѕС‚ 1 РґРѕ РјР°РєСЃ СЌР»РјРµРЅС‚Р° i_rank)
 	void crowd_dist_new(vector<vector<int>> pop_cur, bool flag_sort);
 	//crowded-comparison operator
 	bool crowd_comp_oper(int i_p1, int i_p2);
-	//построение особи Венгерским методом + склейка циклов
+	//РїРѕСЃС‚СЂРѕРµРЅРёРµ РѕСЃРѕР±Рё Р’РµРЅРіРµСЂСЃРєРёРј РјРµС‚РѕРґРѕРј + СЃРєР»РµР№РєР° С†РёРєР»РѕРІ
 	vector<int> patching_algorithm(vector<vector<int>> s, int c_max, boolean orig_or_mod);
-	//вариант для хранения проранжированной популяции (и по фронтам, и внутри фронта)
-	//? сложность сортировки в multimap
+	//РІР°СЂРёР°РЅС‚ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РїСЂРѕСЂР°РЅР¶РёСЂРѕРІР°РЅРЅРѕР№ РїРѕРїСѓР»СЏС†РёРё (Рё РїРѕ С„СЂРѕРЅС‚Р°Рј, Рё РІРЅСѓС‚СЂРё С„СЂРѕРЅС‚Р°)
+	//? СЃР»РѕР¶РЅРѕСЃС‚СЊ СЃРѕСЂС‚РёСЂРѕРІРєРё РІ multimap
 	//multimap<int, multimap<float, vector<int> > > a
 
-	//алгоритм быстрой сортировки
+	//Р°Р»РіРѕСЂРёС‚Рј Р±С‹СЃС‚СЂРѕР№ СЃРѕСЂС‚РёСЂРѕРІРєРё
 	void GA_path::quick_sort(vector<int>& arr, vector<int>& arr_index, int left, int right);
 	//void GA_path::heap_sort_new(vector<vector<int>>& pop, int i_start, int i_stop);
-	//пирамидальная сортровка
-	//flag_phi_sort = true - сортировка по компоненте критерия
-	//flag_phi_sort = false - сортировка по i_dist
+	//РїРёСЂР°РјРёРґР°Р»СЊРЅР°СЏ СЃРѕСЂС‚СЂРѕРІРєР°
+	//flag_phi_sort = true - СЃРѕСЂС‚РёСЂРѕРІРєР° РїРѕ РєРѕРјРїРѕРЅРµРЅС‚Рµ РєСЂРёС‚РµСЂРёСЏ
+	//flag_phi_sort = false - СЃРѕСЂС‚РёСЂРѕРІРєР° РїРѕ i_dist
 	void GA_path::heap_sort(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_citeria, int index_begin, int index_end);
 	//
 	void GA_path::heap_sort(vector<int>& numbers_index, int index_begin, int index_end);
 	
 
-	//ОПЕРАТОРЫ
-	//турнирная селекция
+	//РћРџР•Р РђРўРћР Р«
+	//С‚СѓСЂРЅРёСЂРЅР°СЏ СЃРµР»РµРєС†РёСЏ
 	int tourn_selection();
-	//мутация
+	//РјСѓС‚Р°С†РёСЏ
 	void mutation(int i_p1, int i_p2, vector<int>& p1_temp, vector<int>& p2_temp);
-	//мутация обена
+	//РјСѓС‚Р°С†РёСЏ РѕР±РµРЅР°
 	vector<int> exchange_mutation(vector<int> p);
-	//рандомизированный кроссинговер, основанный на наследовании дуг
+	//СЂР°РЅРґРѕРјРёР·РёСЂРѕРІР°РЅРЅС‹Р№ РєСЂРѕСЃСЃРёРЅРіРѕРІРµСЂ, РѕСЃРЅРѕРІР°РЅРЅС‹Р№ РЅР° РЅР°СЃР»РµРґРѕРІР°РЅРёРё РґСѓРі
 	vector<int> DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> p2);
-	// << julia:  новый опретор кроссинговера
+	// << julia:  РЅРѕРІС‹Р№ РѕРїСЂРµС‚РѕСЂ РєСЂРѕСЃСЃРёРЅРіРѕРІРµСЂР°
 	vector<int> DEC_new(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2);
 	// << julia
 	vector<int> DPX(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2);
 
 
-	//МЕТРИКА
-	//построение аппроксимации мн-ва Парето (значения векторного критерия, без повторов)
+	//РњР•РўР РРљРђ
+	//РїРѕСЃС‚СЂРѕРµРЅРёРµ Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё РјРЅ-РІР° РџР°СЂРµС‚Рѕ (Р·РЅР°С‡РµРЅРёСЏ РІРµРєС‚РѕСЂРЅРѕРіРѕ РєСЂРёС‚РµСЂРёСЏ, Р±РµР· РїРѕРІС‚РѕСЂРѕРІ)
 	void build_phi_P_approx();
-	//аппроксимация мн-ва Парето (значения векторного критерия, без повторов)
+	//Р°РїРїСЂРѕРєСЃРёРјР°С†РёСЏ РјРЅ-РІР° РџР°СЂРµС‚Рѕ (Р·РЅР°С‡РµРЅРёСЏ РІРµРєС‚РѕСЂРЅРѕРіРѕ РєСЂРёС‚РµСЂРёСЏ, Р±РµР· РїРѕРІС‚РѕСЂРѕРІ)
 	vector<vector<int>> phi_P_approx;
-	//вычисление расстояния от особи (из аппроксимации/мн-ва Парето) до ближайшего вектора в мн-ве Парето/аппроксимации
+	//РІС‹С‡РёСЃР»РµРЅРёРµ СЂР°СЃСЃС‚РѕСЏРЅРёСЏ РѕС‚ РѕСЃРѕР±Рё (РёР· Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё/РјРЅ-РІР° РџР°СЂРµС‚Рѕ) РґРѕ Р±Р»РёР¶Р°Р№С€РµРіРѕ РІРµРєС‚РѕСЂР° РІ РјРЅ-РІРµ РџР°СЂРµС‚Рѕ/Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё
 	double dist_p_to_nearest_set(vector<int> phi_p, vector<vector<int>> phi_set);
-	//вычисление метрики - сходимость первого мн-ва ко второму мн-ву
+	//РІС‹С‡РёСЃР»РµРЅРёРµ РјРµС‚СЂРёРєРё - СЃС…РѕРґРёРјРѕСЃС‚СЊ РїРµСЂРІРѕРіРѕ РјРЅ-РІР° РєРѕ РІС‚РѕСЂРѕРјСѓ РјРЅ-РІСѓ
 	double dist_convergence(vector<vector<int>> first_set, vector<vector<int>> second_set, bool flag_count);
-	//среднеквадратическое отклонение метрики "сходимость аппроксимации к мн-ву Парето"
+	//СЃСЂРµРґРЅРµРєРІР°РґСЂР°С‚РёС‡РµСЃРєРѕРµ РѕС‚РєР»РѕРЅРµРЅРёРµ РјРµС‚СЂРёРєРё "СЃС…РѕРґРёРјРѕСЃС‚СЊ Р°РїРїСЂРѕРєСЃРёРјР°С†РёРё Рє РјРЅ-РІСѓ РџР°СЂРµС‚Рѕ"
 	double standard_devation_conver_approx_to_P_set(vector<vector<int>> P_set, double dist_conver);
-	//вывод метрики
+	//РІС‹РІРѕРґ РјРµС‚СЂРёРєРё
 	void evaluate_metric_of_approx(StreamWriter^ sw, vector<vector<int>> P_set, bool flag_count);
 	double dist_conver_approx_to_P_set_val;
 	double dist_conver_P_set_to_approx_val;
 	int count_P_eq_approx;
 
 
-	//СУЖЕНИЕ МН-ВА ПАРЕТО
-	//сам эксперимент
+	//РЎРЈР–Р•РќРР• РњРќ-Р’Рђ РџРђР Р•РўРћ
+	//СЃР°Рј СЌРєСЃРїРµСЂРёРјРµРЅС‚
 	vector<double> experiment_reduction(StreamWriter^ sw, String^ problem_name_str, 
 		double h, int num_steps, double teta_start, unsigned quantum_inf);
-	//аппрокимации мн-ва Парето (без повторов) относительного "нового" критерия
+	//Р°РїРїСЂРѕРєРёРјР°С†РёРё РјРЅ-РІР° РџР°СЂРµС‚Рѕ (Р±РµР· РїРѕРІС‚РѕСЂРѕРІ) РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕРіРѕ "РЅРѕРІРѕРіРѕ" РєСЂРёС‚РµСЂРёСЏ
 	vector<vector<double>> build_new_phi_P_approx(vector<vector<int>> init_phi_P_approx, double teta_1, double teta_2, unsigned quantum_inf);
-	//построение мн-ва Парето перебором
+	//РїРѕСЃС‚СЂРѕРµРЅРёРµ РјРЅ-РІР° РџР°СЂРµС‚Рѕ РїРµСЂРµР±РѕСЂРѕРј
 	vector<vector<double>> build_phi_P_enum(vector<vector<double>> init_set);
-	//вывод результатов эксперимента
+	//РІС‹РІРѕРґ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ СЌРєСЃРїРµСЂРёРјРµРЅС‚Р°
 	friend void print_exp_red(StreamWriter^ sw_4, String^ quantum_inf_name_str, vector<vector<double>> index_reduced, vector<int> total_num_P_approx);
 	friend void print_exp_red_two(StreamWriter^ sw_4, String^ problem_name_str, vector<double> index_reduced, int num_steps, double total_num_P_approx);
 
@@ -149,66 +149,66 @@ public:
 	void set_tourn_size(int s) { tourn_size = s; };
 	void set_p_mut(double p) { p_mut = p; };
 
-	//чтение множества Парето из файла
+	//С‡С‚РµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° РџР°СЂРµС‚Рѕ РёР· С„Р°Р№Р»Р°
 	vector<vector<int>> read_Pareto_set_from_file(String^ file_name_source_str, String^ problem_name_str);
 
 	friend void time_format(unsigned long long result_time, String^ title, StreamWriter^ sw);
 
 private:
-	int n;//число позиций в перестановке
-	int m;//число критериев
-	int N;//численность популяции
-	//vector<vector<int>> pop;//популяция
-	//vector<vector<int>> phi;//пригодность особей (векторный критерий)
-	//vector<vector<vector<int>>> s_m;//матрица значений по каждому критерию
+	int n;//С‡РёСЃР»Рѕ РїРѕР·РёС†РёР№ РІ РїРµСЂРµСЃС‚Р°РЅРѕРІРєРµ
+	int m;//С‡РёСЃР»Рѕ РєСЂРёС‚РµСЂРёРµРІ
+	int N;//С‡РёСЃР»РµРЅРЅРѕСЃС‚СЊ РїРѕРїСѓР»СЏС†РёРё
+	//vector<vector<int>> pop;//РїРѕРїСѓР»СЏС†РёСЏ
+	//vector<vector<int>> phi;//РїСЂРёРіРѕРґРЅРѕСЃС‚СЊ РѕСЃРѕР±РµР№ (РІРµРєС‚РѕСЂРЅС‹Р№ РєСЂРёС‚РµСЂРёР№)
+	//vector<vector<vector<int>>> s_m;//РјР°С‚СЂРёС†Р° Р·РЅР°С‡РµРЅРёР№ РїРѕ РєР°Р¶РґРѕРјСѓ РєСЂРёС‚РµСЂРёСЋ
 
-	int tourn_size = 10;//размер турнира
-	double p_mut = 0.1;//вероятность мутации
+	int tourn_size = 10;//СЂР°Р·РјРµСЂ С‚СѓСЂРЅРёСЂР°
+	double p_mut = 0.1;//РІРµСЂРѕСЏС‚РЅРѕСЃС‚СЊ РјСѓС‚Р°С†РёРё
 
-	int count_best_child;//число итераций где потомок лучше родителей
-	int iter_best_child;//последняя итерация где потомок лучше родителей
-	int* rank;//ранги особей
-	double avg_phi;//средняя пригодность особи в популяции
-	int phi_best;// пригодность лучшей особи
-	int ord_best_ind;//лучшая особь
-	int iter_best;//итерация, на которой получена лучшая особь
-	long time_best;//время получения лучшей особи
-				   //для рекомбинации
-	int number_solution_in_rec;//число потомков в рекомбинации
-	int phi_best_in_rec;// пригодность лучшей особи в рекомбинации
+	int count_best_child;//С‡РёСЃР»Рѕ РёС‚РµСЂР°С†РёР№ РіРґРµ РїРѕС‚РѕРјРѕРє Р»СѓС‡С€Рµ СЂРѕРґРёС‚РµР»РµР№
+	int iter_best_child;//РїРѕСЃР»РµРґРЅСЏСЏ РёС‚РµСЂР°С†РёСЏ РіРґРµ РїРѕС‚РѕРјРѕРє Р»СѓС‡С€Рµ СЂРѕРґРёС‚РµР»РµР№
+	int* rank;//СЂР°РЅРіРё РѕСЃРѕР±РµР№
+	double avg_phi;//СЃСЂРµРґРЅСЏСЏ РїСЂРёРіРѕРґРЅРѕСЃС‚СЊ РѕСЃРѕР±Рё РІ РїРѕРїСѓР»СЏС†РёРё
+	int phi_best;// РїСЂРёРіРѕРґРЅРѕСЃС‚СЊ Р»СѓС‡С€РµР№ РѕСЃРѕР±Рё
+	int ord_best_ind;//Р»СѓС‡С€Р°СЏ РѕСЃРѕР±СЊ
+	int iter_best;//РёС‚РµСЂР°С†РёСЏ, РЅР° РєРѕС‚РѕСЂРѕР№ РїРѕР»СѓС‡РµРЅР° Р»СѓС‡С€Р°СЏ РѕСЃРѕР±СЊ
+	long time_best;//РІСЂРµРјСЏ РїРѕР»СѓС‡РµРЅРёСЏ Р»СѓС‡С€РµР№ РѕСЃРѕР±Рё
+				   //РґР»СЏ СЂРµРєРѕРјР±РёРЅР°С†РёРё
+	int number_solution_in_rec;//С‡РёСЃР»Рѕ РїРѕС‚РѕРјРєРѕРІ РІ СЂРµРєРѕРјР±РёРЅР°С†РёРё
+	int phi_best_in_rec;// РїСЂРёРіРѕРґРЅРѕСЃС‚СЊ Р»СѓС‡С€РµР№ РѕСЃРѕР±Рё РІ СЂРµРєРѕРјР±РёРЅР°С†РёРё
 	bool is_AP_solution_opt;
-	bool is_improve_LS;//решение в локальном поиске локально улучшено
-	int q_current;//значение q для текущей задачи ОР (по алгоритму Сердюкова)
+	bool is_improve_LS;//СЂРµС€РµРЅРёРµ РІ Р»РѕРєР°Р»СЊРЅРѕРј РїРѕРёСЃРєРµ Р»РѕРєР°Р»СЊРЅРѕ СѓР»СѓС‡С€РµРЅРѕ
+	int q_current;//Р·РЅР°С‡РµРЅРёРµ q РґР»СЏ С‚РµРєСѓС‰РµР№ Р·Р°РґР°С‡Рё РћР  (РїРѕ Р°Р»РіРѕСЂРёС‚РјСѓ РЎРµСЂРґСЋРєРѕРІР°)
 
-	//РЕКОМБИНАЦИЯ
-	// << julia: Используется в функциях DEC_new и DCX
+	//Р Р•РљРћРњР‘РРќРђР¦РРЇ
+	// << julia: РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ С„СѓРЅРєС†РёСЏС… DEC_new Рё DCX
 	vector<bool> flag_Pareto_sol(int k, vector<vector<int>> s);
-	// << julia: Используется в функциях DEC_new и DCX
-	//           поиск следующего активного элемента
+	// << julia: РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ С„СѓРЅРєС†РёСЏС… DEC_new Рё DCX
+	//           РїРѕРёСЃРє СЃР»РµРґСѓСЋС‰РµРіРѕ Р°РєС‚РёРІРЅРѕРіРѕ СЌР»РµРјРµРЅС‚Р°
 	int next(int j, int k, vector<bool> flag_S);
 
 
-	//ЛОКАЛЬНЫЙ ПОИСК
+	//Р›РћРљРђР›Р¬РќР«Р™ РџРћРРЎРљ
 	vector<int> local_search(vector<int> assignment, vector<vector<int>> s_m_crit_index);
 
-	//вычисление пригодности особи
+	//РІС‹С‡РёСЃР»РµРЅРёРµ РїСЂРёРіРѕРґРЅРѕСЃС‚Рё РѕСЃРѕР±Рё
 	int phitness(vector<vector<int>> s, vector<int> p);
 
-	//Венгерский метод
+	//Р’РµРЅРіРµСЂСЃРєРёР№ РјРµС‚РѕРґ
 	vector<int> Hungarian_method(int n, int m, vector<vector<int>> cost);
 	
-	// функция "просеивания" через кучу - формирование кучи
-	//flag_phi_sort = true - сортировка по компоненте критерия
-	//flag_phi_sort = false - сортировка по i_dist
+	// С„СѓРЅРєС†РёСЏ "РїСЂРѕСЃРµРёРІР°РЅРёСЏ" С‡РµСЂРµР· РєСѓС‡Сѓ - С„РѕСЂРјРёСЂРѕРІР°РЅРёРµ РєСѓС‡Рё
+	//flag_phi_sort = true - СЃРѕСЂС‚РёСЂРѕРІРєР° РїРѕ РєРѕРјРїРѕРЅРµРЅС‚Рµ РєСЂРёС‚РµСЂРёСЏ
+	//flag_phi_sort = false - СЃРѕСЂС‚РёСЂРѕРІРєР° РїРѕ i_dist
 	void sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_criteria, int root, int bottom, int delta);
 	//
 	void sift_down(vector<int>& numbers_index, int root, int bottom, int delta);
 	
-	//3-opt замена в мутации
+	//3-opt Р·Р°РјРµРЅР° РІ РјСѓС‚Р°С†РёРё
 	vector<int> random_change2(vector<int> assignment, int Nchange, vector<vector<int>> c,
 		int c_aver, int alpha);
 	
-	//метод не нужен
+	//РјРµС‚РѕРґ РЅРµ РЅСѓР¶РµРЅ
 	//vector<int> GA_path::local_search_fast(vector<int> assignment, vector<vector<int>> c,
 	//	vector<vector<int>> vertex, vector<int> vertex_initial, int alpha);
 };
