@@ -36,7 +36,10 @@ int main(int argc, char* argv[])
 	String^ file_name_source_Pareto_set_str;
 
 	//оператор рекомбинации
-	recomb_oper rec_oper = DEC_new;
+	recomb_oper rec_oper = recomb_oper::DEC_new;
+
+	//"кванты информации"
+	unsigned quantum_inf = _1ST_2ND_ + _2ND_1ST_;
 
 	//общее время выполнения всех задач
 	unsigned long long total_time = 0;
@@ -55,7 +58,7 @@ int main(int argc, char* argv[])
 	double max_dist_begin_2 = 0;
 	double max_dist_end_1 = 0;
 	double max_dist_end_2 = 0;
-	
+
 	double min_dist_begin_1 = 0;
 	double min_dist_begin_2 = 0;
 	double min_dist_end_1 = 0;
@@ -64,7 +67,7 @@ int main(int argc, char* argv[])
 	//для статистики аппроксимации мн-ва Парето
 	double total_num_approx_P_begin = 0;
 	double total_num_approx_P_end = 0;
-	
+
 	int max_num_approx_P_begin = 0;
 	int max_num_approx_P_end = 0;
 
@@ -79,14 +82,17 @@ int main(int argc, char* argv[])
 
 	int min_num_approx_in_P_begin = 0;
 	int min_num_approx_in_P_end = 0;
-	
+
 	//статистика эксперимента по сужению мн-ва Парето
 	//контейнеры для относительных показателей сужения мн-ва Парето
 	//доля "отброшенных" точек (в %)
 	vector<vector<double>> index_reduced_1_2; //1-ый критерий важнее 2-го
 	vector<vector<double>> index_reduced_2_1; //2-ой критерий важнее 1-го
+	vector<double> index_reduced_both(SIZE_EXCL_TETA+19); //1-ый важнее 2-го + 2-ой важнее 1-го (таблица, разложенная по строке)
+	vector<double> index_reduced_tmp(SIZE_EXCL_TETA+19); //хранение текущих значения (два "кванта информации")
 
-	//число точек в аппроксимации мн-ва Парето (по всем задачам) 
+
+	//контейнер числа точек в аппроксимации мн-ва Парето 
 	vector<int> total_num_P_approx;
 
 
@@ -144,7 +150,7 @@ int main(int argc, char* argv[])
 			reduction = true;
 		
 		if (str_temp == "\\DPX")
-			rec_oper = DPX;
+			rec_oper = recomb_oper::DPX;
 	}
 	
 	//открываем для считывания
@@ -161,15 +167,15 @@ int main(int argc, char* argv[])
 	*/
 
 	//короткий файл для записи
-	String^ file_name_1_st = "results/" + file_name_rd_str + "_results.csv";
+	String^ file_name_1_st = "results/Example_MTSP_m2_n" + num_n + "_N" + num_N + "_" + rec_oper.ToString("g") + "_results.csv";
 	StreamWriter^ sw_1 = gcnew StreamWriter(file_name_1_st);
 
 	//файл для записи эксперимента по сужению мн-ва Парето
-	String^ file_name_red_P_set_str = "results/" + file_name_rd_str + "_red_P_set.csv";
+	String^ file_name_red_P_set_str = "results/Example_MTSP_m2_n" + num_n + "_N" + num_N + "_" + rec_oper.ToString("g") + "_red_P_set.csv";
 	StreamWriter^ sw_3 = gcnew StreamWriter(file_name_red_P_set_str);
 
-	//короткий файл для записи эксепримента по сужению мн-ва Парето
-	String^ file_name_short_red_P_set_str = "results/" + file_name_rd_str + "_red_P_set_short.csv";
+	//короткий файл для записи эксперимента по сужению мн-ва Парето
+	String^ file_name_short_red_P_set_str = "results/Example_MTSP_m2_n" + num_n + "_N" + num_N + "_" + rec_oper.ToString("g") + "_red_P_set_short.csv";
 	StreamWriter^ sw_4 = gcnew StreamWriter(file_name_short_red_P_set_str);
 	sw_4->WriteLine("Reduction of the Pareto set");
 	sw_4->WriteLine();
@@ -247,9 +253,9 @@ int main(int argc, char* argv[])
 
 		String^ file_name_st;
 		if (MODIF)
-			file_name_st = "results/Example_MTSP_m2_n" + ga.get_n() + "_N" + ga.get_N() + "_" + problem_name_str + "_modif_temp.csv";
+			file_name_st = "results/Example_MTSP_m2_n" + ga.get_n() + "_N" + ga.get_N() + "_" + problem_name_str + "_" + rec_oper.ToString("g") + "_modif_temp.csv";
 		else
-			file_name_st = "results/Example_MTSP_m2_n" + ga.get_n() + "_N" + ga.get_N() + "_" + problem_name_str + "_temp.csv";
+			file_name_st = "results/Example_MTSP_m2_n" + ga.get_n() + "_N" + ga.get_N() + "_" + problem_name_str + "_" + rec_oper.ToString("g") + "_temp.csv";
 		StreamWriter^ sw = gcnew StreamWriter(file_name_st);
 
 		//String^ file_name_1_st = "results/Example_MTSP_m2_n12_N50_" + problem_name_str + ".csv";
@@ -914,10 +920,10 @@ int main(int argc, char* argv[])
 
 					switch (rec_oper)
 					{
-						case DEC_new:
+						case recomb_oper::DEC_new:
 							child = ga.DEC_new(ga.s_m, p1, p2);
 							break;
-						case DPX:
+						case recomb_oper::DPX:
 							child = ga.DPX(ga.s_m, p1, p2);
 							break;
 					}
@@ -1050,8 +1056,8 @@ int main(int argc, char* argv[])
 				
 				
 				//выводим популяцию, ранги, расстояния и аппрокимацию мн-ва Парето (векторный критерий) без повторов
-				if (  ( ((iter % 20) == 0) && file_name_source_Pareto_set_str ) || 
-					( ((iter % 100) == 0) && reduction )  )
+				if (  ( ((iter % FREQ_SHOW_COMP) == 0) && file_name_source_Pareto_set_str ) || 
+					( ((iter % FREQ_SHOW_RED ) == 0) && reduction )  )
 				{
 					//str_temp = problem_name_str->ToString + "\n";
 					printf("Problem %d\n", iter_prbl+1);
@@ -1320,25 +1326,53 @@ int main(int argc, char* argv[])
 				max_num_P_approx = ga.phi_P_approx.size();
 			*/
 			
-			//1-ый критерий важнее 2-го
-			sw_3->WriteLine("Reduction of the Pareto set");
-			sw_3->WriteLine("1st is more important than 2nd");
-			index_reduced_1_2.push_back( ga.experiment_reduction(sw_3, problem_name_str, 0.1, 9, 0, true) );
-			sw_3->WriteLine();
+			if (quantum_inf < _1ST_2ND_ + _2ND_1ST_)
+			{ //задан один "квант информации"
 
-			//2-ой критерий важнее 1-го
-			sw_3->WriteLine("Reduction of the Pareto set");
-			sw_3->WriteLine("2nd is more important than 1st");
-			index_reduced_2_1.push_back( ga.experiment_reduction(sw_3, problem_name_str, 0.1, 9, 0, false) );
-			sw_3->WriteLine();
+				//1-ый критерий важнее 2-го
+				sw_3->WriteLine("Reduction of the Pareto set");
+				sw_3->WriteLine("1st is more important than 2nd");
+				index_reduced_1_2.push_back(ga.experiment_reduction(sw_3, problem_name_str, 0.1, NUM_STEPS_TETA, 0, _1ST_2ND_));
+				sw_3->WriteLine();
+
+				//2-ой критерий важнее 1-го
+				sw_3->WriteLine("Reduction of the Pareto set");
+				sw_3->WriteLine("2nd is more important than 1st");
+				index_reduced_2_1.push_back(ga.experiment_reduction(sw_3, problem_name_str, 0.1, NUM_STEPS_TETA, 0, _2ND_1ST_));
+				sw_3->WriteLine();
+			}
+			else
+			{ //задано два "кванта информации"
+
+				//1-ый критерий важнее 2-го + 2-ой важнее второго
+				sw_3->WriteLine("Reduction of the Pareto set");
+				sw_3->WriteLine("1st -> 2nd and 2nd -> 1st");
+				//index_reduced_1_2.push_back(ga.experiment_reduction(sw_3, problem_name_str, 0.1, 9, 0, _1ST_2ND_ + _2ND_1ST_));
+				index_reduced_tmp = ga.experiment_reduction(sw_3, problem_name_str, 0.1, NUM_STEPS_TETA+1, -0.1, _1ST_2ND_ + _2ND_1ST_);
+				//накапливаем сумму по всем задачам, чтобы потом вычислить среднее
+//!!! инициализация index_reduced_both и index_reduced_tmp
+				for (int i = 0; i < index_reduced_tmp.size(); i++)
+					index_reduced_both[i] += index_reduced_tmp[i];
+				sw_3->WriteLine();
+				//вывод таблицы процента сужения
+				print_exp_red_two(sw_4, problem_name_str, index_reduced_tmp, NUM_STEPS_TETA+1, total_num_P_approx[iter_prbl]);
+
+
+				//таблица (в случае двух "квантов информации")
+
+			}
 
 
 	
 		}//эксперимент по сужению мн-ва Парето
 
 
+		//------------------------------------------------------------------------------------
+		//------------------------------------------------------------------------------------
+
 
 		
+
 		 //статистика по метрике после всех запусков
 		if (file_name_source_Pareto_set_str)
 		{
@@ -1453,8 +1487,28 @@ int main(int argc, char* argv[])
 
 	 //вывод 2-х таблиц: 1) 1-ый важнее 2-го; 2) 2-ой важнее 1-го
 	 //вывод статистики по сужению по всем задачам
-	if (reduction)
+	if ( reduction )
 	{
+		if (quantum_inf < _1ST_2ND_ + _2ND_1ST_)
+		{
+			//ТАБЛ. 1) 1-ый важнее 2-го
+			print_exp_red(sw_4, "1st criterion is more important then the 2nd", index_reduced_1_2, total_num_P_approx);
+
+			//ТАБЛ. 2) 2-ой важнее 1-го
+			print_exp_red(sw_4, "2nd criterion is more important then the 1st", index_reduced_2_1, total_num_P_approx);
+		}
+		else
+		{
+			for (int i = 0; i < index_reduced_tmp.size(); i++)
+				index_reduced_both[i] = index_reduced_both[i]/ num_prbl_val;
+			double aver_num = 0;
+			for (int i = 0; i < total_num_P_approx.size(); i++)
+				aver_num += total_num_P_approx[i];
+			print_exp_red_two(sw_4, "average statistics", index_reduced_both, NUM_STEPS_TETA+1, aver_num / total_num_P_approx.size());
+		}
+
+		/*
+
 		//ТАБЛ. 1) 1-ый важнее 2-го
 		//заголовок
 		sw_4->WriteLine("1st criterion is more important then the 2nd");
@@ -1537,8 +1591,7 @@ int main(int argc, char* argv[])
 		sw_4->WriteLine();
 
 
-
-		//ТАБЛ. 1) 2-ой важнее 1-го
+		//ТАБЛ. 2) 2-ой важнее 1-го
 		//заголовок
 		sw_4->WriteLine("2nd criterion is more important then the 1st");
 		sw_4->Write(";Points in approx of Pareto set;");
@@ -1603,6 +1656,8 @@ int main(int argc, char* argv[])
 		}
 		sw_4->WriteLine();
 		sw_4->WriteLine();
+
+		*/
 
 	}
 
