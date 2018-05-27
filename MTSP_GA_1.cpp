@@ -38,6 +38,12 @@ int main(int argc, char* argv[])
 	//оператор рекомбинации
 	recomb_oper rec_oper = recomb_oper::DEC_new;
 
+	//тип 1-го критерия
+	en_type_criterion type_1nd_criterion = en_type_criterion::SUM;
+
+	//тип 2-го критерия
+	en_type_criterion type_2nd_criterion = en_type_criterion::SUM;
+
 	//"кванты информации"
 	unsigned quantum_inf = _1ST_2ND_ + _2ND_1ST_;
 
@@ -116,6 +122,12 @@ int main(int argc, char* argv[])
 			continue;
 		}
 
+		if (str_temp == "\\MAX_1")
+			type_1nd_criterion = en_type_criterion::MAX;
+
+		if (str_temp == "\\MAX_2")
+			type_2nd_criterion = en_type_criterion::MAX;
+
 		if (str_temp == "\\ITER")
 		{
 			num_iter = stoi(argv[i + 1]);
@@ -151,6 +163,9 @@ int main(int argc, char* argv[])
 		
 		if (str_temp == "\\DPX")
 			rec_oper = recomb_oper::DPX;
+
+		if (str_temp == "\\DEC_one")
+			rec_oper = recomb_oper::DEC_old;
 	}
 	
 	//открываем для считывания
@@ -228,6 +243,8 @@ int main(int argc, char* argv[])
 		
 
 //to do: проверить считывание размера задачи из файлы
+//!!! добавить обработку, если в файле отсутствует строка "n="
+//?   нужно ли задавать n из командной строки?
 //		(для каждой задачи свой размер)
 		while (cur_line_str != "n=")
 			cur_line_str = sr->ReadLine();
@@ -243,7 +260,9 @@ int main(int argc, char* argv[])
 		//число особей
 		//число критериев
 		//длина максимального пути (?)
-		GA_path ga(num_n, num_N, 2, 100);
+		//тип 1-го критерия (сумма или максимум)
+		//тип 2-го критерия (сумма или максимум)
+		GA_path ga(num_n, num_N, 2, 100, type_1nd_criterion, type_2nd_criterion);
 
 
 		
@@ -723,6 +742,11 @@ int main(int argc, char* argv[])
 						case recomb_oper::DEC_new:
 							child = ga.DEC_new(ga.s_m, p1, p2);
 							break;
+
+						case recomb_oper::DEC_old:
+							child = ga.DEC_old(ga.s_m[0], p1, p2);
+							break;
+
 						case recomb_oper::DPX:
 							child = ga.DPX(ga.s_m, p1, p2);
 							break;

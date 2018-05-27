@@ -31,7 +31,10 @@ using namespace System;
 using namespace System::IO;
 
 //операторы кроссинговера
-public enum class recomb_oper {DEC_new, DPX};
+public enum class recomb_oper {DEC_new, DEC_old, DPX};
+
+//типы критерия
+public enum class en_type_criterion { SUM, MAX };
 
 
 class GA_path
@@ -39,6 +42,7 @@ class GA_path
 public:
 	GA_path();
 	GA_path(int n, int N, int m, int s_max_N);
+	GA_path(int n, int N, int m, int s_max_N, en_type_criterion type_1nd_criterion, en_type_criterion type_2nd_criterion);
 	~GA_path();
 	vector<vector<int>> pop;//популяция
 	vector<vector<vector<int>>> s_m;//матрица значений по каждому критерию
@@ -102,10 +106,13 @@ public:
 	//мутация обена
 	vector<int> exchange_mutation(vector<int> p);
 	//рандомизированный кроссинговер, основанный на наследовании дуг
+	//рекомбинация по одному критерию
 	vector<int> DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> p2);
-	// << julia:  новый опретор кроссинговера
+	// << julia:  новый оператор кроссинговера DEC
+	//			  основан на отношении Парето
 	vector<int> DEC_new(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2);
-	// << julia
+	// << julia:  новый оператор кроссинговера DPX
+	//            основан на отношении Парето
 	vector<int> DPX(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2);
 
 
@@ -164,6 +171,9 @@ private:
 	//vector<vector<int>> phi;//пригодность особей (векторный критерий)
 	//vector<vector<vector<int>>> s_m;//матрица значений по каждому критерию
 
+	//тип 1-го и 2-го критериев
+	en_type_criterion type_1nd_criterion, type_2nd_criterion;
+
 	int tourn_size = 10;//размер турнира
 	double p_mut = 0.1;//вероятность мутации
 
@@ -182,6 +192,7 @@ private:
 	bool is_improve_LS;//решение в локальном поиске локально улучшено
 	int q_current;//значение q для текущей задачи ОР (по алгоритму Сердюкова)
 
+
 	//РЕКОМБИНАЦИЯ
 	// << julia: Используется в функциях DEC_new и DCX
 	vector<bool> flag_Pareto_sol(int k, vector<vector<int>> s);
@@ -193,8 +204,10 @@ private:
 	//ЛОКАЛЬНЫЙ ПОИСК
 	vector<int> local_search(vector<int> assignment, vector<vector<int>> s_m_crit_index);
 
-	//вычисление пригодности особи
+	//вычисление значения особи по некоторому критерию (сумма дуг)
 	int phitness(vector<vector<int>> s, vector<int> p);
+	//вычисление значения особи по некоторому критерию (максимальная дуга)
+	int phitness_MAX(vector<vector<int>> s, vector<int> p);
 
 	//Венгерский метод
 	vector<int> Hungarian_method(int n, int m, vector<vector<int>> cost);

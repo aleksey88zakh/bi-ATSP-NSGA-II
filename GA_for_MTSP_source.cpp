@@ -19,6 +19,9 @@ GA_path::GA_path(int n, int N, int m, int s_max_N)
 	for (int i = 0; i < m; i++)
 		phi[i].resize(N);
 
+	this->type_1nd_criterion = en_type_criterion::SUM;
+	this->type_2nd_criterion = en_type_criterion::SUM;
+
 	i_rank.resize(N);
 	i_dist.resize(N);
 
@@ -31,6 +34,45 @@ GA_path::GA_path(int n, int N, int m, int s_max_N)
 	//for (int i = 0; i < N; i++)
 	//	this->pop[i] = new int[n];
 	//this->phi = new int[N];
+	this->rank = new int[N];
+	this->phi_best = s_max_N;
+	this->avg_phi = 0;
+	this->phi_best_in_rec = s_max_N;
+	this->ord_best_ind = -1;
+	this->iter_best = -1;
+	this->number_solution_in_rec = 0;
+	this->time_best = 0;
+	this->count_best_child = 0;
+	this->iter_best_child = 0;
+	this->is_improve_LS = false;
+
+}
+
+GA_path::GA_path(int n, int N, int m, int s_max_N, en_type_criterion type_1nd_criterion, en_type_criterion type_2nd_criterion)
+{
+	this->n = n;//число городов
+	this->N = N;//размер популяции
+	this->m = m;//число критериев
+
+	phi.resize(m);
+	for (int i = 0; i < m; i++)
+		phi[i].resize(N);
+
+	this->type_1nd_criterion = type_1nd_criterion;
+	this->type_2nd_criterion = type_2nd_criterion;
+
+	i_rank.resize(N);
+	i_dist.resize(N);
+
+	i_rank_R_t.resize(2 * N);
+	i_dist_R_t.resize(2 * N);
+
+	this->tourn_size = 10;//размер турнира
+
+						  //this->pop = new int*[N];
+						  //for (int i = 0; i < N; i++)
+						  //	this->pop[i] = new int[n];
+						  //this->phi = new int[N];
 	this->rank = new int[N];
 	this->phi_best = s_max_N;
 	this->avg_phi = 0;
@@ -269,7 +311,7 @@ vector<int> GA_path::local_search(vector<int> assignment, vector<vector<int>> s_
 }
 
 ////////////////////////////////////////////////////////////////////////////////    
-//Вычисление значения особи по некоторому критерию
+//Вычисление значения особи по некоторому критерию (сумма дуг)
 ////////////////////////////////////////////////////////////////////////////////
 int GA_path::phitness(vector<vector<int>> s, vector<int> p)
 {
@@ -281,6 +323,20 @@ int GA_path::phitness(vector<vector<int>> s, vector<int> p)
 	return phi_c;
 }
 
+////////////////////////////////////////////////////////////////////////////////    
+//Вычисление значения особи по некоторому критерию (максимальная дуга)
+////////////////////////////////////////////////////////////////////////////////
+int GA_path::phitness_MAX(vector<vector<int>> s, vector<int> p)
+{
+	int phi_c_max = s[p[size(p) - 1] - 1][p[0] - 1];
+	
+	for (int i = 0; i < size(p) - 1; ++i)
+		if (phi_c_max < s[p[i] - 1][p[i + 1] - 1])
+			phi_c_max = s[p[i] - 1][p[i + 1] - 1];
+		
+	return phi_c_max;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //Значение векторного критерия для особи
@@ -288,8 +344,25 @@ int GA_path::phitness(vector<vector<int>> s, vector<int> p)
 vector<int> GA_path::multi_phitness(vector<int> p)
 {
 	vector<int> temp;
-	for (int i=0; i<s_m.size(); i++)
-		temp.push_back(phitness(s_m[i], p));
+	for (int i = 0; i < s_m.size(); i++)
+	{
+		if (i == 1)
+		{
+			if (type_2nd_criterion == en_type_criterion::MAX)
+				temp.push_back(phitness_MAX(s_m[0], p));
+			if (type_2nd_criterion == en_type_criterion::SUM)
+				temp.push_back(phitness(s_m[i], p));
+			continue;
+		}
+		if (i == 0)
+		{
+			if (type_1nd_criterion == en_type_criterion::MAX)
+				temp.push_back(phitness_MAX(s_m[1], p));
+			if (type_1nd_criterion == en_type_criterion::SUM)
+				temp.push_back(phitness(s_m[i], p));
+			continue;
+		}
+	}
 
 	return temp;
 }
@@ -1859,7 +1932,7 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 	return child;
 }
 
-//СТРАРЫЙ ОПЕРАТОР
+//СТРАРЫЙ ОПЕРАТОР (рекомбинация по одному критерию)
 //////////////////////////////////////////////////////////////////
 //рандомизированный кроссинговер, основанный на наследовании дуг
 //////////////////////////////////////////////////////////////////
