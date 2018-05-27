@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
 
 	//количества задач
 	int num_prbl_val = 0;
-	//флаг, указано название задачи
+	//флаг, указано ли название задачи
 	bool is_problem_specified;
 
 	//если указано название задачи
@@ -204,12 +204,12 @@ int main(int argc, char* argv[])
 			cur_line_str = sr->ReadLine();
 
 		cur_line_str = sr->ReadLine();
-		string num_prbl_str = "";
-		num_prbl_str += cur_line_str[0];
-		num_prbl_val = stoi(num_prbl_str);
+		str_temp = "";
+		str_temp += cur_line_str[0];
+		num_prbl_val = stoi(str_temp);
 	}
 
-	//char** vec_problem_name_str = new char*[num_prbl_val];
+	
 
 
 	//ЗАДАЧИ
@@ -225,7 +225,18 @@ int main(int argc, char* argv[])
 			problem_name_str = sr->ReadLine();
 		}
 		
-		//vec_problem_name_str[iter_prbl] = problem_name_str;
+		
+
+//to do: проверить считывание размера задачи из файлы
+//		(для каждой задачи свой размер)
+		while (cur_line_str != "n=")
+			cur_line_str = sr->ReadLine();
+		cur_line_str = sr->ReadLine();
+		str_temp = "";
+		int k = 0;
+		while ( k < cur_line_str->Length )
+			str_temp += cur_line_str[k++];
+		num_n = stoi(str_temp);
 
 		//значения аргументов конструктора ГА (по порядку)
 		//число городов
@@ -235,11 +246,7 @@ int main(int argc, char* argv[])
 		GA_path ga(num_n, num_N, 2, 100);
 
 
-		//генерация матриц расстояний (2 критерия)
-		vector<vector<int>> s_temp(ga.get_n(), vector<int>(ga.get_n()));
-		//макс длина дуги по каждому критерию
-		vector<int> c_max;
-
+		
 		//функция reserve() почему-то не работает
 		//s_temp.reserve(10);
 		//for (int i = 0; i < 10; i++)
@@ -247,8 +254,6 @@ int main(int argc, char* argv[])
 
 		
 		int var_rand = 10;
-		int c_max_temp = 0;
-		int s_aver_temp = 0;
 		
 
 		String^ file_name_st;
@@ -285,7 +290,7 @@ int main(int argc, char* argv[])
 		sw_1->WriteLine("iter; {0}", num_iter);
 		sw_1->WriteLine("run; {0}", num_runs);
 
-		//файл для записи эксепримента по сужению мн-ва Парето
+		//файл для записи эксперимента по сужению мн-ва Парето
 		if (reduction)
 		{
 			sw_3->WriteLine(problem_name_str);
@@ -296,221 +301,16 @@ int main(int argc, char* argv[])
 
 		}
 
-		while (cur_line_str != "s1=")
-			cur_line_str = sr->ReadLine();
 
-		//заполнение матрицы 1-го критерия из файла
-		//printf("Criterion 1");
-		//sw->WriteLine("Criterion 1");
-		for (int i = 0; i < ga.get_n(); i++) //индекс строки
-		{
-			cur_line_str = sr->ReadLine();
-
-			int j = 0; //индекс столбца
-			int num_temp;
-			string str_temp;
-			//разбираем текущую строку
-			for (int k = 0; k < cur_line_str->Length; k++)
-			{
-				if (cur_line_str[k] == ' ')
-				{
-					num_temp = stoi(str_temp);
-					s_temp[i][j] = num_temp;
-					//sw->Write("{0};", s_temp[i][j]);
-					//printf("%d \t", s_temp[i][j]);
-
-					//подсчет среднего элемента
-					s_aver_temp += s_temp[i][j];
-					//подсчет максимального элемента
-					if (c_max_temp < s_temp[i][j])
-						c_max_temp = s_temp[i][j];
-
-					j++;
-					str_temp = "";
-
-					if (j == ga.get_n())
-						break;
-				}
-				else
-					str_temp += cur_line_str[k];
-			}
-			//sw->WriteLine();
-
-		}
-
-		//добавляем матрицу 1-го критерия в массив s_m
-		ga.set_matrix_criteria(s_temp);
-
-		s_aver_temp = (int)s_aver_temp / ga.get_n()*ga.get_n();
-		//добавляем средний и макс элементы в свои массивы
-		ga.s_aver.push_back(s_aver_temp);
-		c_max.push_back(c_max_temp);
-
-		//sw->WriteLine();
-		//printf("\n");
-
-		s_aver_temp = 0;
-		c_max_temp = 0;
-
-		/*
-		//Матрица расстояний 1-го критерия
-		int k = 0;
-			printf("Criterion %d\n", k + 1);
-			sw->WriteLine("Criterion; {0}", k + 1);
-
-			srand(23);//ПОМЕНЯТЬ!!!
-
-			vector <vector<int>> s_temp1(20, vector<int>(20));
-			for (int i = 0; i < 20; i++)
-			{
-				for (int j = 0; j < 20; j++)
-				{
-					if (i == j)
-						s_temp1[i][i] = 0;
-					else
-						s_temp1[i][j] = (rand() % 20) + 1; //ПОМЕНЯТЬ!!!
-				}
-			}
-
-
-
-			c_max_temp = 0;
-			for (int i = 0; i < ga.get_n(); i++)
-			{
-				for (int j = 0; j < ga.get_n(); j++)
-				{
-					s_temp[i][j] = s_temp1[i][j];
-
-					sw->Write("{0};", s_temp[i][j]);
-					printf("%d \t", s_temp[i][j]);
-
-					s_aver_temp += s_temp[i][j];
-
-					if (c_max_temp < s_temp[i][j])
-						c_max_temp = s_temp[i][j];
-				}
-				sw->WriteLine();
-			}
-
-			ga.set_matrix_criteria(s_temp);
-
-			s_aver_temp = (int)s_aver_temp / ga.get_n()*ga.get_n();
-			ga.s_aver.push_back(s_aver_temp);
-			c_max.push_back(c_max_temp);
-
-
-		sw->WriteLine();
-		printf("\n");
-		*/
-
-
-		while (cur_line_str != "s2=")
-			cur_line_str = sr->ReadLine();
-
-		//заполнение матрицы 2-го критерия из файла
-		//printf("Criterion 2");
-		//sw->WriteLine("Criterion 2");
-		for (int i = 0; i < ga.get_n(); i++) //индекс строки
-		{
-			cur_line_str = sr->ReadLine();
-
-			int j = 0; //индекс столбца
-			int num_temp;
-			string str_temp;
-			//разбираем текущую строку
-			for (int k = 0; k < cur_line_str->Length; k++)
-			{
-				if (cur_line_str[k] == ' ')
-				{
-					num_temp = stoi(str_temp);
-					s_temp[i][j] = num_temp;
-					//sw->Write("{0};", s_temp[i][j]);
-					//printf("%d \t", s_temp[i][j]);
-
-					//подсчет среднего элемента
-					s_aver_temp += s_temp[i][j];
-					//подсчет максимального элемента
-					if (c_max_temp < s_temp[i][j])
-						c_max_temp = s_temp[i][j];
-
-					j++;
-					str_temp = "";
-
-					if (j == ga.get_n())
-						break;
-				}
-				else
-					str_temp += cur_line_str[k];
-			}
-			//sw->WriteLine();
-
-		}
-
-		//добавляем матрицу 2-го критерия в массив s_m
-		ga.set_matrix_criteria(s_temp);
-
-		s_aver_temp = (int)s_aver_temp / ga.get_n()*ga.get_n();
-		//добавляем средний и макс элементы в свои массивы
-		ga.s_aver.push_back(s_aver_temp);
-		c_max.push_back(c_max_temp);
-
-		//sw->WriteLine();
-		//printf("\n");
-
-
-		/*
-		//Матрица расстояний 2-го критерия
-		k++;
-		printf("Criterion %d\n", k + 1);
-		sw->WriteLine("Criterion; {0}", k + 1);
-
-
-		srand(32);//ПОМЕНЯТЬ!!!
-
-		for (int i = 0; i < 20; i++)
-		{
-			for (int j = 0; j < 20; j++)
-			{
-				if (i == j)
-					s_temp1[i][i] = 0;
-				else
-					s_temp1[i][j] = (rand() % 20) + 1;//ПОМЕНЯТЬ!!!
-			}
-		}
-
-
-
-		c_max_temp = 0;
-		s_aver_temp = 0;
-		for (int i = 0; i < ga.get_n(); i++)
-		{
-			for (int j = 0; j < ga.get_n(); j++)
-			{
-
-				s_temp[i][j] = s_temp1[i][j];
-
-				sw->Write("{0};", s_temp[i][j]);
-				printf("%d \t", s_temp[i][j]);
-
-				s_aver_temp += s_temp[i][j];
-
-				if (c_max_temp < s_temp[i][j])
-					c_max_temp = s_temp[i][j];
-			}
-			sw->WriteLine();
-		}
-
-		ga.set_matrix_criteria(s_temp);
-
-		s_aver_temp = (int)s_aver_temp / ga.get_n()*ga.get_n();
-		ga.s_aver.push_back(s_aver_temp);
-		c_max.push_back(c_max_temp);
-		*/
+		//заполнение матриц критериев
+		ga.set_matrices(sr);
 
 		sw->WriteLine();
 
-		
-		//сбрасываем перед циклом по всем запускам
+
+//		ga.init();
+//<<<
+		//сбрасываем значения перед циклом по всем запускам
 		total_dist_begin_1 = 0;
 		total_dist_begin_2 = 0;
 		total_dist_end_1 = 0;
@@ -547,7 +347,7 @@ int main(int argc, char* argv[])
 		//для сужения делаем только один запуск
 		if (reduction)
 			num_runs = 1;
-
+///>>>
 
 		//засекаем время начала работы алгоритма для данной задачи
 		//считаем общее время для одной задачи по всем запускам
@@ -564,10 +364,10 @@ int main(int argc, char* argv[])
 
 			//родители нач популяции
 			vector<int> p1, p2, p3, p4;
-			p1 = ga.patching_algorithm(ga.s_m[0], c_max[0], false);
-			p2 = ga.patching_algorithm(ga.s_m[0], c_max[0], true);
-			p3 = ga.patching_algorithm(ga.s_m[1], c_max[1], false);
-			p4 = ga.patching_algorithm(ga.s_m[1], c_max[1], true);
+			p1 = ga.patching_algorithm(ga.s_m[0], ga.c_max[0], false);
+			p2 = ga.patching_algorithm(ga.s_m[0], ga.c_max[0], true);
+			p3 = ga.patching_algorithm(ga.s_m[1], ga.c_max[1], false);
+			p4 = ga.patching_algorithm(ga.s_m[1], ga.c_max[1], true);
 
 			//sw->WriteLine("p1; p2; p3; p4");
 			//printf("\np1\t p2\t p3\t p4\n");
@@ -645,7 +445,7 @@ int main(int argc, char* argv[])
 
 			//0. начальная популяция
 			temp_time = ::GetTickCount();
-			ga.init_pop(ga.s_m, c_max[0], temp_time, p1, p2, p3, p4);
+			ga.init_pop(ga.s_m, ga.c_max[0], temp_time, p1, p2, p3, p4);
 
 			sw->WriteLine("Initial population");
 			//sw_1->WriteLine("Initial population");
@@ -1326,7 +1126,7 @@ int main(int argc, char* argv[])
 				max_num_P_approx = ga.phi_P_approx.size();
 			*/
 			
-			if (quantum_inf < _1ST_2ND_ + _2ND_1ST_)
+			if (quantum_inf == _1ST_2ND_)
 			{ //задан один "квант информации"
 
 				//1-ый критерий важнее 2-го
@@ -1334,6 +1134,9 @@ int main(int argc, char* argv[])
 				sw_3->WriteLine("1st is more important than 2nd");
 				index_reduced_1_2.push_back(ga.experiment_reduction(sw_3, problem_name_str, 0.1, NUM_STEPS_TETA, 0, _1ST_2ND_));
 				sw_3->WriteLine();
+			}
+			if (quantum_inf == _2ND_1ST_ )
+			{ //задан один "квант информации"
 
 				//2-ой критерий важнее 1-го
 				sw_3->WriteLine("Reduction of the Pareto set");
@@ -1341,13 +1144,12 @@ int main(int argc, char* argv[])
 				index_reduced_2_1.push_back(ga.experiment_reduction(sw_3, problem_name_str, 0.1, NUM_STEPS_TETA, 0, _2ND_1ST_));
 				sw_3->WriteLine();
 			}
-			else
+			if (quantum_inf == _1ST_2ND_+_2ND_1ST_ )
 			{ //задано два "кванта информации"
 
-				//1-ый критерий важнее 2-го + 2-ой важнее второго
+				//1-ый критерий важнее 2-го + 2-ой критерий важнее 1-го
 				sw_3->WriteLine("Reduction of the Pareto set");
 				sw_3->WriteLine("1st -> 2nd and 2nd -> 1st");
-				//index_reduced_1_2.push_back(ga.experiment_reduction(sw_3, problem_name_str, 0.1, 9, 0, _1ST_2ND_ + _2ND_1ST_));
 				index_reduced_tmp = ga.experiment_reduction(sw_3, problem_name_str, 0.1, NUM_STEPS_TETA+1, -0.1, _1ST_2ND_ + _2ND_1ST_);
 				//накапливаем сумму по всем задачам, чтобы потом вычислить среднее
 //!!! инициализация index_reduced_both и index_reduced_tmp

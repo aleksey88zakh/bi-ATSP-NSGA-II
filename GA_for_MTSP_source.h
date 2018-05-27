@@ -46,6 +46,7 @@ public:
 	vector<int> i_rank;//ранг фронта по Парето
 	vector<double> i_dist;//расстояние (для ранжирования внутри форнта)
 	vector<int> s_aver;//средняя величина элемента матрицы (по каждому критерию)
+	vector<int> c_max; //макс длина дуги (по каждому критерию)
 
 	//родители + потомки (R_t = P_t + Q_t)
 	vector<vector<int>> pop_R_t;
@@ -60,8 +61,9 @@ public:
 		//vector<vector<int>> vertex, vector<int> vertex_initial); - пока не используем
 	//построение особи с помощью рандомизатора
 	vector<int> random_individual();
-	//заполнение матриц расстояний
+	//функции по заполнению матриц расстояний
 	void set_matrix_criteria(vector<vector<int>> s);
+	void set_matrices(StreamReader^ sr);
 	//значение векторного критерия для особи
 	vector<int> multi_phitness(vector<int> p);
 	//отношение Парето
@@ -132,7 +134,7 @@ public:
 	//аппрокимации мн-ва Парето (без повторов) относительного "нового" критерия
 	vector<vector<double>> build_new_phi_P_approx(vector<vector<int>> init_phi_P_approx, double teta_1, double teta_2, unsigned quantum_inf);
 	//построение мн-ва Парето перебором
-	vector<vector<double>> build_phi_P_enum(vector<vector<double>> init_set);
+	vector<vector<int>> build_phi_P_enum(vector<vector<double>> init_set,  vector<vector<int>> phi_P_approx);
 	//вывод результатов эксперимента
 	friend void print_exp_red(StreamWriter^ sw_4, String^ quantum_inf_name_str, vector<vector<double>> index_reduced, vector<int> total_num_P_approx);
 	friend void print_exp_red_two(StreamWriter^ sw_4, String^ problem_name_str, vector<double> index_reduced, int num_steps, double total_num_P_approx);

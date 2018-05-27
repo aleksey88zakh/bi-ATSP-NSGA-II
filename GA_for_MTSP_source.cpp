@@ -302,6 +302,230 @@ void GA_path::set_matrix_criteria(vector<vector<int>> s)
 {
 	this->s_m.push_back(s);
 }
+////////////////////////////////////////////////////////////////////////////////
+//разбор матриц из файла и запись в контейнер s_m (через set_matrix_criteria())
+////////////////////////////////////////////////////////////////////////////////
+void GA_path::set_matrices(StreamReader^ sr)
+{
+	String^ cur_line_str = sr->ReadLine();
+	
+	//временный контейнер для матриц расстояний
+	vector<vector<int>> s_temp(this->get_n(), vector<int>(this->get_n()));
+	int c_max_temp = 0;
+	int s_aver_temp = 0;
+	
+	while (cur_line_str != "s1=")
+		cur_line_str = sr->ReadLine();
+
+	//заполнение матрицы 1-го критерия из файла
+	//printf("Criterion 1");
+	//sw->WriteLine("Criterion 1");
+	for (int i = 0; i < this->get_n(); i++) //индекс строки
+	{
+		cur_line_str = sr->ReadLine();
+
+		int j = 0; //индекс столбца
+		int num_temp;
+		string str_temp;
+		//разбираем текущую строку
+		for (int k = 0; k < cur_line_str->Length; k++)
+		{
+			if (cur_line_str[k] == ' ')
+			{
+				num_temp = stoi(str_temp);
+				s_temp[i][j] = num_temp;
+				//sw->Write("{0};", s_temp[i][j]);
+				//printf("%d \t", s_temp[i][j]);
+
+				//подсчет среднего элемента
+				s_aver_temp += s_temp[i][j];
+				//подсчет максимального элемента
+				if (c_max_temp < s_temp[i][j])
+					c_max_temp = s_temp[i][j];
+
+				j++;
+				str_temp = "";
+
+				if (j == this->get_n())
+					break;
+			}
+			else
+				str_temp += cur_line_str[k];
+		}
+		//sw->WriteLine();
+
+	}
+
+	//добавляем матрицу 1-го критерия в массив s_m
+	this->set_matrix_criteria(s_temp);
+
+	s_aver_temp = (int)s_aver_temp / this->get_n()*this->get_n();
+	//добавляем средний и макс элементы в свои массивы
+	this->s_aver.push_back(s_aver_temp);
+	this->c_max.push_back(c_max_temp);
+
+	//sw->WriteLine();
+	//printf("\n");
+
+	s_aver_temp = 0;
+	c_max_temp = 0;
+
+	/*
+	//Матрица расстояний 1-го критерия
+	int k = 0;
+	printf("Criterion %d\n", k + 1);
+	sw->WriteLine("Criterion; {0}", k + 1);
+
+	srand(23);//ПОМЕНЯТЬ!!!
+
+	vector <vector<int>> s_temp1(20, vector<int>(20));
+	for (int i = 0; i < 20; i++)
+	{
+	for (int j = 0; j < 20; j++)
+	{
+	if (i == j)
+	s_temp1[i][i] = 0;
+	else
+	s_temp1[i][j] = (rand() % 20) + 1; //ПОМЕНЯТЬ!!!
+	}
+	}
+
+
+
+	c_max_temp = 0;
+	for (int i = 0; i < ga.get_n(); i++)
+	{
+	for (int j = 0; j < ga.get_n(); j++)
+	{
+	s_temp[i][j] = s_temp1[i][j];
+
+	sw->Write("{0};", s_temp[i][j]);
+	printf("%d \t", s_temp[i][j]);
+
+	s_aver_temp += s_temp[i][j];
+
+	if (c_max_temp < s_temp[i][j])
+	c_max_temp = s_temp[i][j];
+	}
+	sw->WriteLine();
+	}
+
+	ga.set_matrix_criteria(s_temp);
+
+	s_aver_temp = (int)s_aver_temp / ga.get_n()*ga.get_n();
+	ga.s_aver.push_back(s_aver_temp);
+	c_max.push_back(c_max_temp);
+
+
+	sw->WriteLine();
+	printf("\n");
+	*/
+
+
+	while (cur_line_str != "s2=")
+		cur_line_str = sr->ReadLine();
+
+	//заполнение матрицы 2-го критерия из файла
+	//printf("Criterion 2");
+	//sw->WriteLine("Criterion 2");
+	for (int i = 0; i < this->get_n(); i++) //индекс строки
+	{
+		cur_line_str = sr->ReadLine();
+
+		int j = 0; //индекс столбца
+		int num_temp;
+		string str_temp;
+		//разбираем текущую строку
+		for (int k = 0; k < cur_line_str->Length; k++)
+		{
+			if (cur_line_str[k] == ' ')
+			{
+				num_temp = stoi(str_temp);
+				s_temp[i][j] = num_temp;
+				//sw->Write("{0};", s_temp[i][j]);
+				//printf("%d \t", s_temp[i][j]);
+
+				//подсчет среднего элемента
+				s_aver_temp += s_temp[i][j];
+				//подсчет максимального элемента
+				if (c_max_temp < s_temp[i][j])
+					c_max_temp = s_temp[i][j];
+
+				j++;
+				str_temp = "";
+
+				if (j == this->get_n())
+					break;
+			}
+			else
+				str_temp += cur_line_str[k];
+		}
+		//sw->WriteLine();
+
+	}
+
+	//добавляем матрицу 2-го критерия в массив s_m
+	this->set_matrix_criteria(s_temp);
+
+	s_aver_temp = (int)s_aver_temp / this->get_n()*this->get_n();
+	//добавляем средний и макс элементы в свои массивы
+	this->s_aver.push_back(s_aver_temp);
+	this->c_max.push_back(c_max_temp);
+
+	//sw->WriteLine();
+	//printf("\n");
+
+
+	/*
+	//Матрица расстояний 2-го критерия
+	k++;
+	printf("Criterion %d\n", k + 1);
+	sw->WriteLine("Criterion; {0}", k + 1);
+
+
+	srand(32);//ПОМЕНЯТЬ!!!
+
+	for (int i = 0; i < 20; i++)
+	{
+	for (int j = 0; j < 20; j++)
+	{
+	if (i == j)
+	s_temp1[i][i] = 0;
+	else
+	s_temp1[i][j] = (rand() % 20) + 1;//ПОМЕНЯТЬ!!!
+	}
+	}
+
+
+
+	c_max_temp = 0;
+	s_aver_temp = 0;
+	for (int i = 0; i < ga.get_n(); i++)
+	{
+	for (int j = 0; j < ga.get_n(); j++)
+	{
+
+	s_temp[i][j] = s_temp1[i][j];
+
+	sw->Write("{0};", s_temp[i][j]);
+	printf("%d \t", s_temp[i][j]);
+
+	s_aver_temp += s_temp[i][j];
+
+	if (c_max_temp < s_temp[i][j])
+	c_max_temp = s_temp[i][j];
+	}
+	sw->WriteLine();
+	}
+
+	ga.set_matrix_criteria(s_temp);
+
+	s_aver_temp = (int)s_aver_temp / ga.get_n()*ga.get_n();
+	ga.s_aver.push_back(s_aver_temp);
+	c_max.push_back(c_max_temp);
+	*/
+
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3063,7 +3287,7 @@ vector<double> GA_path::experiment_reduction(StreamWriter^ sw, String^ problem_n
 	int num_rows = 1;
 	
 	vector<vector<double>> new_phi_P_approx;
-	vector<vector<double>> phi_P_approx_reduced;
+	vector<vector<int>> phi_P_approx_reduced;
 	vector<double> index_reduced_temp;
 
 	/*
@@ -3099,8 +3323,8 @@ vector<double> GA_path::experiment_reduction(StreamWriter^ sw, String^ problem_n
 			
 			//пересчитываем векторы в новом вектороном критерии (значения вещественные, т.к. teta вещественные)
 			new_phi_P_approx = this->build_new_phi_P_approx(this->phi_P_approx, teta_1, teta_2, quantum_inf);
-			//находим мн-во Парето в новом критеритериальном пр-ве
-			phi_P_approx_reduced = this->build_phi_P_enum(new_phi_P_approx);
+			//находим сужение мн-ва Парето в исходном критеритериальном пр-ве (относительно 2-го аргумента)
+			phi_P_approx_reduced = this->build_phi_P_enum(new_phi_P_approx, this->phi_P_approx);
 
 			if ( quantum_inf == (_1ST_2ND_ + _2ND_1ST_) )
 				sw->WriteLine("teta_12; {0:F1}; teta_21; {0:F1}", teta_1, teta_2);
@@ -3174,9 +3398,9 @@ vector<vector<double>> GA_path::build_new_phi_P_approx(vector<vector<int>> init_
 ////////////////////////////////////////////////////////////////////////////////
 //построение мн-ва Парето перебором
 ////////////////////////////////////////////////////////////////////////////////
-vector<vector<double>> GA_path::build_phi_P_enum(vector<vector<double>> init_set)
+vector<vector<int>> GA_path::build_phi_P_enum(vector<vector<double>> init_set, vector<vector<int>> phi_P_approx)
 {
-	vector<vector<double>> res_set;
+	vector<vector<int>> res_set;
 
 	bool* flag_s = new bool[init_set.size()];
 	for (int i = 0; i < init_set.size(); i++)
@@ -3203,10 +3427,10 @@ vector<vector<double>> GA_path::build_phi_P_enum(vector<vector<double>> init_set
 
 	}
 	
-	for (int i = 0; i < init_set.size(); i++)
+	for (int i = 0; i < phi_P_approx.size(); i++)
 	{
 		if (!flag_s[i])
-			res_set.push_back(init_set[i]);
+			res_set.push_back(phi_P_approx[i]);
 	}
 
 	return res_set;
