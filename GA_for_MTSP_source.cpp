@@ -37,7 +37,7 @@ GA_path::GA_path(int n, int N, int m, int s_max_N)
 	this->rank = new int[N];
 	this->phi_best = s_max_N;
 	this->avg_phi = 0;
-	this->phi_best_in_rec = s_max_N;
+	//this->phi_best_in_rec = s_max_N;
 	this->ord_best_ind = -1;
 	this->iter_best = -1;
 	this->number_solution_in_rec = 0;
@@ -76,7 +76,7 @@ GA_path::GA_path(int n, int N, int m, int s_max_N, en_type_criterion type_1nd_cr
 	this->rank = new int[N];
 	this->phi_best = s_max_N;
 	this->avg_phi = 0;
-	this->phi_best_in_rec = s_max_N;
+	//this->phi_best_in_rec = s_max_N;
 	this->ord_best_ind = -1;
 	this->iter_best = -1;
 	this->number_solution_in_rec = 0;
@@ -107,7 +107,7 @@ void GA_path::init_pop(vector<vector<vector<int>>> s, int S_max, unsigned long l
 	//vector<vector<int>> vertex, vector<int> vertex_initial) - пока не используем
 {
 	this->phi_best = S_max*this->n;
-	this->phi_best_in_rec = S_max*this->n;
+	//this->phi_best_in_rec = S_max*this->n;
 	this->number_solution_in_rec = 0;
 	this->count_best_child = 0;
 	this->iter_best_child = 0;
@@ -1936,7 +1936,7 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 //////////////////////////////////////////////////////////////////
 //рандомизированный кроссинговер, основанный на наследовании дуг
 //////////////////////////////////////////////////////////////////
-vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> p2)
+vector<int> GA_path::DEC_old(vector<int> p1, vector<int> p2)
 {
 	//        for (int i = 0; i < p1.length; ++i) {
 	//            System.out.print(p1[i] + " ");
@@ -2266,7 +2266,7 @@ vector<int> GA_path::DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> 
 	//       System.out.println(this.phitnessTSP(s, p1));
 	//       System.out.println(this.phitnessTSP(s, p2));
 	//       System.out.println(this.phitnessTSP(s, child));
-	this->phi_best_in_rec = this->phitness(s, child);
+	//this->phi_best_in_rec = this->phitness(s, child);
 	this->number_solution_in_rec = 1;
 	return child;
 }

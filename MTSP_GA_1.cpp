@@ -744,7 +744,7 @@ int main(int argc, char* argv[])
 							break;
 
 						case recomb_oper::DEC_old:
-							child = ga.DEC_old(ga.s_m[0], p1, p2);
+							child = ga.DEC_old(p1, p2);
 							break;
 
 						case recomb_oper::DPX:
@@ -754,7 +754,7 @@ int main(int argc, char* argv[])
 						
 
 					//мутируем потомка, у кототорого значения критерия совпадает хотя бы с одним из родителей
-					//Юля
+					//Юлечка
 					if (MODIF)
 					{
 						//для рандомизатора

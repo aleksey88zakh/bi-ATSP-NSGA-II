@@ -107,11 +107,11 @@ public:
 	vector<int> exchange_mutation(vector<int> p);
 	//рандомизированный кроссинговер, основанный на наследовании дуг
 	//рекомбинация по одному критерию
-	vector<int> DEC_old(vector<vector<int>> s, vector<int> p1, vector<int> p2);
-	// << julia:  новый оператор кроссинговера DEC
+	vector<int> DEC_old(vector<int> p1, vector<int> p2);
+	// << Yulechka:  новый оператор кроссинговера DEC
 	//			  основан на отношении Парето
 	vector<int> DEC_new(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2);
-	// << julia:  новый оператор кроссинговера DPX
+	// << Yulechka:  новый оператор кроссинговера DPX
 	//            основан на отношении Парето
 	vector<int> DPX(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2);
 
@@ -187,16 +187,16 @@ private:
 	long time_best;//время получения лучшей особи
 				   //для рекомбинации
 	int number_solution_in_rec;//число потомков в рекомбинации
-	int phi_best_in_rec;// пригодность лучшей особи в рекомбинации
+	//int phi_best_in_rec;// пригодность лучшей особи в рекомбинации
 	bool is_AP_solution_opt;
 	bool is_improve_LS;//решение в локальном поиске локально улучшено
 	int q_current;//значение q для текущей задачи ОР (по алгоритму Сердюкова)
 
 
 	//РЕКОМБИНАЦИЯ
-	// << julia: Используется в функциях DEC_new и DCX
+	// << Yulechka: Используется в функциях DEC_new и DCX
 	vector<bool> flag_Pareto_sol(int k, vector<vector<int>> s);
-	// << julia: Используется в функциях DEC_new и DCX
+	// << Yulechka: Используется в функциях DEC_new и DCX
 	//           поиск следующего активного элемента
 	int next(int j, int k, vector<bool> flag_S);
 
