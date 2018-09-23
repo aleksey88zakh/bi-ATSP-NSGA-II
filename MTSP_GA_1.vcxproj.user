@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>\INPUT "Example_MTSP_m2_n20_N50_12contr.txt" \ITER 40 \FILE_PARETO "Example_MTSP_m2_n20_N50_12contr_Temp.csv" \PROBLEM_NAME "mtsp_12_contr1"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>\INPUT "Example_MTSP_m2_n20_N50_1_20.txt" \ITER 1000 \FILE_PARETO "Example_MTSP_m2_n20_N50_1_20_Temp.csv"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <RemoteDebuggerCommandArguments>\INPUT "Example_MTSP_m2_n20_N50_1_10.txt" \REDUCE</RemoteDebuggerCommandArguments>
   </PropertyGroup>
