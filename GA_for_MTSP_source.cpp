@@ -15,9 +15,20 @@ GA_path::GA_path(int n, int N, int m, int s_max_N)
 	this->N = N;//размер популяции
 	this->m = m;//число критериев
 
-	phi.resize(m);
-	for (int i = 0; i < m; i++)
-		phi[i].resize(N);
+	phi.resize(2*N);
+	//for (int i = 0; i < N; i++)  - инициализируется через phi[i] = ...
+	//	phi[i].resize(m);
+
+	//----------------------------------
+	//ЛОКАЛЬНЫЙ ПОИСК
+	//через reserve?
+	c_max.resize(n);
+	for (int i = 0; i < n; i++)
+		c_max[i].resize(m);
+
+	i_rank_pi.resize(n);
+	index_p.resize(n);
+	//----------------------------------
 
 	i_rank.resize(N);
 	i_dist.resize(N);
@@ -128,145 +139,6 @@ void GA_path::init_pop(vector<vector<vector<int>>> s, int S_max, unsigned long l
 
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//Локальный поиск
-////////////////////////////////////////////////////////////////////////////////
-vector<int> GA_path::local_search(vector<int> assignment, vector<vector<int>> s_m_crit_index)
-{
-	int G = 0;
-	int F = 0;
-	int F_max = -1;
-	vector<int> result(this->get_n());
-	vector<vector<int>> path(2, vector<int>(this->get_n()));
-
-	//            Random rnd = new Random();//датчик случайных чисел
-	int j_head = -1;
-	int i_next = -1;
-	int i_temp = -1;
-	int i_tail = -1;
-	int j_tail = -1;
-	int count = 0;
-	bool is_improve = true;
-
-	for (int i = 0; i< this->get_n() - 1; i++)
-	{
-		path[1][assignment[i] - 1] = assignment[i + 1] - 1;
-		path[0][assignment[i + 1] - 1] = assignment[i] - 1;
-	}
-	path[1][assignment[this->get_n() - 1] - 1] = assignment[0] - 1;
-	path[0][assignment[0] - 1] = assignment[this->get_n() - 1] - 1;
-
-	while (is_improve)
-	{//пока есть улучшения - движемся вперед!
-					   //          i_head=rnd.nextInt(n);//случайным образом выбирается начальная вершина (i_head - это конец пути)
-		for (int i_head = 0; i_head < this->get_n(); i_head++)
-		{
-			is_improve = false;
-			j_head = path[1][i_head]; //(j_head - это начало пути) 
-			path[1][i_head] = -1;//удаляем дугу
-			path[0][j_head] = -1;
-
-			//добавляем дугу для образования цикла 
-			for (int i_t = 0; i_t < this->get_n(); i_t++)
-			{
-				if (i_head != i_t && j_head != i_t)
-				{
-					i_next = i_t;
-					G = 0;//начальный выигрыш
-						  //добавляем дугу и тем самым создаем цикл
-						  //добавляем (i_head, i_next)
-					path[1][i_head] = i_next;
-					i_temp = path[0][i_next];//дуга для удаления формируется однозначно
-					path[0][i_next] = i_head;
-					G = G + s_m_crit_index[i_head][j_head] - s_m_crit_index[i_head][i_next];//обновляем выигрыш
-																  //удаляем (i_temp, i_next)
-					path[1][i_temp] = -1;
-					//разрываем цикл
-					//выбираем вершину из цикла j_tail
-					count = 0;
-					F_max = -1;
-					j_tail = -1;
-					i_tail = path[1][i_next];//просматриваем вершины цикла
-					while (count < this->get_n())
-					{
-						if (i_next != i_tail)
-						{
-							F = G + s_m_crit_index[i_temp][i_next] - s_m_crit_index[i_temp][i_tail] +
-								s_m_crit_index[path[0][i_tail]][i_tail] - s_m_crit_index[path[0][i_tail]][j_head];
-							if (F > 0)
-							{
-								count++;
-								if (F > F_max)
-								{
-									j_tail = i_tail;
-									F_max = F;
-								}
-							}
-						}
-
-						i_tail = path[1][i_tail];
-						if (i_tail == i_next)
-							break;
-					}
-
-					if (count == 0)
-					{//в данном направлении нет улучшения (возвращаем метки на место)
-						path[1][i_head] = -1;
-						path[0][j_head] = -1;
-						path[0][i_next] = i_temp;
-						path[1][i_temp] = i_next;
-					}
-					else {//нашли улучшающее решение
-						  //добавляем (i_temp, j_tail)
-						path[1][i_temp] = j_tail;
-						i_tail = path[0][j_tail];
-						path[0][j_tail] = i_temp;
-						//удаляем (i_tail, j_tail)
-						path[1][i_tail] = -1;
-						//добавляем (i_tail, j_head)
-						path[1][i_tail] = j_head;
-						path[0][j_head] = i_tail;
-						is_improve = true;
-						break;
-					}
-				}
-
-			}
-
-			if (is_improve)
-			{
-				//                    for (int i = 0; i < n; ++i) {
-				//                    result[i] = path[1][i];
-				//                    System.out.print(result[i]+" ");
-				//                    }
-				//                    System.out.println();
-				//                     System.out.println("Улучшение: " +costAssignment(c, result));
-				break;
-			}
-			else {
-				path[1][i_head] = j_head;//возвращаем дугу
-				path[0][j_head] = i_head;
-			}
-		}
-	}
-
-	//формируем перестановку (циклическая)
-	result[0] = 1;
-	i_temp = 0;
-	for (int i = 1; i<n; ++i)
-	{
-		result[i] = path[1][i_temp] + 1;
-		i_temp = path[1][i_temp];
-	}
-
-	//                   for (int i = 0; i < n; ++i) {
-	//                    result[i] = path[1][i];
-	////                    System.out.print(result[i]+" ");
-	//                    }
-	//                    System.out.println();
-	//                     System.out.println("Итог: " +costAssignment(c, result));     
-	return result;
-}
 
 ////////////////////////////////////////////////////////////////////////////////    
 //Вычисление значения особи по некоторому критерию
@@ -325,6 +197,7 @@ void GA_path::set_matrices(StreamReader^ sr)
 		cur_line_str = sr->ReadLine();
 
 		int j = 0; //индекс столбца
+		this->c_max[i][0] = 0; //максимальная дуга по каждой строке
 		int num_temp;
 		string str_temp;
 		//разбираем текущую строку
@@ -342,6 +215,8 @@ void GA_path::set_matrices(StreamReader^ sr)
 				//подсчет максимального элемента
 				if (c_max_temp < s_temp[i][j])
 					c_max_temp = s_temp[i][j];
+				if (this->c_max[i][0] < s_temp[i][j])
+					this->c_max[i][0] = s_temp[i][j];
 
 				j++;
 				str_temp = "";
@@ -362,7 +237,7 @@ void GA_path::set_matrices(StreamReader^ sr)
 	s_aver_temp = (int)s_aver_temp / this->get_n()*this->get_n();
 	//добавляем средний и макс элементы в свои массивы
 	this->s_aver.push_back(s_aver_temp);
-	this->c_max.push_back(c_max_temp);
+	this->c_max_all.push_back(c_max_temp);
 
 	//sw->WriteLine();
 	//printf("\n");
@@ -433,6 +308,7 @@ void GA_path::set_matrices(StreamReader^ sr)
 		cur_line_str = sr->ReadLine();
 
 		int j = 0; //индекс столбца
+		this->c_max[i][1] = 0; //максимальная дуга по каждой строке
 		int num_temp;
 		string str_temp;
 		//разбираем текущую строку
@@ -450,6 +326,8 @@ void GA_path::set_matrices(StreamReader^ sr)
 				//подсчет максимального элемента
 				if (c_max_temp < s_temp[i][j])
 					c_max_temp = s_temp[i][j];
+				if (this->c_max[i][1] < s_temp[i][j])
+					this->c_max[i][1] = s_temp[i][j];
 
 				j++;
 				str_temp = "";
@@ -470,7 +348,7 @@ void GA_path::set_matrices(StreamReader^ sr)
 	s_aver_temp = (int)s_aver_temp / this->get_n()*this->get_n();
 	//добавляем средний и макс элементы в свои массивы
 	this->s_aver.push_back(s_aver_temp);
-	this->c_max.push_back(c_max_temp);
+	this->c_max_all.push_back(c_max_temp);
 
 	//sw->WriteLine();
 	//printf("\n");
@@ -612,6 +490,274 @@ bool GA_path::Pareto_pref(const vector<T> a, const vector<T> b)
 
 
 ////////////////////////////////////////////////////////////////////////////////
+//Локальный поиск
+////////////////////////////////////////////////////////////////////////////////
+vector<int> GA_path::local_search(vector<int> p, float alpha)//это локальный поиск по принципу first-improvement
+																		//котороый делает полный перебор, его нужно изменить!!!!!
+{
+	//////////////////////////////////////////////////////////////////////////////////
+	vector<vector<int>> path(2, vector<int>(n));//хранит предков и потомков по туру
+	int i_head, j_head, i_next, i_temp, i_tail, j_tail;//точки разрыва цикла
+	int k = (int)(alpha*(n - 1));//число вершин для просмотра
+	boolean is_improve;//для сигнала, что текущее решение улучшено
+	int s1_p, s2_p, s1, s2;//значения критериев на p
+	s1_p = phitness(s_m[0], p);//значение первого критерия для текущей лучшей точки
+	s2_p = phitness(s_m[1], p);//значение второго критерия для текущей лучшей точки
+
+						  //очередь вершин
+						  //объявление очереди
+	deque<int> pi_deque;
+	//для вершин в черном списке
+	vector<boolean> tabu(this->get_n());
+	//запись перестановки pi (переменная index_pi) в очередь
+	for (int i = 0; i < this->index_pi.size(); i++) {
+		pi_deque.push_back(((this->index_pi[i]) - 1));
+		tabu[i] = false;//изначально все вершины вне черного списка (активны!)
+	}
+
+	for (int i = 0; i < n - 1; ++i) {
+		path[1][p[i] - 1] = p[i + 1] - 1;
+		path[0][p[i + 1] - 1] = p[i] - 1;
+	}
+	path[1][p[n - 1] - 1] = p[0] - 1;
+	path[0][p[0] - 1] = p[n - 1] - 1;
+	//////////////////////////////////////////////////////////////////////////////////
+	//+++++++++++++++++++++++++++++++++++++++++++
+	//+++++++++++++++++++++++++++++++++++++++++++
+	is_improve = false;
+	//основной цикл просмотра окрестности
+	while (pi_deque.size() != 0) {//просматриваем вершины очереди по порядку
+								  //////////////////////////////////////////////////////////////////
+		i_head = pi_deque.front(); //возвращает первый элемент очереди (нет проверки сущестования)
+		pi_deque.pop_front(); //удаление первого элемента очереди (не возвращает его)
+		j_head = path[1][i_head]; //идентифицируем следующую вершину цикла 
+		is_improve = false;
+		//path[1][i_head] = -1;//удаляем дугу (i_head,j_head)
+		//path[0][j_head] = -1;
+		/////////////////////////////////////////////////////////////////
+		//добавляем дугу для образования цикла (i_head,i_next) //перебираем только alpha вариантов
+		for (int i_t = 0; i_t < k; i_t++) {//2
+			i_next = (this->index_p[i_head][i_t]) - 1;
+			//printf("%d %d %d %d\t", i_head, j_head, i_next,i_t);
+			//printf("\n");
+			if (i_head != i_next && j_head != i_next) {//3
+													   //добавляем (i_head, i_next)
+													   //path[1][i_head] = i_next;
+				i_temp = path[0][i_next];//дуга для удаления формируется однозначно
+										 //path[0][i_next] = i_head;
+										 //удаляем (i_temp, i_next)
+										 //path[1][i_temp] = -1;
+				j_tail = i_next;//просматриваем вершины цикла, j_tail - кандидат
+				while (true) {
+					j_tail = path[1][j_tail];
+					if (j_head == j_tail) {//!
+						break;
+					}//!
+					if (j_head != j_tail) {//if1
+										   //обновляем значения критериев по новому циклу
+						s1 = s1_p - s_m[0][i_head][j_head] - s_m[0][i_temp][i_next] - s_m[0][path[0][j_tail]][j_tail] +
+							s_m[0][i_head][i_next] + s_m[0][i_temp][j_tail] + s_m[0][path[0][j_tail]][j_head];
+						s2 = s2_p - s_m[1][i_head][j_head] - s_m[1][i_temp][i_next] - s_m[1][path[0][j_tail]][j_tail] +
+							s_m[1][i_head][i_next] + s_m[1][i_temp][j_tail] + s_m[1][path[0][j_tail]][j_head];
+						if ((s1 < s1_p && s2 <= s2_p) || (s1 <= s1_p && s2 < s2_p)) {//if 2нашли улучшающее решение
+																					 //printf("%d %d\t", s1, s2);
+																					 //printf("\n");
+
+							is_improve = true; break;
+						}//if2
+
+					}//if 1
+
+
+				}//while(true)
+				if (is_improve == false) {
+					//в данном направлении нет улучшения (возвращаем метки на место)
+					//идет речь о направлении, где удалены (i_head,j_head) и (i_temp,i_next),
+					//но добавлена (i_head,i_next) 
+					//path[1][i_head] = -1;//остается только одна удаленная дуга (i_head,j_head)
+					//path[0][j_head] = -1;
+					//path[0][i_next] = i_temp;
+					//path[1][i_temp] = i_next;
+				}
+				else {//нашли улучшающее решение в окрестности текущего решения
+					  //удаляем (i_head,j_head)
+					path[1][i_head] = -1;
+					path[0][j_head] = -1;
+					//добавляем (i_head, i_next)
+					path[1][i_head] = i_next;
+					path[0][i_next] = i_head;
+					//удаляем (i_temp, i_next)
+					path[1][i_temp] = -1;
+					//добавляем (i_temp, j_tail)
+					path[1][i_temp] = j_tail;
+					i_tail = path[0][j_tail];
+					path[0][j_tail] = i_temp;
+					//удаляем (i_tail, j_tail)
+					path[1][i_tail] = -1;
+					//добавляем (i_tail, j_head)
+					path[1][i_tail] = j_head;
+					path[0][j_head] = i_tail;
+					s1_p = s1; s2_p = s2;//обновляем значения критериев
+					break;
+				}
+			}//3
+		}//2
+		if (is_improve) {
+			//добавляем i_head в конец очереди
+			pi_deque.push_back(i_head); //добавление переменной i_head в конец очереди
+										//если  вершина какого-либо удаленного ребера в черном списке, то возвращаем ее в очередь
+			if (tabu[j_head] == true) { tabu[j_head] = false; pi_deque.push_back(j_head); }
+			if (tabu[i_next] == true) { tabu[i_next] = false; pi_deque.push_back(i_next); }
+			if (tabu[i_temp] == true) { tabu[i_temp] = false; pi_deque.push_back(i_temp); }
+			if (tabu[j_tail] == true) { tabu[j_tail] = false; pi_deque.push_back(j_tail); }
+			if (tabu[i_tail] == true) { tabu[i_tail] = false; pi_deque.push_back(i_tail); }
+		}
+		else {
+			tabu[i_head] = true;
+			//еслии неудача, то возвращаем дугу
+			// path[1][i_head] = j_head;
+			// path[0][j_head] = i_head;
+		}
+
+	}//while(pi_deque.size()!=0)
+	 //+++++++++++++++++++++++++++++++++++++++++++
+	 //+++++++++++++++++++++++++++++++++++++++++++
+	vector<int> result(this->get_n());
+	result[0] = 1; i_temp = 0;
+	for (int i = 1; i < n; ++i) {
+		result[i] = path[1][i_temp] + 1;
+		i_temp = path[1][i_temp];
+	}
+	return result;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//Построение фронтов
+//Алгортим Jensen (NlogN)
+////////////////////////////////////////////////////////////////////////////////
+vector<int> GA_path::range_front_J(vector<vector<int>> phi_cur, vector<vector<int>>& pop_cur, vector<int>& indeces_fronts, unsigned int type)
+{
+	//вектор фронтов (используется индекс особи в популяции pop)
+	vector<int> index_front_temp;
+
+	//вектор рангов фронтов
+	vector<int> i_rank_temp;
+
+	//отсортированный массив особей (pop_cur)
+	vector<vector<int>> pop_sort;
+
+	//предсортировка по 1-му критерию
+	//? учесть равенство по 1-му критерию
+	for (int i = 0; i < ( (pop_cur.size()>0) ? pop_cur.size(): phi_cur.size() ); i++)
+		index_front_temp.push_back(i);
+	heap_sort(phi_cur, index_front_temp, -1, 0, index_front_temp.size() - 1);
+
+
+	//множество фронтов
+	//vector<int> - фронт индексов особей
+	//vector< vector<int> > - массив фронтов
+	vector<vector<int>> F_j;
+	vector<int> F_j_temp;
+	F_j_temp.push_back(index_front_temp[0]);
+	F_j.push_back(F_j_temp);
+
+	//число фронтов
+	int E = 1;
+
+	int b;
+
+	for (int i = 1; i < index_front_temp.size(); i++)
+	{
+		if (phi_cur[F_j[F_j.size() - 1][F_j[F_j.size() - 1].size() - 1]] == phi_cur[index_front_temp[i]])
+		{
+			F_j[F_j.size() - 1].push_back(index_front_temp[i]);
+			continue;
+		}
+
+		if (phi_cur[F_j[F_j.size() - 1][F_j[F_j.size() - 1].size() - 1]][1] <= phi_cur[index_front_temp[i]][1])
+		{
+			//последний фронт доминирует рассматриваемую особь
+			//создаем новый фронт и добавляем туда особь
+			E++;
+			vector<int> F_j_new;
+			F_j_new.push_back(index_front_temp[i]);
+			F_j.push_back(F_j_new);
+		}
+		else
+		{
+			//последний фронт не доминирует рассматриваемую особь
+			//ищем фронт с мин индексом, который не доминирует особь
+			//используем бинарный поиск
+			b = binary_search_Fb(phi_cur, index_front_temp[i], F_j);
+			F_j[b].push_back(index_front_temp[i]);
+		}
+	}
+
+
+	//index_front_temp.clear();
+	for (int i = 0; i < E; i++)
+		for (int j = 0; j < F_j[i].size(); j++)
+		{
+			switch (type)
+			{
+			case 0:
+				indeces_fronts.push_back(F_j[i][j] + 1); //заполняем отсортированными индексами
+				i_rank_temp.push_back(i + 1);
+				break;
+			case 1:
+				i_rank_temp.push_back(i + 1);
+				pop_sort.push_back(pop_cur[F_j[i][j]]); //заполняем отсортированными особями (если pop_cur не пусто)
+				break;
+			}
+		}
+	if (!pop_sort.empty())
+	 pop_cur = pop_sort;
+
+	
+	return i_rank_temp;
+	
+
+	//создаем структры для возраващения значения функции
+	//структура содержит:
+	//отсортированные индексы векторов
+	//ранги
+	//Fronts fronts_struct;
+	//fronts_struct.ranks = i_rank_temp;
+	//fronts_struct.fronts_index = F_j_temp;
+}
+
+	////////////////////////////////////////////////////////////////////////////////
+	//Бинарный поиск
+	//для поиска фронта F_b при вычислении рангов
+	////////////////////////////////////////////////////////////////////////////////
+	int GA_path::binary_search_Fb(vector<vector<int>> phi_cur, int cur_index, vector<vector<int>> F_j)
+	{
+		//как правильно возращать значение?
+		int index_left = 0;
+		int index_right = F_j.size() - 1;
+		//int index_end = index_right;
+
+		while (index_right - index_left)
+		{
+			int index_mid = index_left + (index_right - index_left) / 2;
+			if (phi_cur[cur_index] == phi_cur[F_j[index_mid][F_j[index_mid].size() - 1]])
+				return index_mid;
+
+			if (phi_cur[cur_index][1] < phi_cur[F_j[index_mid][F_j[index_mid].size() - 1]][1])
+				index_right = index_mid;
+			else
+				index_left = index_mid + 1;
+		}
+
+		//if (multi_phitness(pop_cur[cur_index])[1] == multi_phitness(pop_cur[F_j[index_right][F_j[index_right].size() - 1]])[1])
+		return index_right;
+
+		//return index_end;
+	}
+
+
+////////////////////////////////////////////////////////////////////////////////
 //Построение фронтов (без ранжированя внутри фронта)
 ////////////////////////////////////////////////////////////////////////////////
 vector<int> GA_path::range_front(vector<vector<int>>& pop_cur, bool flag_pop_sort)
@@ -690,6 +836,126 @@ vector<int> GA_path::range_front(vector<vector<int>>& pop_cur, bool flag_pop_sor
 
 	return i_rank_temp;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//Построение фронтов (без ранжированя внутри фронта)
+//Алгортим Jensen (NlogN)
+////////////////////////////////////////////////////////////////////////////////
+/*
+vector<int> GA_path::range_front_J_(vector<vector<int>>& pop_cur, bool flag_pop_sort)
+{
+	//вектор фронтов (используется индекс особи в популяции pop)
+	vector<vector<int>> index_front;
+	vector<int> index_front_temp;
+	
+	//вектор рангов фронтов
+	vector<int> i_rank_temp;
+	if (!flag_pop_sort)
+		i_rank_temp.resize(pop_cur.size());
+
+	//отсортированная популяция
+	vector<vector<int>> pop_sort;
+
+	//предсортировка по 1-му критерию
+	//? учесть равенство по 1-му критерию
+	for (int i = 0; i < pop_cur.size(); i++)
+		index_front_temp.push_back(i);
+	heap_sort(pop_cur, index_front_temp, -1, 0, pop_cur.size()-1);
+
+	//множество фронтов
+	//vector<int> - особь
+	//vector< vector<int> > - фронт
+	//vector< vector< vector<int> > > - множество фронтов
+	vector<vector<int>> F_j;
+	vector<int> F_j_temp;
+	F_j_temp.push_back(index_front_temp[0]);
+	F_j.push_back(F_j_temp);
+	
+	//число фронтов
+	int E = 1;
+
+	int b;
+
+	for (int i = 1; i < pop_cur.size(); i++)
+	{
+		if (multi_phitness(pop_cur[F_j[F_j.size() - 1][F_j[F_j.size() - 1].size() - 1]]) == multi_phitness(pop_cur[index_front_temp[i]]))
+		{
+			F_j[F_j.size() - 1].push_back(index_front_temp[i]);
+			continue;
+		}
+				
+		if ( multi_phitness(pop_cur[F_j[ F_j.size() - 1 ][ F_j[F_j.size() - 1].size() - 1 ]])[1] <= multi_phitness(pop_cur[index_front_temp[i]])[1] )
+		{
+			//последний фронт доминирует рассматриваемую особь
+			//создаем новый фронт и добавляем туда особь
+			E++;
+			vector<int> F_j_new;
+			F_j_new.push_back(index_front_temp[i]);
+			F_j.push_back(F_j_new);
+		}
+		else
+		{
+			//последний фронт не доминирует рассматриваемую особь
+			//ищем фронт с мин индексом, который не доминирует особь
+			//используем бинарный поиск
+			b = binary_search_Fb_(pop_cur, index_front_temp[i], F_j);
+			F_j[b].push_back(index_front_temp[i]);
+		}
+	}
+
+	for (int i = 0; i < E; i++)
+	{
+		for (int j = 0; j < F_j[i].size();j++)
+		{
+			if (flag_pop_sort)
+			{
+				i_rank_temp.push_back(i+1);
+				pop_sort.push_back(pop_cur[F_j[i][j]]);
+			}
+			else
+				i_rank_temp[F_j[i][j]] =i+1;
+		}
+	}
+
+	if (flag_pop_sort)
+		pop_cur = pop_sort;
+
+	return i_rank_temp;
+}
+*/
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+//Бинарный поиск
+//для поиска фронта F_b при вычислении рангов
+////////////////////////////////////////////////////////////////////////////////
+/*
+int GA_path::binary_search_Fb_(vector<vector<int>> pop_cur, int cur_index, vector<vector<int>> F_j)
+{	
+	//как правильно возращать значение?
+	int index_left = 0;
+	int index_right = F_j.size() - 1;
+	//int index_end = index_right;
+
+	while (index_right - index_left)
+	{
+		int index_mid = index_left + (index_right - index_left) / 2;
+		if ( multi_phitness(pop_cur[cur_index]) == multi_phitness(pop_cur[F_j[index_mid][F_j[index_mid].size() - 1]]) )
+			return index_mid;
+
+		if (multi_phitness(pop_cur[cur_index])[1] < multi_phitness(pop_cur[F_j[index_mid][F_j[index_mid].size() - 1]])[1])
+			index_right = index_mid;
+		else
+			index_left = index_mid + 1;
+	}
+
+	//if (multi_phitness(pop_cur[cur_index])[1] == multi_phitness(pop_cur[F_j[index_right][F_j[index_right].size() - 1]])[1])
+		return index_right;
+
+	//return index_end;
+}
+*/
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -906,7 +1172,7 @@ void GA_path::crowd_dist_new(vector<vector<int>> pop_cur, bool flag_sort)
 						if (phitness(s_m[j], pop_cur[k]) < min_phi)
 							min_phi = phitness(s_m[j], pop_cur[k]);
 
-						//поиск макс значения\ по текущему критерию
+						//поиск макс значения по текущему критерию
 						if (phitness(s_m[j], pop_cur[k]) > max_phi)
 							max_phi = phitness(s_m[j], pop_cur[k]);
 					}
@@ -990,6 +1256,12 @@ bool GA_path::crowd_comp_oper(int i_p1, int i_p2) //(vector<int> p1, vector<int>
 }
 
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////СОРТИРОВКА///////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 ////////////////////////////////////////////////////////////////////////////////
 //Быстрая сортировка
 ////////////////////////////////////////////////////////////////////////////////
@@ -1051,12 +1323,17 @@ void GA_path::heap_sort_new(vector<vector<int>>& pop_cur, int i_start, int i_sto
 }
 */
 
-
+////////////////////////////////////////////////////////////////////////////////
+//Пирамидальная сортировка
+////////////////////////////////////////////////////////////////////////////////
 void GA_path::heap_sort(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_criteria, int index_begin, int index_end)
 {
 	// Формируем нижний ряд пирамиды
 	for (int i = ((index_end - index_begin + 1) / 2) - 1; i >= 0; i--)
-		sift_down(pop_cur, numbers_index, num_criteria, i, index_end - index_begin + 1, 0);
+		if (num_criteria != -1)
+			sift_down(pop_cur, numbers_index, num_criteria, i, index_end - index_begin + 1, 0);
+		else
+			sift_down(pop_cur, numbers_index, i, index_end - index_begin + 1, 0); // Jensen в LS и осн. вычисл. рангов
 	// Просеиваем через пирамиду остальные элементы
 	for (int i = index_end - index_begin; i >= 1; i--)
 	{
@@ -1066,9 +1343,34 @@ void GA_path::heap_sort(vector<vector<int>> pop_cur, vector<int>& numbers_index,
 		numbers_index[0] = numbers_index[i];
 		//numbers[i] = temp;
 		numbers_index[i] = temp_index;
-		sift_down(pop_cur, numbers_index, num_criteria, 0, i, 0);
+		if (num_criteria != -1)
+			sift_down(pop_cur, numbers_index, num_criteria, 0, i, 0);
+		else
+			sift_down(pop_cur, numbers_index, 0, i, 0); // Jensen в LS и осн. вычисл. рангов
 	}
 }
+
+//НЕ ИСПОЛЬЗУЕТСЯ
+/*
+void GA_path::heap_sort_ls(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_criteria, int index_begin, int index_end)
+{
+	// Формируем нижний ряд пирамиды
+	for (int i = ((index_end - index_begin + 1) / 2) - 1; i >= 0; i--)
+			sift_down_ls(pop_cur, numbers_index, i, index_end - index_begin + 1, 0);
+	// Просеиваем через пирамиду остальные элементы
+	for (int i = index_end - index_begin; i >= 1; i--)
+	{
+		//int temp = numbers[0];
+		int temp_index = numbers_index[0];
+		//numbers[0] = numbers[i];
+		numbers_index[0] = numbers_index[i];
+		//numbers[i] = temp;
+		numbers_index[i] = temp_index;
+			sift_down_ls(pop_cur, numbers_index, 0, i, 0);
+	}
+}
+*/
+
 
 void GA_path::heap_sort(vector<int>& numbers_index, int index_begin, int index_end)
 {
@@ -1092,6 +1394,7 @@ void GA_path::heap_sort(vector<int>& numbers_index, int index_begin, int index_e
 }
 
 //Функция "просеивания" через кучу (см. в функции пирамидальной сортировки)
+//при построении crowed dist
 void GA_path::sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_criteria, int root, int bottom, int delta)
 {
 	int max_child; // индекс максимального потомка
@@ -1129,6 +1432,116 @@ void GA_path::sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index,
 }
 
 
+//НЕ ИСПОЛЬЗУЕТСЯ
+//Функция "просеивания" через кучу (см. в функции пирамидальной сортировки)
+/*
+void GA_path::sift_down_(vector<vector<int>> pop_cur, vector<int>& numbers_index, int root, int bottom, int delta)
+{
+	int max_child; // индекс максимального потомка
+	int done = 0; // флаг того, что куча сформирована
+				  // Пока не дошли до последнего ряда
+	while ((root * 2 + 1 < bottom) && (!done))
+	{
+		if (root * 2 + 2 == bottom)    // если мы в последнем ряду, 
+			max_child = root * 2 + 1;    // запоминаем левый потомок
+										 // иначе запоминаем больший потомок из двух
+		else
+		{
+			if ( //сравнение по 1-му критерию
+				(multi_phitness(pop_cur[numbers_index[delta + root * 2 + 1]])[0] >
+					multi_phitness(pop_cur[numbers_index[delta + root * 2 + 2]])[0])
+				|| //если по 1-му равенство, сравнение по 2-му критерию
+				((multi_phitness(pop_cur[numbers_index[delta + root * 2 + 1]])[0] ==
+					multi_phitness(pop_cur[numbers_index[delta + root * 2 + 2]])[0]) &&
+					(multi_phitness(pop_cur[numbers_index[delta + root * 2 + 1]])[1] >
+						multi_phitness(pop_cur[numbers_index[delta + root * 2 + 2]])[1]))
+				)
+				max_child = root * 2 + 1;
+			else
+				max_child = root * 2 + 2;
+		}
+		// если элемент вершины меньше максимального потомка
+		if ( //сравнение по 1-му критерию
+			(multi_phitness(pop_cur[numbers_index[delta + root]])[0] <
+				multi_phitness(pop_cur[numbers_index[delta + max_child]])[0])
+			|| //если по 1-му равенство, сравнение по 2-му критерию
+			((multi_phitness(pop_cur[numbers_index[delta + root]])[0] ==
+				multi_phitness(pop_cur[numbers_index[delta + max_child]])[0]) &&
+				(multi_phitness(pop_cur[numbers_index[delta + root]])[1] <
+					multi_phitness(pop_cur[numbers_index[delta + max_child]])[1]))
+			)
+		{
+			//int temp = numbers[delta + root]; // меняем их местами
+			int temp_index = numbers_index[delta + root]; // меняем индексы местами		
+														  //numbers[delta + root] = numbers[delta + max_child];
+			numbers_index[delta + root] = numbers_index[delta + max_child];
+			//numbers[delta + max_child] = temp;
+			numbers_index[delta + max_child] = temp_index;
+			root = max_child;
+		}
+		else // иначе
+			done = 1; // пирамида сформирована
+
+	}
+}
+*/
+
+//Функция "просеивания" через кучу (см. в функции пирамидальной сортировки)
+//сравнивается по двум критериям
+//в препроцессинге локального поиска
+//	при построении перестановок pi и p_i
+void GA_path::sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index, int root, int bottom, int delta)
+{
+	int max_child; // индекс максимального потомка
+	int done = 0; // флаг того, что куча сформирована
+				  // Пока не дошли до последнего ряда
+	while ((root * 2 + 1 < bottom) && (!done))
+	{
+		if (root * 2 + 2 == bottom)    // если мы в последнем ряду, 
+			max_child = root * 2 + 1;    // запоминаем левый потомок
+										 // иначе запоминаем больший потомок из двух
+		else
+		{
+			if ( //сравнение по 1-му критерию
+				(pop_cur[numbers_index[delta + root * 2 + 1]][0] >
+					pop_cur[numbers_index[delta + root * 2 + 2]][0])
+				|| //если по 1-му равенство, сравнение по 2-му критерию
+				(pop_cur[numbers_index[delta + root * 2 + 1]][0] ==
+					pop_cur[numbers_index[delta + root * 2 + 2]][0] &&
+					pop_cur[numbers_index[delta + root * 2 + 1]][1] >
+						pop_cur[numbers_index[delta + root * 2 + 2]][1])
+				)
+				max_child = root * 2 + 1;
+			else
+				max_child = root * 2 + 2;
+		}
+		// если элемент вершины меньше максимального потомка
+		if ( //сравнение по 1-му критерию
+			(pop_cur[numbers_index[delta + root]][0] <
+				pop_cur[numbers_index[delta + max_child]][0])
+			|| //если по 1-му равенство, сравнение по 2-му критерию
+			(pop_cur[numbers_index[delta + root]][0] ==
+				pop_cur[numbers_index[delta + max_child]][0] &&
+				pop_cur[numbers_index[delta + root]][1] <
+					pop_cur[numbers_index[delta + max_child]][1])
+			)
+		{
+			//int temp = numbers[delta + root]; // меняем их местами
+			int temp_index = numbers_index[delta + root]; // меняем индексы местами		
+														  //numbers[delta + root] = numbers[delta + max_child];
+			numbers_index[delta + root] = numbers_index[delta + max_child];
+			//numbers[delta + max_child] = temp;
+			numbers_index[delta + max_child] = temp_index;
+			root = max_child;
+		}
+		else // иначе
+			done = 1; // пирамида сформирована
+
+	}
+}
+
+//в сортировке последнего фронта (не полностью вошедшего в R_t)
+//	сортировка по crowed dist
 void GA_path::sift_down(vector<int>& numbers_index, int root, int bottom, int delta)
 {
 	int max_child; // индекс максимального потомка
@@ -1164,6 +1577,14 @@ void GA_path::sift_down(vector<int>& numbers_index, int root, int bottom, int de
 				done = 1; // пирамида сформирована
 	}
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //Турнирная селекция
