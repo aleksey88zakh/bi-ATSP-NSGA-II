@@ -16,8 +16,6 @@ int main(int argc, char* argv[])
 {
 	//число городов
 	int num_n = 12;
-	//флаг числа городов не по умолчанию
-	bool is_num_n_specified = false;
 
 	//число особей
 	int num_N = 50;
@@ -109,7 +107,6 @@ int main(int argc, char* argv[])
 		if (str_temp == "\\n")
 		{
 			num_n = stoi(argv[i + 1]);
-			is_num_n_specified = true;
 			continue;
 		}
 
@@ -231,18 +228,15 @@ int main(int argc, char* argv[])
 		
 
 //to do: проверить считывание размера задачи из файлы
-        //если число городов не задано с командной строки
-		if (!is_num_n_specified)
-		{
-			while (cur_line_str != "n=")
-				cur_line_str = sr->ReadLine();
+//		(для каждой задачи свой размер)
+		while (cur_line_str != "n=")
 			cur_line_str = sr->ReadLine();
-			str_temp = "";
-			int k = 0;
-			while (k < cur_line_str->Length)
-				str_temp += cur_line_str[k++];
-			num_n = stoi(str_temp);
-		}
+		cur_line_str = sr->ReadLine();
+		str_temp = "";
+		int k = 0;
+		while ( k < cur_line_str->Length )
+			str_temp += cur_line_str[k++];
+		num_n = stoi(str_temp);
 
 		//значения аргументов конструктора ГА (по порядку)
 		//число городов
@@ -370,10 +364,10 @@ int main(int argc, char* argv[])
 
 			//родители нач популяции
 			vector<int> p1, p2, p3, p4;
-			p1 = ga.patching_algorithm(ga.s_m[0], ga.c_max_all[0], false);
-			p2 = ga.patching_algorithm(ga.s_m[0], ga.c_max_all[0], true);
-			p3 = ga.patching_algorithm(ga.s_m[1], ga.c_max_all[1], false);
-			p4 = ga.patching_algorithm(ga.s_m[1], ga.c_max_all[1], true);
+			p1 = ga.patching_algorithm(ga.s_m[0], ga.c_max[0], false);
+			p2 = ga.patching_algorithm(ga.s_m[0], ga.c_max[0], true);
+			p3 = ga.patching_algorithm(ga.s_m[1], ga.c_max[1], false);
+			p4 = ga.patching_algorithm(ga.s_m[1], ga.c_max[1], true);
 
 			//sw->WriteLine("p1; p2; p3; p4");
 			//printf("\np1\t p2\t p3\t p4\n");
@@ -451,7 +445,7 @@ int main(int argc, char* argv[])
 
 			//0. начальная популяция
 			temp_time = ::GetTickCount();
-			ga.init_pop(ga.s_m, ga.c_max_all[0], temp_time, p1, p2, p3, p4);
+			ga.init_pop(ga.s_m, ga.c_max[0], temp_time, p1, p2, p3, p4);
 
 			sw->WriteLine("Initial population");
 			//sw_1->WriteLine("Initial population");
@@ -475,180 +469,42 @@ int main(int argc, char* argv[])
 			//phi[i][j], i - индекс критерия, j - индекс особи
 
 			sw->WriteLine("Values of vector criterion (initial population)");
+			//sw_1->WriteLine("Values of vector criterion");
 			printf("Values of vector criterion (initial population, problem %d):\n", iter_prbl+1);
-			
-			//заполнение значений критерия
-			for (int i = 0; i < ga.get_N(); i++)
-				ga.phi[i] = ga.multi_phitness(ga.pop[i]);
+			//vector<int> phi_min, phi_max;
+			//for (int j = 0; j < ga.get_N(); j++)
+			//	for (int i = 0; i < ga.get_m(); i++)
+			//		ga.phi[i][j] = ga.multi_phitness(ga.pop[j])[i];
 
-			//вывод значений критерия
-			for (int j = 0; j < ga.get_m(); j++)
+			for (int i = 0; i < ga.get_m(); i++)
 			{
-				for (int i = 0; i < ga.get_N(); i++)
+				for (int j = 0; j < ga.get_N(); j++)
 				{
+					ga.phi[i][j] = ga.multi_phitness(ga.pop[j])[i];
 					sw->Write("{0};", ga.phi[i][j]);
+					//sw_1->Write("{0};", ga.phi[i][j]);
 					printf("%d\t", ga.phi[i][j]);
 				}
 				sw->WriteLine();
-				printf("\n");
-			}
-			printf("\n");
-			sw->WriteLine();
-			
-
-
-//-----------------------------------------------------------------------------------------------
-//----------ЛОКАЛЬНЫЙ ПОИСК----------------------------------------------------------------------
-
-			//ПРЕПРОЦЕССИНГ
-			//построение перестановки pi (переменная index_pi)
-			//? определение fronts_struct_temp с размерностью
-			vector<vector<int>> tmp; //заглушка
-			ga.i_rank_pi = ga.range_front_J(ga.c_max, tmp, ga.index_pi, 0);
-			tmp.clear();
-			//ga.i_rank_pi = fronts_struct_temp.ranks;
-			//ga.index_pi = fronts_struct_temp.fronts_index;
-			sw->WriteLine("Permutation pi");
-			printf("Permutation pi\n");
-			for (int i = 0; i < ga.index_pi.size(); i++)
-			{
-				sw->Write("{0};", ga.index_pi[i]);
-				printf("%d\t", ga.index_pi[i]);
-			}
-			sw->WriteLine();
-			printf("\n");
-			sw->WriteLine("Ranks");
-			printf("Ranks\n");
-			for (int i = 0; i < ga.index_pi.size(); i++)
-			{
-				sw->Write("{0};", ga.i_rank_pi[i]);
-				printf("%d\t", ga.i_rank_pi[i]);
-			}
-			sw->WriteLine();
-			printf("\n");
-
-
-			//построение перестановок p_i (переменная index_p)
-			sw->WriteLine("Permutations p");
-			printf("Permutations p\n");
-			vector<vector<int>> c_max_temp;
-			for (int i = 0; i < ga.get_n(); i++)
-			{
-				c_max_temp.clear();
-				for (int j = 0; j < ga.get_n(); j++)
-					//сохраняем весь массив вектров (в том числе при i=j)
-					//чтобы использовать в ф-ции постр. рангов
-					c_max_temp.push_back({ ga.s_m[0][i][j], ga.s_m[1][i][j] });
-
-				vector<int> index_front_temp;
-				vector<vector<int>> tmp; //заглушка
-				ga.range_front_J(c_max_temp, tmp, index_front_temp, 0);
-				//первым всегда будет вектор (0, 0) (при i=j)
-				//поэтому начинаем с k=1
-				for (int k = 1; k < index_front_temp.size(); k++)
-					ga.index_p[i].push_back(index_front_temp[k]);
-				index_front_temp.clear();
-				tmp.clear();
-
-				//вывод
-				sw->WriteLine("i = {0}", i + 1);
-				printf("i = %d\n", i);
-				for (int j = 0; j < ga.index_p[i].size(); j++)
-				{
-					sw->Write("{0};", ga.index_p[i][j]);
-					printf("%d\t", ga.index_p[i][j]);
-				}
-				sw->WriteLine();
-				printf("\n");
+				//sw_1->WriteLine();
+				/*
+				phi_min.push_back(*min_element(ga.phi[i].cbegin(), ga.phi[i].cend()));
+				printf("min = %d\t", phi_min[i]);
+				phi_max.push_back(*max_element(ga.phi[i].cbegin(), ga.phi[i].cend()));
+				printf("max = %d\t\n", phi_max[i]);
+				*/
 			}
 
 			sw->WriteLine();
+			//sw_1->WriteLine();
 			printf("\n");
 
-
-			//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ МАССИВА pop
-			vector<int> pop_new;
-			printf("Local search\n");
-			printf("\n");
-			sw->WriteLine("Local search");
-			sw->WriteLine();
-
-			for (int i=0;i<ga.get_N();i++)
-				ga.pop[i] = ga.local_search(ga.pop[i], 0.5);
-
-			sw->WriteLine("after LS");
-			printf("afret LS:\n");
-			for (int j = 0; j < ga.get_n(); j++)
-			{
-				for (int i = 0; i < ga.get_N(); i++)
-				{
-					sw->Write("{0};", ga.pop[i][j]);
-					printf("%d\t", ga.pop[i][j]);
-				}
-				sw->WriteLine();
-
-			}
-
-			sw->WriteLine();
-			printf("\n");
-			//заполняем значение векторного критерия по популяции
-			sw->WriteLine("Values of vector criterion:");
-			printf("Values of vector criterion:\n");
-
-			for (int j = 0; j < ga.get_m(); j++)
-			{
-				for (int i = 0; i < ga.get_N(); i++)
-				{
-					sw->Write("{0};", ga.multi_phitness(ga.pop[i])[j]);
-					printf("%d\t", ga.multi_phitness(ga.pop[i])[j]);
-				}
-				sw->WriteLine();
-			}
-
-			sw->WriteLine();
-			printf("\n");
-
-
-//-----------------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------------
-
-
-
-
-
-//------------ПОСТРОЕНИЕ ФРОНТОВ
-			//true - популяция в явном виде отсорирована по фронтам + ранги фронтов заданы в векторе i_rank
-			//false - популяция в явном виде не отсорирована по фронтам, ранги фронтов заданы в векторе i_rank
-			vector<int> tmp2; //заглушка
-			ga.i_rank = ga.range_front_J(ga.phi, ga.pop, tmp2, 1);
-			tmp2.clear();
-			//значение векторного критерия отсортированной популяции
-			sw->WriteLine("Values of vector criterion (sorted):");
-			printf("Values of vector criterion (sorted):\n");
-
-			//заполнение значений критерия
-			for (int i = 0; i < ga.get_N(); i++)
-				ga.phi[i] = ga.multi_phitness(ga.pop[i]);
-
-			//вывод значений критерия
-			for (int j = 0; j < ga.get_m(); j++)
-			{
-				for (int i = 0; i < ga.get_N(); i++)
-				{
-					sw->Write("{0};", ga.phi[i][j]);
-					printf("%d\t", ga.phi[i][j]);
-				}
-				sw->WriteLine();
-				printf("\n");
-			}
-			printf("\n");
-			sw->WriteLine();
-
-
-
+			//построение фронтов
 			sw->WriteLine("Ranks of poulation (initial population)");
 			//sw_1->WriteLine("Ranks of poulation");
 			printf("Ranks of poulation (initial population, problem %d):\n", iter_prbl+1);
+			//false - популяция в явном виде не отсорирована по фронтам, ранги фронтов заданы в векторе i_rank
+			ga.i_rank = ga.range_front(ga.pop, true);
 			for (int i = 0; i < ga.get_N(); i++)
 			{
 				sw->Write("{0};", ga.i_rank[i]);
@@ -874,7 +730,7 @@ int main(int argc, char* argv[])
 						
 
 					//мутируем потомка, у кототорого значения критерия совпадает хотя бы с одним из родителей
-					//Юлечка
+					//Юля
 					if (MODIF)
 					{
 						//для рандомизатора
@@ -905,11 +761,7 @@ int main(int argc, char* argv[])
 				//вычисление ранга особей
 				//printf("Ranks of poulation:\n");
 				//true - популяция в явном виде отсорирована про фронтам, i_rank_R_t - такой же порядок (ранги фронтов)
-				for (int i = 0; i < 2*ga.get_N(); i++)
-					ga.phi[i] = ga.multi_phitness(ga.pop_R_t[i]);
-				vector<int> tmp2; //заглушка
-				ga.i_rank_R_t = ga.range_front_J(ga.phi, ga.pop_R_t, tmp2, 1);
-				tmp2.clear();
+				ga.i_rank_R_t = ga.range_front(ga.pop_R_t, true);
 				//for (int i = 0; i < ga.get_N(); i++)
 				//	printf("%d\t", ga.i_rank[i]);
 				//printf("\n");
@@ -992,7 +844,7 @@ int main(int argc, char* argv[])
 				//если последний фронт закончился индексом N-1 (полностью войдет в новую популяцию)
 				//то особи из следующих фронтов не добавляем
 
-				//ЛОКАЛЬНЫЙ ПОИСК (сделан для начальной популяции)
+				//ЛОКАЛЬНЫЙ ПОИСК (не сделан)
 				//for (int i = 0; i < ga.get_n(); i++)
 				//{
 					//ga.local_search(ga.pop[i], ga.s_m[0]); //что писать вторым аргументом?
@@ -1053,23 +905,19 @@ int main(int argc, char* argv[])
 					//значания критериев
 					sw->WriteLine("Values of vector criterion (problem {0}, run {1}, iteration {2})", iter_prbl+1, index_run+1, iter);
 					printf("Values of vector criterion (problem %d, run %d, iteration %d):\n", iter_prbl+1, index_run+1, iter);
-					//заполнение значений критерия
-					for (int i = 0; i < ga.get_N(); i++)
-						ga.phi[i] = ga.multi_phitness(ga.pop[i]);
-
-					//вывод значений критерия
-					for (int j = 0; j < ga.get_m(); j++)
+					for (int i = 0; i < ga.get_m(); i++)
 					{
-						for (int i = 0; i < ga.get_N(); i++)
+						for (int j = 0; j < ga.get_N(); j++)
 						{
+							ga.phi[i][j] = ga.multi_phitness(ga.pop[j])[i];
 							sw->Write("{0};", ga.phi[i][j]);
 							printf("%d\t", ga.phi[i][j]);
 						}
 						sw->WriteLine();
-						printf("\n");
 					}
-					printf("\n");
+
 					sw->WriteLine();
+					printf("\n");
 
 					
 					sw->WriteLine("Approximation of the Pareto set (problem {0}, run {1}, iteration {2})", iter_prbl+1, index_run+1, iter);

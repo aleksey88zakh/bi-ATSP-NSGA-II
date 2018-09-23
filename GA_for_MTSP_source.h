@@ -30,12 +30,6 @@ using namespace std;
 using namespace System;
 using namespace System::IO;
 
-//struct Fronts
-//{
-//	vector<int> ranks;
-//	vector<int> fronts_index;
-//};
-
 //операторы кроссинговера
 public enum class recomb_oper {DEC_new, DPX};
 
@@ -52,12 +46,7 @@ public:
 	vector<int> i_rank;//ранг фронта по Парето
 	vector<double> i_dist;//расстояние (для ранжирования внутри форнта)
 	vector<int> s_aver;//средняя величина элемента матрицы (по каждому критерию)
-	vector<int> c_max_all; //макс длина дуги (по каждому критерию)
-	//локальный поиск
-	vector<int> index_pi;
-	vector<int> i_rank_pi;
-	vector<vector<int>> index_p;
-
+	vector<int> c_max; //макс длина дуги (по каждому критерию)
 
 	//родители + потомки (R_t = P_t + Q_t)
 	vector<vector<int>> pop_R_t;
@@ -82,9 +71,6 @@ public:
 	bool Pareto_pref(vector<T> a, vector<T> b);
 	//функция строит ранжировнные фронты популяции pop_cur парето-оптимальных решений (без crowding distance)
 	vector<int> range_front(vector<vector<int>>& pop, bool flag_sort_pop);
-	//функция строит ранжировнные фронты популяции pop_cur парето-оптимальных решений (без crowding distance)
-	//алгоритм Jensen (NlogN)
-	vector<int> range_front_J(vector<vector<int>> phi_cur, vector<vector<int>>& pop_cur, vector<int>& indeces_fronts, unsigned int type);
 	//вычисляет расстояния для особей из популяции pop_cur с рангом rank (ранг от 1 до макс элмента i_rank)
 	void crowd_dist(vector<double>& i_dist_cur, int rank, vector<int> i_rank_cur, vector<vector<int>> pop_cur, bool flag_sort);
 	//НОВАЯ вычисляет расстояния для особей из популяции pop_cur с рангом rank (ранг от 1 до макс элмента i_rank)
@@ -98,34 +84,15 @@ public:
 	//multimap<int, multimap<float, vector<int> > > a
 
 	//алгоритм быстрой сортировки
-	void quick_sort(vector<int>& arr, vector<int>& arr_index, int left, int right);
+	void GA_path::quick_sort(vector<int>& arr, vector<int>& arr_index, int left, int right);
 	//void GA_path::heap_sort_new(vector<vector<int>>& pop, int i_start, int i_stop);
 	//пирамидальная сортровка
 	//flag_phi_sort = true - сортировка по компоненте критерия
 	//flag_phi_sort = false - сортировка по i_dist
-	void heap_sort(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_citeria, int index_begin, int index_end);
-	//void heap_sort_ls(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_citeria, int index_begin, int index_end);
-	//сортировка по i_dist
-	void heap_sort(vector<int>& numbers_index, int index_begin, int index_end);
+	void GA_path::heap_sort(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_citeria, int index_begin, int index_end);
+	//
+	void GA_path::heap_sort(vector<int>& numbers_index, int index_begin, int index_end);
 	
-
-	//ЛОКАЛЬНЫЙ ПОИСК
-	//препроцессинг
-
-	//массив максимальных дуг по каждому критерию
-	vector<vector<int>> c_max;
-	//функция строит ранжировнные фронты популяции pop_cur парето-оптимальных решений (без crowding distance)
-	//алгоритм Jensen (NlogN)
-	//Fronts range_front_J_ls(vector<vector<int>>& pop, bool flag_sort_pop);
-	//бинарный поиск
-	//для поиска фронта F_b при вычислении рангов
-	//int binary_search_Fb_ls(vector<vector<int>> pop_cur, int cur_index, vector<vector<int>> F_j);
-
-
-	//ЛОКАЛЬНЫЙ ПОИСК
-	vector<int> local_search(vector<int> p, float alpha);
-
-
 
 	//ОПЕРАТОРЫ
 	//турнирная селекция
@@ -216,12 +183,15 @@ private:
 	int q_current;//значение q для текущей задачи ОР (по алгоритму Сердюкова)
 
 	//РЕКОМБИНАЦИЯ
-	// << Yulechka: Используется в функциях DEC_new и DCX
+	// << julia: Используется в функциях DEC_new и DCX
 	vector<bool> flag_Pareto_sol(int k, vector<vector<int>> s);
-	// << Yulechka: Используется в функциях DEC_new и DCX
+	// << julia: Используется в функциях DEC_new и DCX
 	//           поиск следующего активного элемента
 	int next(int j, int k, vector<bool> flag_S);
 
+
+	//ЛОКАЛЬНЫЙ ПОИСК
+	vector<int> local_search(vector<int> assignment, vector<vector<int>> s_m_crit_index);
 
 	//вычисление пригодности особи
 	int phitness(vector<vector<int>> s, vector<int> p);
@@ -234,15 +204,7 @@ private:
 	//flag_phi_sort = false - сортировка по i_dist
 	void sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_criteria, int root, int bottom, int delta);
 	//
-	void sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index, int root, int bottom, int delta);
-	//void sift_down_ls(vector<vector<int>> pop_cur, vector<int>& numbers_index, int root, int bottom, int delta);
-	//сортировка по i_dist
 	void sift_down(vector<int>& numbers_index, int root, int bottom, int delta);
-
-
-	//бинарный поиск
-	int binary_search_Fb(vector<vector<int>> pop_cur, int cur_index, vector<vector<int>> F_j);
-
 	
 	//3-opt замена в мутации
 	vector<int> random_change2(vector<int> assignment, int Nchange, vector<vector<int>> c,
