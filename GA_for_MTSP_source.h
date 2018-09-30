@@ -5,8 +5,11 @@
 #include <queue>
 #include <set>
 #include <map>
+#include <list>
 #include <string>
 #include <direct.h>
+#include "common.h"
+//#include "common.cpp"
 
 #define ITER_MAX 200
 #define MODIF true //ПОМЕНЯТЬ!!!
@@ -39,6 +42,8 @@ using namespace System::IO;
 //операторы кроссинговера
 public enum class recomb_oper {DEC_new, DPX};
 
+//extern template bool Pareto_pref(const vector<int> a, const vector<int> b);
+//extern template bool Pareto_pref(const vector<double> a, const vector<double> b);
 
 class GA_path
 {
@@ -77,9 +82,6 @@ public:
 	void set_matrices(StreamReader^ sr);
 	//значение векторного критерия для особи
 	vector<int> multi_phitness(vector<int> p);
-	//отношение Парето
-	template <typename T>
-	bool Pareto_pref(vector<T> a, vector<T> b);
 	//функция строит ранжировнные фронты популяции pop_cur парето-оптимальных решений (без crowding distance)
 	vector<int> range_front(vector<vector<int>>& pop, bool flag_sort_pop);
 	//функция строит ранжировнные фронты популяции pop_cur парето-оптимальных решений (без crowding distance)
@@ -186,8 +188,6 @@ public:
 
 	//чтение множества Парето из файла
 	vector<vector<int>> read_Pareto_set_from_file(String^ file_name_source_str, String^ problem_name_str);
-
-	friend void time_format(unsigned long long result_time, String^ title, StreamWriter^ sw);
 
 private:
 	int n;//число позиций в перестановке

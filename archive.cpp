@@ -1,0 +1,94 @@
+#include "archive.h"
+#include "common.h"
+
+Archive::Archive()
+{
+}
+
+Archive::Archive(GA_path ga)
+{
+	//? использовать переменную i_start_last_front_exceeded
+	// переделать с учетом:
+	//	1) заполнения ga.phi;
+	//	2) если все особи ранга 1
+	for (int i = 0; i < ga.get_N(); i++)
+	{
+		if (ga.i_rank[i] == 2)
+			break;
+		archive.push_back(ga.pop[i]);
+		val_crit_archive.push_back(ga.multi_phitness(ga.pop[i]));
+		ar_index_not_cons_lst.push_back(0);
+	}
+
+}
+
+Archive::~Archive()
+{
+	archive.clear();
+	ar_index_cons_lst.clear();
+	ar_index_not_cons_lst.clear();
+	ar_index_no_lst.clear();
+	val_crit_archive.clear();
+}
+
+int Archive::check_new(vector<int> pop_new, vector<int> val_crit_new)
+{
+	list<unsigned>::const_iterator it_lst;
+
+	// пробегаемся по индексам элементов архива, кот. не просмотрены
+	for (it_lst = ar_index_not_cons_lst.cbegin(); it_lst != ar_index_not_cons_lst.cend(); ++it_lst)
+	{
+		//новая особь доминирует особь в позиции *it_lst
+		if (Pareto_pref(val_crit_new, val_crit_archive[*it_lst]))
+		{
+			ar_index_no_lst.push_back(*it_lst);
+			it_lst = ar_index_not_cons_lst.erase(it_lst); // присвивать it_lst?
+													  //continue; 
+		}
+
+		if (Pareto_pref(val_crit_archive[*it_lst], val_crit_new))
+			return 0;
+	}
+
+
+	// пробегаемся по индексам элементов архива, кот. просмотрены
+	for (it_lst = ar_index_cons_lst.cbegin(); it_lst != ar_index_cons_lst.cend(); ++it_lst)
+	{
+		//новая особь доминирует особь в позиции *it_lst
+		if (Pareto_pref(val_crit_new, val_crit_archive[*it_lst]))
+		{
+			ar_index_no_lst.push_back(*it_lst);
+			it_lst = ar_index_cons_lst.erase(it_lst); // присвивать it_lst?
+													  //continue; 
+		}
+
+		if (Pareto_pref(val_crit_archive[*it_lst], val_crit_new))
+			return 0;
+	}
+
+
+	// новая особь не была продоминирована
+	// добавляем ее в архив
+	if (!ar_index_no_lst.empty())
+	{
+		int i_tmp = ar_index_no_lst.front();
+		ar_index_not_cons_lst.push_back(i_tmp);
+		archive[i_tmp] = pop_new;
+		val_crit_archive[i_tmp] = val_crit_new;
+		ar_index_no_lst.pop_front();
+	}
+	else
+	{
+		if (!ar_index_not_cons_lst.empty())
+			ar_index_not_cons_lst.push_back(archive.size()); // с учетом того, что новую особь в архив не добавили
+		else
+			ar_index_not_cons_lst.push_back(0); // индекс с 0
+
+														   //добавляем новую особь в популяцию (архив)
+		archive.push_back(pop_new);
+		val_crit_archive.push_back(val_crit_new);
+	}
+		
+
+	return 1;
+}

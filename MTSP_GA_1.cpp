@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include "GA_for_MTSP_source.h"
+#include "archive.h"
 
 using namespace std;
 using namespace System;
@@ -807,7 +808,7 @@ int main(int argc, char* argv[])
 			//vector<int> i_rank_R_t(2 * ga.get_N());
 
 
-			//ОСНОВНОЙ ЦИКЛ ПО ИТЕРАЦИЯМ
+//ОСНОВНОЙ ЦИКЛ ПО ИТЕРАЦИЯМ
 			int iter = 0;
 			while (++iter <= num_iter)
 			{
@@ -992,11 +993,68 @@ int main(int argc, char* argv[])
 				//если последний фронт закончился индексом N-1 (полностью войдет в новую популяцию)
 				//то особи из следующих фронтов не добавляем
 
-				//ЛОКАЛЬНЫЙ ПОИСК (сделан для начальной популяции)
-				//for (int i = 0; i < ga.get_n(); i++)
-				//{
-					//ga.local_search(ga.pop[i], ga.s_m[0]); //что писать вторым аргументом?
-				//}
+//////////////////////////////////////////
+/////////////// ЛОКАЛЬНЫЙ ПОИСК В КОНЦЕ ИНТЕРАЦИЙ
+/////////////////////////////////////////
+				if (iter == num_iter)
+				{
+					//формируем архив из особей с раном 1
+					Archive arch(ga);
+					//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ АРХИВА
+					vector<int> pop_new;
+					printf("Local search at the end\n");
+					printf("\n");
+					sw->WriteLine("Local search at the end");
+					sw->WriteLine();
+
+					// цикл, пока архив непросмотренных не пуст
+					while (!arch.ar_index_not_cons_lst.empty())
+					{
+						//для рандомизатора
+						temp_time = ::GetTickCount();
+						srand(temp_time);
+						unsigned i_tmp = rand() % arch.ar_index_not_cons_lst.size();
+						
+						// переходим к элементу архива, соотв. случ. сгенерированному индексу
+						list<unsigned>::const_iterator it_lst = arch.ar_index_not_cons_lst.cbegin();
+						advance(it_lst, i_tmp);
+						
+						// добавляем к просмотренным
+						arch.ar_index_cons_lst.push_back(*it_lst);
+						// удаляем из непросмотренных
+						arch.ar_index_not_cons_lst.erase(it_lst);
+						
+						// генерируем новую особь
+						pop_new = ga.local_search(arch.archive[*it_lst], 0.5);
+						arch.check_new(pop_new, ga.multi_phitness(pop_new));
+						
+					}
+
+					sw->WriteLine("after LS at the end");
+					printf("after LS at the end:\n");
+					for (int j = 0; j < ga.get_n(); j++)
+					{
+						for (int i = 0; i < arch.archive.size(); i++)
+						{
+							sw->Write("{0};", arch.archive[i][j]);
+							printf("%d\t", arch.archive[i][j]);
+						}
+						sw->WriteLine();
+
+					}
+
+					for (int j = 0; j < ga.get_m(); j++)
+					{
+						for (int i = 0; i < arch.archive.size(); i++)
+						{
+							sw->Write("{0};", arch.val_crit_archive[i][j]);
+							printf("%d\t", arch.val_crit_archive[i][j]);
+						}
+						sw->WriteLine();
+
+					}
+
+				}
 
 				//формируем значения векторного критерия аппроксимации мн-ва Парето (без повторов)
 				ga.phi_P_approx.clear();
@@ -1054,6 +1112,7 @@ int main(int argc, char* argv[])
 					sw->WriteLine("Values of vector criterion (problem {0}, run {1}, iteration {2})", iter_prbl+1, index_run+1, iter);
 					printf("Values of vector criterion (problem %d, run %d, iteration %d):\n", iter_prbl+1, index_run+1, iter);
 					//заполнение значений критерия
+// TO DO: перенести заполнение (не вывод) до "лок. поиска в конце итераций"
 					for (int i = 0; i < ga.get_N(); i++)
 						ga.phi[i] = ga.multi_phitness(ga.pop[i]);
 
