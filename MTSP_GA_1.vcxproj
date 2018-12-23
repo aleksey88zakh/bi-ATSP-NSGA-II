@@ -91,7 +91,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);ALG_VNS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
@@ -155,7 +155,6 @@
     <ClCompile Include="common.cpp" />
     <ClCompile Include="GA_for_MTSP_source.cpp" />
     <ClCompile Include="MTSP_GA_1.cpp" />
-    <ClCompile Include="MTSP_VNS_1.cpp" />
     <ClCompile Include="operators.cpp" />
     <ClCompile Include="reduction.cpp" />
     <ClCompile Include="stdafx.cpp">

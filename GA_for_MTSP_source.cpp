@@ -447,7 +447,7 @@ vector<int> GA_path::random_individual()
 ////////////////////////////////////////////////////////////////////////////////
 //Локальный поиск
 ////////////////////////////////////////////////////////////////////////////////
-vector<int> GA_path::local_search(vector<int> p, float alpha, void* p_arch)//это локальный поиск по принципу first-improvement
+vector<int> GA_path::local_search(vector<int> p, float alpha)//это локальный поиск по принципу first-improvement
 																		//котороый делает полный перебор, его нужно изменить!!!!!
 {
 	//////////////////////////////////////////////////////////////////////////////////
@@ -466,7 +466,7 @@ vector<int> GA_path::local_search(vector<int> p, float alpha, void* p_arch)//э�
 	vector<boolean> tabu(this->get_n());
 	//запись перестановки pi (переменная index_pi) в очередь
 	for (int i = 0; i < this->index_pi.size(); i++) {
-		pi_deque.push_back(this->index_pi[i] - 1);
+		pi_deque.push_back(((this->index_pi[i]) - 1));
 		tabu[i] = false;//изначально все вершины вне черного списка (активны!)
 	}
 
@@ -481,8 +481,7 @@ vector<int> GA_path::local_search(vector<int> p, float alpha, void* p_arch)//э�
 	//+++++++++++++++++++++++++++++++++++++++++++
 	is_improve = false;
 	//основной цикл просмотра окрестности
-	while (pi_deque.size() != 0)
-	{//просматриваем вершины очереди по порядку
+	while (pi_deque.size() != 0) {//просматриваем вершины очереди по порядку
 								  //////////////////////////////////////////////////////////////////
 		i_head = pi_deque.front(); //возвращает первый элемент очереди (нет проверки сущестования)
 		pi_deque.pop_front(); //удаление первого элемента очереди (не возвращает его)
@@ -492,104 +491,40 @@ vector<int> GA_path::local_search(vector<int> p, float alpha, void* p_arch)//э�
 		//path[0][j_head] = -1;
 		/////////////////////////////////////////////////////////////////
 		//добавляем дугу для образования цикла (i_head,i_next) //перебираем только alpha вариантов
-		for (int i_t = 0; i_t < k; i_t++)
-		{	//2
+		for (int i_t = 0; i_t < k; i_t++) {//2
 			i_next = (this->index_p[i_head][i_t]) - 1;
 			//printf("%d %d %d %d\t", i_head, j_head, i_next,i_t);
 			//printf("\n");
-			if (i_head != i_next && j_head != i_next)
-			{	//3
-				//добавляем (i_head, i_next)
-				//path[1][i_head] = i_next;
+			if (i_head != i_next && j_head != i_next) {//3
+													   //добавляем (i_head, i_next)
+													   //path[1][i_head] = i_next;
 				i_temp = path[0][i_next];//дуга для удаления формируется однозначно
 										 //path[0][i_next] = i_head;
 										 //удаляем (i_temp, i_next)
 										 //path[1][i_temp] = -1;
 				j_tail = i_next;//просматриваем вершины цикла, j_tail - кандидат
-
-				while (true)
-				{
+				while (true) {
 					j_tail = path[1][j_tail];
 					if (j_head == j_tail) {//!
 						break;
 					}//!
-					if (j_head != j_tail)
-					{	//if1
-						//обновляем значения критериев по новому циклу
+					if (j_head != j_tail) {//if1
+										   //обновляем значения критериев по новому циклу
 						s1 = s1_p - s_m[0][i_head][j_head] - s_m[0][i_temp][i_next] - s_m[0][path[0][j_tail]][j_tail] +
 							s_m[0][i_head][i_next] + s_m[0][i_temp][j_tail] + s_m[0][path[0][j_tail]][j_head];
 						s2 = s2_p - s_m[1][i_head][j_head] - s_m[1][i_temp][i_next] - s_m[1][path[0][j_tail]][j_tail] +
 							s_m[1][i_head][i_next] + s_m[1][i_temp][j_tail] + s_m[1][path[0][j_tail]][j_head];
+						if ((s1 < s1_p && s2 <= s2_p) || (s1 <= s1_p && s2 < s2_p)) {//if 2нашли улучшающее решение
+																					 //printf("%d %d\t", s1, s2);
+																					 //printf("\n");
 
-						// локальный поиск начальной популяции
-						if (!p_arch)
-						{
-							// новая особь доминирует текущую					
-							if ((s1 < s1_p && s2 <= s2_p) || (s1 <= s1_p && s2 < s2_p))
-							{	//if2
-								//нашли улучшающее решение
-								//printf("%d %d\t", s1, s2);
-								//printf("\n");
-
-								is_improve = true;
-								break;
-							}//if2
-						}
-						//локальный поиск в финальной популяции
-						else
-						{
-							// "центр" окрестности продоминировал новую особь
-							if ((s1_p < s1 && s2_p <= s2) || (s1_p <= s1 && s2_p < s2))
-								continue;
-
-							// формируем перестановку, соотв. новой особи
-							vector<vector<int>> path_tmp = path;
-							//удаляем (i_head,j_head)
-							path_tmp[1][i_head] = -1;
-							path_tmp[0][j_head] = -1;
-							//добавляем (i_head, i_next)
-							path_tmp[1][i_head] = i_next;
-							path_tmp[0][i_next] = i_head;
-							//удаляем (i_temp, i_next)
-							path_tmp[1][i_temp] = -1;
-							//добавляем (i_temp, j_tail)
-							path_tmp[1][i_temp] = j_tail;
-							i_tail = path_tmp[0][j_tail];
-							path_tmp[0][j_tail] = i_temp;
-							//удаляем (i_tail, j_tail)
-							path_tmp[1][i_tail] = -1;
-							//добавляем (i_tail, j_head)
-							path_tmp[1][i_tail] = j_head;
-							path_tmp[0][j_head] = i_tail;
-
-							vector<int> result_tmp(this->get_n());
-							result_tmp[0] = 1;
-							int i_temp2 = 0;
-							for (int i = 1; i < n; ++i)
-							{
-								result_tmp[i] = path_tmp[1][i_temp2] + 1;
-								i_temp2 = path_tmp[1][i_temp2];
-							}
-
-							// новая особь продоминировала "центр" окрестности
-							if ((s1 < s1_p && s2 <= s2_p) || (s1 <= s1_p && s2 < s2_p))
-							{
-								//? сравниваем {s1, s2} c архивом\{s1_p, s2_p}
-								return result_tmp; // возвращаем новую особь
-							}
-
-							// дошли до сюда, значит новая и текущая особи не сравнимы
-							// сравним новую особь с архивом
-							if (((Archive*)p_arch)->check_new({ s1, s2 }))
-							{
-								((Archive*)p_arch)->arch_modify(result_tmp, { s1, s2 });
-							}
-						}
+							is_improve = true; break;
+						}//if2
 
 					}//if 1
 
-				}//while(true)
 
+				}//while(true)
 				if (is_improve == false) {
 					//в данном направлении нет улучшения (возвращаем метки на место)
 					//идет речь о направлении, где удалены (i_head,j_head) и (i_temp,i_next),
@@ -599,8 +534,7 @@ vector<int> GA_path::local_search(vector<int> p, float alpha, void* p_arch)//э�
 					//path[0][i_next] = i_temp;
 					//path[1][i_temp] = i_next;
 				}
-				else
-				{//нашли улучшающее решение в окрестности текущего решения
+				else {//нашли улучшающее решение в окрестности текущего решения
 					  //удаляем (i_head,j_head)
 					path[1][i_head] = -1;
 					path[0][j_head] = -1;
@@ -623,11 +557,7 @@ vector<int> GA_path::local_search(vector<int> p, float alpha, void* p_arch)//э�
 				}
 			}//3
 		}//2
-
-		if (p_arch) continue;
-
-		if (is_improve)
-		{
+		if (is_improve) {
 			//добавляем i_head в конец очереди
 			pi_deque.push_back(i_head); //добавление переменной i_head в конец очереди
 										//если  вершина какого-либо удаленного ребера в черном списке, то возвращаем ее в очередь
@@ -636,7 +566,6 @@ vector<int> GA_path::local_search(vector<int> p, float alpha, void* p_arch)//э�
 			if (tabu[i_temp] == true) { tabu[i_temp] = false; pi_deque.push_back(i_temp); }
 			if (tabu[j_tail] == true) { tabu[j_tail] = false; pi_deque.push_back(j_tail); }
 			if (tabu[i_tail] == true) { tabu[i_tail] = false; pi_deque.push_back(i_tail); }
-
 		}
 		else {
 			tabu[i_head] = true;
@@ -648,10 +577,6 @@ vector<int> GA_path::local_search(vector<int> p, float alpha, void* p_arch)//э�
 	}//while(pi_deque.size()!=0)
 	 //+++++++++++++++++++++++++++++++++++++++++++
 	 //+++++++++++++++++++++++++++++++++++++++++++
-
-	if (p_arch)
-		return {}; // возвращаем пустой вектор
-
 	vector<int> result(this->get_n());
 	result[0] = 1; i_temp = 0;
 	for (int i = 1; i < n; ++i) {
