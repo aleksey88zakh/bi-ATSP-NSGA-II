@@ -15,6 +15,8 @@ using namespace System;
 using namespace System::IO;
 
 
+/*
+*оепемеяемн б GA_for_MTSP_source.h*
 class Archive
 {
 public:
@@ -28,9 +30,10 @@ public:
 	list<unsigned> ar_index_not_cons_lst;
 	list<unsigned> ar_index_no_lst;
 
-	int check_new(vector<int> pop_new, vector<int> val_crit_new);
+	int check_new(vector<int> val_crit_new);
+	void arch_modify(vector<int> pop_new, vector<int> val_crit_new);
 };
-
+*/
 
 
 inline unsigned get_status_lst(unsigned x)

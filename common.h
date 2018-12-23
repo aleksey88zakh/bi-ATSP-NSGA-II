@@ -13,7 +13,10 @@ using namespace std;
 using namespace System;
 using namespace System::IO;
 
+#define MAX_NUM_K_OPT 11
+
 void time_format(unsigned long long result_time, String^ title, StreamWriter^ sw);
+vector<int> shaking_Kopt(vector<int> s, int k);
 
 ////////////////////////////////////////////////////////////////////////////////
 //Отношение Парето

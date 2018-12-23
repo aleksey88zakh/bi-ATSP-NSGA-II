@@ -9,6 +9,7 @@
 #include <string>
 #include <direct.h>
 #include "common.h"
+//#include "archive.h"
 //#include "common.cpp"
 
 #define ITER_MAX 200
@@ -44,6 +45,8 @@ public enum class recomb_oper {DEC_new, DPX};
 
 //extern template bool Pareto_pref(const vector<int> a, const vector<int> b);
 //extern template bool Pareto_pref(const vector<double> a, const vector<double> b);
+
+
 
 class GA_path
 {
@@ -125,7 +128,7 @@ public:
 
 
 	//ЛОКАЛЬНЫЙ ПОИСК
-	vector<int> local_search(vector<int> p, float alpha);
+	vector<int> local_search(vector<int> p, float alpha, void* p_arch = NULL);
 
 
 
@@ -251,4 +254,21 @@ private:
 	//метод не нужен
 	//vector<int> GA_path::local_search_fast(vector<int> assignment, vector<vector<int>> c,
 	//	vector<vector<int>> vertex, vector<int> vertex_initial, int alpha);
+};
+
+class Archive
+{
+public:
+	Archive();
+	Archive(GA_path ga); // на основе данных генетического алгоритма
+	~Archive();
+
+	vector<vector<int>> archive;
+	vector<vector<int>> val_crit_archive;
+	list<unsigned> ar_index_cons_lst;
+	list<unsigned> ar_index_not_cons_lst;
+	list<unsigned> ar_index_no_lst;
+
+	int check_new(vector<int> val_crit_new);
+	void arch_modify(vector<int> pop_new, vector<int> val_crit_new);
 };
