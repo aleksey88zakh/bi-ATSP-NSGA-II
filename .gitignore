@@ -4,11 +4,12 @@
 /.vs
 /Debug
 /Release
+/results
 #####################################
 *.exe
 *.~*
 *.dll
-*vcxproj.*
+*.vcxproj.*
 *.vcxproj
 *.md
 *.sln
