@@ -1,7 +1,7 @@
 ﻿// MTSP_GA_1.cpp: определяет точку входа для консольного приложения.
 //
 
-#include "stdafx.h"
+//#include "stdafx.h"
 #include <iostream>
 #include <string>
 #include "GA_for_MTSP_source.h"
@@ -30,6 +30,9 @@ int main_GA(int argc, char* argv[])
 	//кол-во запусков на одной задаче
 	int num_runs = 1;
 
+	//время работы на одной задаче
+	unsigned long time_run = 0;
+
 	//имя файла, с которого считываем
 	String^ file_name_rd_str = "Example_MTSP_m2_n20_N50_12.txt";//ПОМЕНЯТЬ!!!
 
@@ -41,6 +44,9 @@ int main_GA(int argc, char* argv[])
 
 	//оператор рекомбинации
 	recomb_oper rec_oper = recomb_oper::DEC_new;
+
+	//флаг локального поиска
+	bool flag_no_LS = false;
 
 	//"кванты информации"
 	unsigned quantum_inf = _1ST_2ND_ + _2ND_1ST_;
@@ -111,7 +117,7 @@ int main_GA(int argc, char* argv[])
 		if (str_temp == "\\n")
 		{
 			num_n = stoi(argv[i + 1]);
-			is_num_n_specified = true;
+//			is_num_n_specified = true;
 			continue;
 		}
 
@@ -151,15 +157,47 @@ int main_GA(int argc, char* argv[])
 			continue;
 		}
 
+		if (str_temp == "\\TIME")
+		{
+			// в мсек.
+			time_run = stof(argv[i + 1]) * 1000;
+			continue;
+		}
+
+		if (str_temp == "\\NO_LS")
+			flag_no_LS = true;
+
 		if (str_temp == "\\REDUCE")
 			reduction = true;
 		
 		if (str_temp == "\\DPX")
 			rec_oper = recomb_oper::DPX;
+
+		if (str_temp == "\\Q_learn")
+			rec_oper = recomb_oper::CH_MAX;
 	}
 	
 	//открываем для считывания
 	StreamReader^ sr = gcnew StreamReader(file_name_rd_str);
+	
+	//короткий файл для записи
+	String^ file_name_1_st = "results/Example_MTSP_m2_n" + num_n + "_N" + num_N + "_summary.csv";
+	StreamWriter^ sw_1 = gcnew StreamWriter(file_name_1_st);
+
+	//файл для записи эксперимента по сужению мн-ва Парето
+	String^ file_name_red_P_set_str = "results/Example_MTSP_m2_n" + num_n + "_N" + num_N + "_red_P_set.csv";
+	StreamWriter^ sw_3 = gcnew StreamWriter(file_name_red_P_set_str);
+
+	//короткий файл для записи эксперимента по сужению мн-ва Парето
+	String^ file_name_short_red_P_set_str = "results/Example_MTSP_m2_n" + num_n + "_N" + num_N + "_red_P_set_short.csv";
+	StreamWriter^ sw_4 = gcnew StreamWriter(file_name_short_red_P_set_str);
+	sw_4->WriteLine("Reduction of the Pareto set");
+	sw_4->WriteLine();
+
+	//файл для вывода аппрокимации мн-ва Парето в отдельный файл для последующего вычисления гиперобъема
+																 /*Example_MTSP_m2_n50_1_10.txt*/
+	StreamWriter^ sw_5 = gcnew StreamWriter("results/Pareto_set_GA_" + file_name_rd_str->Substring(16, file_name_rd_str->LastIndexOf(".txt")-16) + ".csv");
+	
 	/*
 	TCHAR buffer[MAX_PATH];
 	GetCurrentDirectory(sizeof(buffer), buffer);
@@ -170,21 +208,7 @@ int main_GA(int argc, char* argv[])
 
 	_mkdir(str_temp.c_str());
 	*/
-
-	//короткий файл для записи
-	String^ file_name_1_st = "results/Example_MTSP_m2_n" + num_n + "_N" + num_N + "_" + rec_oper.ToString("g") + "_results.csv";
-	StreamWriter^ sw_1 = gcnew StreamWriter(file_name_1_st);
-
-	//файл для записи эксперимента по сужению мн-ва Парето
-	String^ file_name_red_P_set_str = "results/Example_MTSP_m2_n" + num_n + "_N" + num_N + "_" + rec_oper.ToString("g") + "_red_P_set.csv";
-	StreamWriter^ sw_3 = gcnew StreamWriter(file_name_red_P_set_str);
-
-	//короткий файл для записи эксперимента по сужению мн-ва Парето
-	String^ file_name_short_red_P_set_str = "results/Example_MTSP_m2_n" + num_n + "_N" + num_N + "_" + rec_oper.ToString("g") + "_red_P_set_short.csv";
-	StreamWriter^ sw_4 = gcnew StreamWriter(file_name_short_red_P_set_str);
-	sw_4->WriteLine("Reduction of the Pareto set");
-	sw_4->WriteLine();
-
+	
 	String^ cur_line_str = sr->ReadLine();
 
 	//количества задач
@@ -263,28 +287,28 @@ int main_GA(int argc, char* argv[])
 		
 		int var_rand = 10;
 		
+		//ФАЙЛЫ ДЛЯ ЧТЕНИЯ И ЗАПИСИ
 
-		String^ file_name_st;
-		if (MODIF)
-			file_name_st = "results/Example_MTSP_m2_n" + ga.get_n() + "_N" + ga.get_N() + "_" + problem_name_str + "_" + rec_oper.ToString("g") + "_modif_temp.csv";
-		else
-			file_name_st = "results/Example_MTSP_m2_n" + ga.get_n() + "_N" + ga.get_N() + "_" + problem_name_str + "_" + rec_oper.ToString("g") + "_temp.csv";
+		String^ file_name_st = "results/Example_MTSP_m2_n" + ga.get_n() + "_N" + ga.get_N() + "_" + problem_name_str + ".csv";
+//		if (MODIF)
+//			file_name_st = "results/Example_MTSP_m2_n" + ga.get_n() + "_N" + ga.get_N() + "_" + problem_name_str + "_" + rec_oper.ToString("g") + "_modif_temp.csv";
+//		else
+//			file_name_st = "results/Example_MTSP_m2_n" + ga.get_n() + "_N" + ga.get_N() + "_" + problem_name_str + "_" + rec_oper.ToString("g") + "_temp.csv";
 		StreamWriter^ sw = gcnew StreamWriter(file_name_st);
 
-		//String^ file_name_1_st = "results/Example_MTSP_m2_n12_N50_" + problem_name_str + ".csv";
-		//StreamWriter^ sw_1 = gcnew StreamWriter(file_name_1_st);
+		
 
 
 		//чтение множества Парето из файла (если присвоена строка с именем)
 		//String^ file_name_source_Pareto_set_str = "Example_MTSP_m2_n20_N50_1_10_Temp.csv";
 		vector<vector<int>> phi_Pareto_set;
 		if (file_name_source_Pareto_set_str)
-			phi_Pareto_set = ga.read_Pareto_set_from_file(file_name_source_Pareto_set_str, problem_name_str);
+			phi_Pareto_set = read_Pareto_set_from_file(file_name_source_Pareto_set_str, problem_name_str, ga.get_m());
 		
 		//счетчик числа совпадений аппроксимации и мн-ва Парето
 		ga.count_P_eq_approx = 0;
 
-
+		//выписываем параметры задачи
 		sw->WriteLine(problem_name_str);
 		sw->WriteLine("n; {0}", ga.get_n());
 		sw->WriteLine("m; {0}", ga.get_m());
@@ -297,6 +321,16 @@ int main_GA(int argc, char* argv[])
 		sw_1->WriteLine("N; {0}", ga.get_N());
 		sw_1->WriteLine("iter; {0}", num_iter);
 		sw_1->WriteLine("run; {0}", num_runs);
+		if (flag_no_LS)
+			sw_1->WriteLine("NO_LS");
+		else
+		{
+			sw_1->WriteLine("LS begin alpha; {0:F2}", LS_GA_BEGIN_ALPHA);
+			sw_1->WriteLine("LS end alpha; {0:F2}", LS_GA_END_ALPHA);
+		}
+		sw_1->WriteLine("tourn size; {0}", ga.get_tourn_size());
+		sw_1->WriteLine("p_mut; {0:F2}", ga.get_p_mut());
+		
 
 		//файл для записи эксперимента по сужению мн-ва Парето
 		if (reduction)
@@ -363,70 +397,72 @@ int main_GA(int argc, char* argv[])
 
 
 //ПРЕПРОЦЕССИНГ для локального поиска
-		//построение перестановки pi (переменная index_pi)
-		//? определение fronts_struct_temp с размерностью
-		vector<vector<int>> tmp; //заглушка
-		ga.i_rank_pi = ga.range_front_J(ga.c_max, tmp, ga.index_pi, 0);
-		tmp.clear();
-		//ga.i_rank_pi = fronts_struct_temp.ranks;
-		//ga.index_pi = fronts_struct_temp.fronts_index;
-		sw->WriteLine("Permutation pi");
-		printf("Permutation pi\n");
-		for (int i = 0; i < ga.index_pi.size(); i++)
+		if (!flag_no_LS)
 		{
-			sw->Write("{0};", ga.index_pi[i]);
-			printf("%d\t", ga.index_pi[i]);
-		}
-		sw->WriteLine();
-		printf("\n");
-		sw->WriteLine("Ranks");
-		printf("Ranks\n");
-		for (int i = 0; i < ga.index_pi.size(); i++)
-		{
-			sw->Write("{0};", ga.i_rank_pi[i]);
-			printf("%d\t", ga.i_rank_pi[i]);
-		}
-		sw->WriteLine();
-		printf("\n");
-
-
-		//построение перестановок p_i (переменная index_p)
-		sw->WriteLine("Permutations p");
-		printf("Permutations p\n");
-		vector<vector<int>> c_max_temp;
-		for (int i = 0; i < ga.get_n(); i++)
-		{
-			c_max_temp.clear();
-			for (int j = 0; j < ga.get_n(); j++)
-				//сохраняем весь массив вектров (в том числе при i=j)
-				//чтобы использовать в ф-ции постр. рангов
-				c_max_temp.push_back({ ga.s_m[0][i][j], ga.s_m[1][i][j] });
-
-			vector<int> index_front_temp;
+			//построение перестановки pi (переменная index_pi)
+			//? определение fronts_struct_temp с размерностью
 			vector<vector<int>> tmp; //заглушка
-			ga.range_front_J(c_max_temp, tmp, index_front_temp, 0);
-			//первым всегда будет вектор (0, 0) (при i=j)
-			//поэтому начинаем с k=1
-			for (int k = 1; k < index_front_temp.size(); k++)
-				ga.index_p[i].push_back(index_front_temp[k]);
-			index_front_temp.clear();
+			ga.i_rank_pi = ga.range_front_J(ga.c_max, tmp, ga.index_pi, 0);
 			tmp.clear();
-
-			//вывод
-			sw->WriteLine("i = {0}", i + 1);
-			printf("i = %d\n", i);
-			for (int j = 0; j < ga.index_p[i].size(); j++)
+			//ga.i_rank_pi = fronts_struct_temp.ranks;
+			//ga.index_pi = fronts_struct_temp.fronts_index;
+			sw->WriteLine("Permutation pi");
+			printf("Permutation pi\n");
+			for (int i = 0; i < ga.index_pi.size(); i++)
 			{
-				sw->Write("{0};", ga.index_p[i][j]);
-				printf("%d\t", ga.index_p[i][j]);
+				sw->Write("{0};", ga.index_pi[i]);
+				printf("%d\t", ga.index_pi[i]);
 			}
 			sw->WriteLine();
 			printf("\n");
+			sw->WriteLine("Ranks");
+			printf("Ranks\n");
+			for (int i = 0; i < ga.index_pi.size(); i++)
+			{
+				sw->Write("{0};", ga.i_rank_pi[i]);
+				printf("%d\t", ga.i_rank_pi[i]);
+			}
+			sw->WriteLine();
+			printf("\n");
+
+
+			//построение перестановок p_i (переменная index_p)
+			sw->WriteLine("Permutations p");
+			printf("Permutations p\n");
+			vector<vector<int>> c_max_temp;
+			for (int i = 0; i < ga.get_n(); i++)
+			{
+				c_max_temp.clear();
+				for (int j = 0; j < ga.get_n(); j++)
+					//сохраняем весь массив вектров (в том числе при i=j)
+					//чтобы использовать в ф-ции постр. рангов
+					c_max_temp.push_back({ ga.s_m[0][i][j], ga.s_m[1][i][j] });
+
+				vector<int> index_front_temp;
+				vector<vector<int>> tmp; //заглушка
+				ga.range_front_J(c_max_temp, tmp, index_front_temp, 0);
+				//первым всегда будет вектор (0, 0) (при i=j)
+				//поэтому начинаем с k=1
+				for (int k = 1; k < index_front_temp.size(); k++)
+					ga.index_p[i].push_back(index_front_temp[k]);
+				index_front_temp.clear();
+				tmp.clear();
+
+				//вывод
+				sw->WriteLine("i = {0}", i + 1);
+				printf("i = %d\n", i);
+				for (int j = 0; j < ga.index_p[i].size(); j++)
+				{
+					sw->Write("{0};", ga.index_p[i][j]);
+					printf("%d\t", ga.index_p[i][j]);
+				}
+				sw->WriteLine();
+				printf("\n");
+			}
+
+			sw->WriteLine();
+			printf("\n");
 		}
-
-		sw->WriteLine();
-		printf("\n");
-
 		//засекаем время препроцессинга
 		long time_local_search_b_pre = ::GetTickCount() - start_time;
 		//время локального поиска (в начале)
@@ -440,7 +476,7 @@ int main_GA(int argc, char* argv[])
 		//цикл по запускаем (на одной задаче)
 		for (int index_run = 0; index_run < num_runs; index_run++)
 		{
-			sw->WriteLine("Problem{0} Run {1}", iter_prbl + 1, index_run + 1);
+			sw->WriteLine("Problem {0} Run {1}", iter_prbl + 1, index_run + 1);
 			//для рандомизатора
 			temp_time = ::GetTickCount();
 			srand(temp_time);
@@ -576,63 +612,62 @@ int main_GA(int argc, char* argv[])
 
 //-----------------------------------------------------------------------------------------------
 //----------ЛОКАЛЬНЫЙ ПОИСК (нач. поп.)----------------------------------------------------------
-
-			// ПРЕПРОЦЕССИНГ см. выше
-			// выполняется один раз перед всеми запусками одной задачи
-
-
-			//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ МАССИВА pop
-
 			//время локального поиска (в начале)
 			time_local_search_b -= ::GetTickCount();
-
-			vector<int> pop_new;
-			printf("Local search\n");
-			printf("\n");
-			sw->WriteLine("Local search");
-			sw->WriteLine();
-
-			for (int i=0;i<ga.get_N();i++)
-				ga.pop[i] = ga.local_search(ga.pop[i], 0.5);
-
-			sw->WriteLine("after LS");
-			printf("afret LS:\n");
-			for (int j = 0; j < ga.get_n(); j++)
+			if (!flag_no_LS)
 			{
-				for (int i = 0; i < ga.get_N(); i++)
-				{
-					sw->Write("{0};", ga.pop[i][j]);
-					printf("%d\t", ga.pop[i][j]);
-				}
+				// ПРЕПРОЦЕССИНГ см. выше
+				// выполняется один раз перед всеми запусками одной задачи
+
+
+				//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ МАССИВА pop			
+				vector<int> pop_new;
+				printf("Local search\n");
+				printf("\n");
+				sw->WriteLine("Local search");
 				sw->WriteLine();
 
-			}
-
-			sw->WriteLine();
-			printf("\n");
-
-
-			//заполняем значение векторного критерия по популяции
-			sw->WriteLine("Values of vector criterion:");
-			printf("Values of vector criterion:\n");
-
-			//заполнение значений критерия
-			for (int i = 0; i < ga.get_N(); i++)
-				ga.phi[i] = ga.multi_phitness(ga.pop[i]);
-
-			//вывод значений критерия
-			for (int j = 0; j < ga.get_m(); j++)
-			{
 				for (int i = 0; i < ga.get_N(); i++)
+					ga.pop[i] = ga.local_search(ga.pop[i], LS_GA_BEGIN_ALPHA, LS_GA_BEGIN_BETA);
+
+				sw->WriteLine("after LS");
+				printf("afret LS:\n");
+				for (int j = 0; j < ga.get_n(); j++)
 				{
-					sw->Write("{0};", ga.phi[i][j]);
-					printf("%d\t", ga.phi[i][j]);
+					for (int i = 0; i < ga.get_N(); i++)
+					{
+						sw->Write("{0};", ga.pop[i][j]);
+						printf("%d\t", ga.pop[i][j]);
+					}
+					sw->WriteLine();
+
 				}
+
 				sw->WriteLine();
 				printf("\n");
+
+				//заполняем значение векторного критерия по популяции
+				sw->WriteLine("Values of vector criterion:");
+				printf("Values of vector criterion:\n");
+
+				//заполнение значений критерия
+				for (int i = 0; i < ga.get_N(); i++)
+					ga.phi[i] = ga.multi_phitness(ga.pop[i]);
+
+				//вывод значений критерия
+				for (int j = 0; j < ga.get_m(); j++)
+				{
+					for (int i = 0; i < ga.get_N(); i++)
+					{
+						sw->Write("{0};", ga.phi[i][j]);
+						printf("%d\t", ga.phi[i][j]);
+					}
+					sw->WriteLine();
+					printf("\n");
+				}
+				printf("\n");
+				sw->WriteLine();
 			}
-			printf("\n");
-			sw->WriteLine();
 
 			//засекаем время локального поиска (в начале)
 			time_local_search_b += ::GetTickCount();
@@ -834,10 +869,24 @@ int main_GA(int argc, char* argv[])
 			//вектор рангов фронтов для R_t - сделан членом класса GA_path
 			//vector<int> i_rank_R_t(2 * ga.get_N());
 
+			//функция выигрыша в кроссинговере 
+	//		vector<vector<float>> Q_cross[2];
+	//		/*for (int i = 0; i < ga.get_N(); i++)
+	//			for (int j = 0; j < ga.get_N(); j++)
+	//			{
+	//
+	//			}*/
+	//		Q_cross[0] = vector<vector<float>>(ga.get_N(), vector<float>(ga.get_N(), 0));
+	//		Q_cross[1] = vector<vector<float>>(ga.get_N(), vector<float>(ga.get_N(), 0));
+	//		float alpha_rec = 1.0;
+
 
 //ОСНОВНОЙ ЦИКЛ ПО ИТЕРАЦИЯМ
 			int iter = 0;
-			while (++iter <= num_iter)
+			unsigned long cur_time_start = ::GetTickCount();
+			unsigned long cur_time = 0;
+			/*условие на кол-во итераций*/         /*условие на время*/
+			while ((++iter <= num_iter && time_run == 0) || (cur_time <= time_run))
 			{
 				ga.pop_R_t = ga.pop; //R_t = P_t
 				for (int i = 0; i < ga.get_N(); i++)
@@ -855,6 +904,7 @@ int main_GA(int argc, char* argv[])
 					//для рандомизатора
 					temp_time = ::GetTickCount();
 					srand(temp_time);
+//TO DO: переписать мутацию
 					ga.mutation(i_p1, i_p2, p1_temp, p2_temp);
 
 					//printf("After mutation:\n");
@@ -890,30 +940,93 @@ int main_GA(int argc, char* argv[])
 					temp_time = ::GetTickCount();
 					srand(temp_time);
 
+					vector<int> phi_p1 = ga.multi_phitness(ga.pop[i_p1]);
+					vector<int> phi_p2 = ga.multi_phitness(ga.pop[i_p2]);
+
 					switch (rec_oper)
 					{
 						case recomb_oper::DEC_new:
 							child = ga.DEC_new(ga.s_m, p1, p2);
+							if (MODIF)
+							{
+								// если потомок совпадает с одним из родителей, применяем DPX
+								vector<int> phi_child = ga.multi_phitness(child);
+										/*потомок совпадает с одним из родителей*/
+								if ( (phi_child == phi_p1) || (phi_child == phi_p2)  ||
+										/*потомок хуже одного из родителей*/
+									 Pareto_pref(phi_p1, phi_child) || Pareto_pref(phi_p2, phi_child) )
+									child = ga.DPX(ga.s_m, p1, p2);
+							}
 							break;
 						case recomb_oper::DPX:
 							child = ga.DPX(ga.s_m, p1, p2);
 							break;
+						//обучение с подрекплением
+//						case recomb_oper::CH_MAX:
+//							
+//							// инициализируем значения текущего состояния
+//							int i_first, i_second;
+//							if (ga.i_rank[i_p1] > ga.i_rank[i_p2])
+//							{
+//								i_first = ga.i_rank[i_p2];
+//								i_second = ga.i_rank[i_p1];
+//							}
+//							else
+//							{
+//								i_first = ga.i_rank[i_p1];
+//								i_second = ga.i_rank[i_p2];
+//							}
+//
+//							if (Q_cross[0][i_first][i_second] > Q_cross[1][i_first][i_second])
+//							{
+//// проверить формат записи p1, p2, child
+//								child = ga.DEC_new(ga.s_m, p1, p2);
+//								Q_cross[0][i_first][i_second] = Q_cross[0][i_first][i_second] + alpha_rec * ga.update_rate_crossover(ga.pop[i_p1], ga.pop[i_p2], child);
+//								printf("Q_DEC[%d, %d] = %.2f\n", i_first, i_second, Q_cross[0][i_first][i_second]);
+//								sw->WriteLine("Q_DEC[{0}, {1}]; {2:F2};", i_first, i_second, Q_cross[0][i_first][i_second]);
+//							}
+//							else
+//								if (Q_cross[0][i_first][i_second] < Q_cross[1][i_first][i_second])
+//								{
+//									child = ga.DPX(ga.s_m, p1, p2);
+//									Q_cross[1][i_first][i_second] = Q_cross[1][i_first][i_second] + alpha_rec * ga.update_rate_crossover(ga.pop[i_p1], ga.pop[i_p2], child);
+//									printf("Q_DPX[%d, %d] = %.2f\n", i_first, i_second, Q_cross[1][i_first][i_second]);
+//									sw->WriteLine("Q_DPX[{0}, {1}]; {2:F2}", i_first, i_second, Q_cross[1][i_first][i_second]);
+//								}
+//								else // в случае равенства выбираем один из операторов с равной вероятностью
+//								{
+//									//для рандомизатора
+//									temp_time = ::GetTickCount();
+//									srand(temp_time);
+//
+//									double rand_mut = (double)rand() / RAND_MAX;
+//									if (rand_mut < 0.5)
+//									{
+//										child = ga.DEC_new(ga.s_m, p1, p2);
+//										Q_cross[0][i_first][i_second] = Q_cross[0][i_first][i_second] + alpha_rec * ga.update_rate_crossover(ga.pop[i_p1], ga.pop[i_p2], child);
+//										printf("Q_DEC[%d, %d] = %.2f\n", i_first, i_second, Q_cross[0][i_first][i_second]);
+//										sw->WriteLine("Q_DEC[{0}, {1}]; {2:F2};", i_first, i_second, Q_cross[0][i_first][i_second]);
+//									}
+//									else
+//									{
+//										child = ga.DPX(ga.s_m, p1, p2);
+//										Q_cross[1][i_first][i_second] = Q_cross[1][i_first][i_second] + alpha_rec * ga.update_rate_crossover(ga.pop[i_p1], ga.pop[i_p2], child);
+//										printf("Q_DPX[%d, %d] = %.2f\n", i_first, i_second, Q_cross[1][i_first][i_second]);
+//										sw->WriteLine("Q_DPX[{0}, {1}]; {2:F2}", i_first, i_second, Q_cross[1][i_first][i_second]);
+//									}
+//								}
+//
+//					
+//							break;
 					}
-						
 
 					//мутируем потомка, у кототорого значения критерия совпадает хотя бы с одним из родителей
 					//Юлечка
 					if (MODIF)
-					{
-						// если потомок совпадает с одним из родителей, применяем DPX
-						if ((ga.multi_phitness(child) == ga.multi_phitness(ga.pop[i_p1])) ||
-							(ga.multi_phitness(child) == ga.multi_phitness(ga.pop[i_p2])))
-							child = ga.DPX(ga.s_m, p1, p2);
-							
+					{					
 						// если потомок опять совпадает с одним из родителей,
 						// применяем мутацию обмена
-						if ((ga.multi_phitness(child) == ga.multi_phitness(ga.pop[i_p1])) ||
-							(ga.multi_phitness(child) == ga.multi_phitness(ga.pop[i_p2])))
+						if ( (ga.multi_phitness(child) == phi_p1) || (ga.multi_phitness(child) == phi_p2) )
 						{
 							//для рандомизатора
 							temp_time = ::GetTickCount();
@@ -1144,8 +1257,68 @@ int main_GA(int argc, char* argv[])
 				ga.pop_R_t.clear();
 				//ga.i_dist_R_t.clear();
 				ga.i_rank_R_t.clear();
+			
+				//обновляем текущее время работы (без LS)
+				cur_time = ::GetTickCount() - cur_time_start;
+
 			}//основной цикл итераций
 
+			//если запуск был на время, выводим результат последней итерации
+			if (time_run > 0)
+			{
+				sw->WriteLine("Run {0}, Iteration {1}", index_run + 1, iter);
+				for (int j = 0; j < ga.get_n(); j++)
+				{
+					for (int i = 0; i < ga.get_N(); i++)
+						sw->Write("{0};", ga.pop[i][j]);
+					sw->WriteLine();
+				}
+				sw->WriteLine();
+
+				sw->WriteLine("Ranks of poulation (problem {0}, run {1}, iteration {2})", iter_prbl + 1, index_run + 1, iter);
+				for (int i = 0; i < ga.get_N(); i++)
+					sw->Write("{0};", ga.i_rank[i]);
+				sw->WriteLine();
+
+				//расстояния популяции
+				sw->WriteLine("Crowding distances of population (problem {0}, run {1}, iteration {2})", iter_prbl + 1, index_run + 1, iter);
+				for (int i = 0; i < ga.get_N(); i++)
+					sw->Write("{0:F2};", ga.i_dist[i]);
+				sw->WriteLine();
+
+				//значания критериев
+				sw->WriteLine("Values of vector criterion (problem {0}, run {1}, iteration {2})", iter_prbl + 1, index_run + 1, iter);
+				//заполнение значений критерия
+				// TO DO: перенести заполнение (не вывод) до "лок. поиска в конце итераций"
+				for (int i = 0; i < ga.get_N(); i++)
+					ga.phi[i] = ga.multi_phitness(ga.pop[i]);
+
+				//вывод значений критерия
+				for (int j = 0; j < ga.get_m(); j++)
+				{
+					for (int i = 0; i < ga.get_N(); i++)
+						sw->Write("{0};", ga.phi[i][j]);
+					sw->WriteLine();
+				}
+				sw->WriteLine();
+			
+				sw->WriteLine("Approximation of the Pareto set (problem {0}, run {1}, iteration {2})", iter_prbl + 1, index_run + 1, iter);
+				for (int i = 0; i < ga.get_m(); i++)
+				{
+					for (int j = 0; j < ga.phi_P_approx.size(); j++)
+						sw->Write("{0};", ga.phi_P_approx[j][i]);
+					sw->WriteLine();
+				}
+				sw->WriteLine();
+
+				//вычисление метрики - аппроксимации множества Парето (если выше присвоено имя файла)
+				if (file_name_source_Pareto_set_str)
+				{
+					ga.evaluate_metric_of_approx(sw, phi_Pareto_set, false);
+					sw->WriteLine();
+				}
+
+			}
 
 /////////////////////////////////////////////////////////
 //////////////////// ЛОКАЛЬНЫЙ ПОИСК (конеч. поп.)
@@ -1153,92 +1326,110 @@ int main_GA(int argc, char* argv[])
 
 			//время локального поиска (в конце)
 			time_local_search_f -= ::GetTickCount();
-
-			//формируем архив из особей с раном 1
-			Archive arch(ga);
-			//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ АРХИВА
-			vector<int> new_to_arch;
-			printf("\n Local search at the end\n");
-			sw->WriteLine();
-			sw->WriteLine("Local search at the end");
-
-			// цикл, пока архив непросмотренных не пуст
-			while (!arch.ar_index_not_cons_lst.empty())
+			if (!flag_no_LS)
 			{
-				//для рандомизатора
-				temp_time = ::GetTickCount();
-				srand(temp_time);
-				unsigned i_tmp = rand() % arch.ar_index_not_cons_lst.size();
-
-				// переходим к элементу архива, соотв. случ. сгенерированному индексу
-				list<unsigned>::const_iterator it_lst = arch.ar_index_not_cons_lst.cbegin();
-				advance(it_lst, i_tmp);
-				// дальше итератор it_lst использовать нельзя,
-				// т.к. на его позиции удаляется элелемент ar_index_not_cons_lst
-				i_tmp = *it_lst;
-
-				// локальный поиск
-				vector<int> new_to_arch = ga.local_search(arch.archive[i_tmp], 1, &arch);
-				if (!new_to_arch.empty()) // не пустой, если i_lst был продоминирован
-				{
-					// добавляем в список неживых
-					arch.ar_index_no_lst.push_back(*it_lst);
-					// удаляем из непросмотренных
-					arch.ar_index_not_cons_lst.erase(it_lst);
-
-					// сравниваем с архивом
-					if ( arch.check_new(ga.multi_phitness(new_to_arch)) )
-						arch.arch_modify(new_to_arch, ga.multi_phitness(new_to_arch));
-				}
-				else // i_lst не был продоминирован
-				{
-					// добавляем к просмотренным
-					arch.ar_index_cons_lst.push_back(*it_lst);
-					// удаляем из непросмотренных
-					arch.ar_index_not_cons_lst.erase(it_lst);
-				}
-
-			}
-
-			sw->WriteLine("after LS at the end. archive");
-			printf("after LS at the end. archive: \n");
-			for (int j = 0; j < ga.get_n(); j++)
-			{
-				for (int i = 0; i < arch.archive.size(); i++)
-				{
-					sw->Write("{0};", arch.archive[i][j]);
-					printf("%d\t", arch.archive[i][j]);
-				}
+				//формируем архив из особей с раном 1
+				Archive arch(ga);
+				//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ АРХИВА
+				vector<int> new_to_arch;
+				printf("\n Local search at the end\n");
 				sw->WriteLine();
+				sw->WriteLine("Local search at the end");
 
-			}
-
-			sw->WriteLine("after LS at the end. archive (val_crit)");
-			printf("after LS at the end. archive (val_crit): \n");
-			for (int j = 0; j < ga.get_m(); j++)
-			{
-				for (int i = 0; i < arch.archive.size(); i++)
+				// цикл, пока архив непросмотренных не пуст
+				while (!arch.ar_index_not_cons_lst.empty())
 				{
-					sw->Write("{0};", arch.val_crit_archive[i][j]);
-					printf("%d\t", arch.val_crit_archive[i][j]);
+					//для рандомизатора
+					temp_time = ::GetTickCount();
+					srand(temp_time);
+					unsigned i_tmp = rand() % arch.ar_index_not_cons_lst.size();
+
+					// переходим к элементу архива, соотв. случ. сгенерированному индексу
+					list<unsigned>::const_iterator it_lst = arch.ar_index_not_cons_lst.cbegin();
+					advance(it_lst, i_tmp);
+					// дальше итератор it_lst использовать нельзя,
+					// т.к. на его позиции удаляется элелемент ar_index_not_cons_lst
+					i_tmp = *it_lst;
+
+					// локальный поиск
+					vector<int> new_to_arch = ga.local_search(arch.archive[i_tmp], LS_GA_END_ALPHA, LS_GA_END_BETA, &arch);
+					if (!new_to_arch.empty()) // не пустой, если i_lst был продоминирован
+					{
+						// добавляем в список неживых
+						arch.ar_index_no_lst.push_back(*it_lst);
+						// удаляем из непросмотренных
+						arch.ar_index_not_cons_lst.erase(it_lst);
+
+						// сравниваем с архивом
+						if (arch.check_new(ga.multi_phitness(new_to_arch)))
+							arch.arch_modify(new_to_arch, ga.multi_phitness(new_to_arch));
+					}
+					else // i_lst не был продоминирован
+					{
+						// добавляем к просмотренным
+						arch.ar_index_cons_lst.push_back(*it_lst);
+						// удаляем из непросмотренных
+						arch.ar_index_not_cons_lst.erase(it_lst);
+					}
+
 				}
-				sw->WriteLine();
 
+				//выводим архив
+				//заполняем аппроксимацию мн-ва Парето
+				ga.phi_P_approx.clear();
+				sw->WriteLine("Archive after LS at the end");
+				printf("Archive after LS at the end: \n");
+				for (int j = 0; j < ga.get_n(); j++)
+				{
+					//все живые особи = все просмотренные особи
+					list<unsigned>::const_iterator it_lst;
+					for (it_lst = arch.ar_index_cons_lst.cbegin(); it_lst != arch.ar_index_cons_lst.cend(); )
+					{
+						sw->Write("{0};", arch.archive[*it_lst][j]);
+						printf("%d\t", arch.archive[*it_lst][j]);
+						if (j == 0) // только на одной итерации внешнего цикла
+							ga.phi_P_approx.push_back(arch.val_crit_archive[*it_lst]);
+						it_lst++;
+					}
+					sw->WriteLine();
+
+				}
+
+				//выводим аппроксимацию мн-ва Парето
+				sw->WriteLine("Approx of the Pareto set after LS (end)");
+				printf("Approx of the Pareto set after LS (end): \n");
+				for (int j = 0; j < ga.get_m(); j++)
+				{
+					for (int i = 0; i < ga.phi_P_approx.size(); i++)
+					{
+						sw->Write("{0};", ga.phi_P_approx[i][j]);
+						printf("%d\t", ga.phi_P_approx[i][j]);
+					}
+					sw->WriteLine();
+				}
+
+
+				//вычисление метрики после локального поиска в финальной популяции
+				sw->WriteLine("After LS at the end (archive)");
+				if (file_name_source_Pareto_set_str)
+				{
+					ga.evaluate_metric_of_approx(sw, phi_Pareto_set, false);
+					sw->WriteLine();
+				}
 			}
-
-
-			//вычисление метрики после локального поиска в финальной популяции
-			ga.phi_P_approx = arch.val_crit_archive;
-			sw->WriteLine("After LS at the end (archive)");
-			if (file_name_source_Pareto_set_str)
-			{
-				ga.evaluate_metric_of_approx(sw, phi_Pareto_set, false);
-				sw->WriteLine();
-			}
-
 			//засекаем время локального поиска (в конце)
 			time_local_search_f += ::GetTickCount();
 
+			//выводим аппрокимацию мн-ва Парето в отдельный файл для последующего вычисления гиперобъема
+			sw_5->WriteLine(problem_name_str + ";");
+			sw_5->WriteLine("Pareto Set;");
+			for (int i = 0; i < ga.phi_P_approx.size(); i++)
+			{
+				for (int j = 0; j < ga.get_m(); j++)
+					sw_5->Write("{0};", ga.phi_P_approx[i][j]);
+				sw_5->WriteLine();
+			}
+			sw_5->WriteLine("N; {0};", ga.phi_P_approx.size());
 
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
@@ -1503,8 +1694,8 @@ int main_GA(int argc, char* argv[])
 		if (num_runs > 1)
 		{
 			aver_time = result_time / num_runs;
-			time_format(aver_time, "Average total time of all runs (one problem)", sw);
-			time_format(aver_time, "Average total time of all runs (one problem)", sw_1);
+			time_format(aver_time, "Average time through all runs (one problem)", sw);
+			time_format(aver_time, "Average time through all runs (one problem)", sw_1);
 		}
 
 
@@ -1565,6 +1756,7 @@ int main_GA(int argc, char* argv[])
 	sw_1->Close();
 	sw_3->Close();
 	sw_4->Close();
+	sw_5->Close();
 	sr->Close();
 
 	printf("\n");
@@ -1589,6 +1781,9 @@ int main_VNS(int argc, char* argv[])
 
 	//кол-во запусков на одной задаче
 	int num_runs = 1;
+
+	//время работы одной задачи на одном запуске
+	unsigned long time_run = 0;
 
 	//имя файла, с которого считываем
 	String^ file_name_rd_str = "Example_MTSP_m2_n20_N50_12.txt";//ПОМЕНЯТЬ!!!
@@ -1671,7 +1866,7 @@ int main_VNS(int argc, char* argv[])
 		if (str_temp == "\\n")
 		{
 			num_n = stoi(argv[i + 1]);
-			is_num_n_specified = true;
+//			is_num_n_specified = true;
 			continue;
 		}
 
@@ -1714,6 +1909,13 @@ int main_VNS(int argc, char* argv[])
 		if (str_temp == "\\REDUCE")
 			reduction = true;
 
+		if (str_temp == "\\TIME")
+		{
+			// в мсек.
+			time_run = stof(argv[i + 1])*1000;
+			continue;
+		}
+
 		//if (str_temp == "\\DPX")
 		//	rec_oper = recomb_oper::DPX;
 	}
@@ -1722,18 +1924,21 @@ int main_VNS(int argc, char* argv[])
 	StreamReader^ sr = gcnew StreamReader(file_name_rd_str);
 
 	//короткий файл для записи
-	String^ file_name_1_st = "results/Example_MTSP_VNS_m2_n" + num_n + "_N" + num_N + "_results.csv";
+	String^ file_name_1_st = "results/Example_MTSP_m2_n" + num_n + "_N" + num_N + "_summary.csv";
 	StreamWriter^ sw_1 = gcnew StreamWriter(file_name_1_st);
 
 	//файл для записи эксперимента по сужению мн-ва Парето
-	String^ file_name_red_P_set_str = "results/Example_MTSP_VNS_m2_n" + num_n + "_N" + num_N + "_red_P_set.csv";
+	String^ file_name_red_P_set_str = "results/Example_MTSP_m2_n" + num_n + "_N" + num_N + "_red_P_set.csv";
 	StreamWriter^ sw_3 = gcnew StreamWriter(file_name_red_P_set_str);
 
 	//короткий файл для записи эксперимента по сужению мн-ва Парето
-	String^ file_name_short_red_P_set_str = "results/Example_MTSP_VNS_m2_n" + num_n + "_N" + num_N + "_red_P_set_short.csv";
+	String^ file_name_short_red_P_set_str = "results/Example_MTSP_m2_n" + num_n + "_N" + num_N + "_red_P_set_short.csv";
 	StreamWriter^ sw_4 = gcnew StreamWriter(file_name_short_red_P_set_str);
 	sw_4->WriteLine("Reduction of the Pareto set");
 	sw_4->WriteLine();
+
+	//файл для вывода аппрокимации мн-ва Парето в отдельный файл для последующего вычисления гиперобъема
+	StreamWriter^ sw_5 = gcnew StreamWriter("results/Pareto_set_VNS_" + file_name_rd_str->Substring(16, file_name_rd_str->LastIndexOf(".txt")-16) + ".csv");
 
 	String^ cur_line_str = sr->ReadLine();
 
@@ -1821,7 +2026,7 @@ int main_VNS(int argc, char* argv[])
 		//String^ file_name_source_Pareto_set_str = "Example_MTSP_m2_n20_N50_1_10_Temp.csv";
 		vector<vector<int>> phi_Pareto_set;
 		if (file_name_source_Pareto_set_str)
-			phi_Pareto_set = vns.read_Pareto_set_from_file(file_name_source_Pareto_set_str, problem_name_str);
+			phi_Pareto_set = read_Pareto_set_from_file(file_name_source_Pareto_set_str, problem_name_str, vns.get_m());
 
 		//счетчик числа совпадений аппроксимации и мн-ва Парето
 		vns.count_P_eq_approx = 0;
@@ -1837,8 +2042,10 @@ int main_VNS(int argc, char* argv[])
 		sw_1->WriteLine("n; {0}", vns.get_n());
 		sw_1->WriteLine("m; {0}", vns.get_m());
 		sw_1->WriteLine("N; {0}", vns.get_N());
-		sw_1->WriteLine("iter; {0}", num_iter);
 		sw_1->WriteLine("run; {0}", num_runs);
+		sw_1->WriteLine("LS begin alpha; {0:F2}", LS_VNS_BEGIN_ALPHA);
+		sw_1->WriteLine("LS end alpha; {0:F2}", LS_VNS_END_ALPHA);
+		sw_1->WriteLine("K shaking; {0}", MAX_NUM_K_OPT);
 
 		//файл для записи эксперимента по сужению мн-ва Парето
 		if (reduction)
@@ -2136,7 +2343,7 @@ int main_VNS(int argc, char* argv[])
 			sw->WriteLine();
 
 			for (int i = 0; i < vns.get_N(); i++)
-				vns.pop[i] = vns.local_search(vns.pop[i], 0.5);
+				vns.pop[i] = vns.local_search(vns.pop[i], LS_VNS_BEGIN_ALPHA LS_VNS_BEGIN_BETA);
 
 			sw->WriteLine("after LS");
 			printf("afret LS:\n");
@@ -2336,7 +2543,10 @@ int main_VNS(int argc, char* argv[])
 			// ограничение на число итерация num_iter
 
 			int iter = 0;
-			while (++iter <= num_iter)
+			unsigned long cur_time_start = ::GetTickCount();
+			unsigned long cur_time = 0;
+		               /*условие на кол-во итераций*/         /*условие на время*/
+			while ( (++iter <= num_iter && time_run == 0) || (cur_time <= time_run) )
 			{
 
 				/////////////////////////////////////////////////////////
@@ -2348,7 +2558,7 @@ int main_VNS(int argc, char* argv[])
 
 
 				//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ АРХИВА
-				vector<int> new_to_arch;
+				//vector<int> new_to_arch;
 				unsigned i_tmp;
 				printf("\n Local search at the end\n");
 				sw->WriteLine();
@@ -2374,42 +2584,54 @@ int main_VNS(int argc, char* argv[])
 				arch.ar_index_cons_lst.push_back(i_tmp);
 				// удаляем из непросмотренных
 				arch.ar_index_not_cons_lst.erase(it_lst);
-				//флаг: особь продоминирована
-//				bool pop_is_improved = true;
 				//индекс окрестности
 				int k_opt = 3;
+				vector<int> new_to_arch;
 
 				// локальный поиск - ПЕРЕДЕЛАТЬ: по окр.1-6          /* 6 */
 				while ( k_opt < MAX_NUM_K_OPT + 2 )
 				{
-					vector<int> new_to_arch = shaking_Kopt(arch.archive[i_tmp], k_opt);
+					new_to_arch = shaking_Kopt(arch.archive[i_tmp], k_opt);
 					// ЛП как на начальной популяции
-					new_to_arch = vns.local_search(new_to_arch, 1);
+					new_to_arch = vns.local_search(new_to_arch, LS_VNS_END_ALPHA, LS_VNS_END_BETA)
 					if (!new_to_arch.empty()) // не пустой, если i_lst был продоминирован
 					{
-						// добавляем в список неживых
-						//arch.ar_index_no_lst.push_back(i_tmp_1);
-						// удаляем из непросмотренных
-						//arch.ar_index_not_cons_lst.erase(it_lst);
-
 						// сравниваем с архивом
 						if (arch.check_new(vns.multi_phitness(new_to_arch))) // true, если new_to_arch не был продоминирован
 						{
 							arch.arch_modify(new_to_arch, vns.multi_phitness(new_to_arch));
-//							pop_is_improved = false;
 							break;
 						}
+						//ОТЛАДКА
+						/*int count_repit = 0;
+						list<unsigned>::iterator it_lst_2;
+						list<unsigned>::iterator it_lst_3;
+						for (it_lst_2 = arch.ar_index_not_cons_lst.begin(); it_lst_2 != arch.ar_index_not_cons_lst.end(); )
+						{
+							if (arch.val_crit_archive[*it_lst_2] == vns.multi_phitness(new_to_arch))
+								count_repit++;
+							it_lst_2++;
+						}
+						for (it_lst_3 = arch.ar_index_cons_lst.begin(); it_lst_3 != arch.ar_index_cons_lst.end(); )
+						{
+							if (arch.val_crit_archive[*it_lst_3] == vns.multi_phitness(new_to_arch))
+								count_repit++;
+							it_lst_3++;
+						}
+						if (count_repit > 1)
+						{
+							printf("repit!");
+							sw_1->WriteLine("repit!");
+						}*/
+						//ОТЛАДКА
+
+
 					}
-					//else // i_lst не был продоминирован
-					//{
-					//	// добавляем к просмотренным
-					//	arch.ar_index_cons_lst.push_back(i_tmp);
-					//	// удаляем из непросмотренных
-					//	arch.ar_index_not_cons_lst.erase(it_lst);
-					//}
 					k_opt += 2;
 
 				}
+						
+
 				sw->WriteLine("k_neigh = {0}", k_opt);
 
 				sw->WriteLine("Iteration {0}; problem {1}", iter, iter_prbl + 1);
@@ -2483,10 +2705,141 @@ int main_VNS(int argc, char* argv[])
 
 				////////////////////////////////////////////////////////////////////////////////////
 				////////////////////////////////////////////////////////////////////////////////////				
-				
+			
+			//обновляем текущее время работы
+			cur_time = ::GetTickCount() - cur_time_start;
 
 			}//основной цикл итераций
 			
+
+
+			/////////////////////////////////////////////////////////
+			//////////////////// ЛОКАЛЬНЫЙ ПОИСК из ГА (конеч. поп.)
+			////////////////////////////////////////////////////////
+
+			
+			if (LS_VNS_from_GA)
+			{
+				//время локального поиска (в конце)
+				time_local_search_f -= ::GetTickCount();
+
+				//формируем архив из архива - рез-тата работы VNS
+				Archive arch2;
+				list<unsigned>::const_iterator it_lst;
+				int cnt_arch2 = 0;
+				for (it_lst = arch.ar_index_cons_lst.cbegin(); it_lst != arch.ar_index_cons_lst.cend(); it_lst++)
+				{
+					arch2.archive.push_back(arch.archive[*it_lst]);
+					arch2.val_crit_archive.push_back(arch.val_crit_archive[*it_lst]);
+					arch2.ar_index_not_cons_lst.push_back(cnt_arch2);
+					cnt_arch2++;
+				}
+				
+				//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ АРХИВА
+				vector<int> new_to_arch;
+				printf("\n Local search at the end\n");
+				sw->WriteLine();
+				sw->WriteLine("Local search at the end");
+
+				// цикл, пока архив непросмотренных не пуст
+				while (!arch2.ar_index_not_cons_lst.empty())
+				{
+					//для рандомизатора
+					temp_time = ::GetTickCount();
+					srand(temp_time);
+					unsigned i_tmp = rand() % arch2.ar_index_not_cons_lst.size(); // случ. число из интервала [0, size-1]
+
+					// переходим к элементу архива, соотв. случ. сгенерированному индексу
+					list<unsigned>::const_iterator it_lst = arch2.ar_index_not_cons_lst.cbegin();
+					advance(it_lst, i_tmp); // передвигает итератор на i_tmp позиций
+					// дальше итератор it_lst использовать нельзя,
+					// т.к. на его позиции удаляется элелемент ar_index_not_cons_lst
+					i_tmp = *it_lst;
+
+					// локальный поиск
+					vector<int> new_to_arch = vns.local_search(arch2.archive[i_tmp], LS_GA_END_ALPHA, LS_GA_END_BETA, &arch2);
+					if (!new_to_arch.empty()) // не пустой, если i_lst был продоминирован
+					{
+						// добавляем в список неживых
+						arch2.ar_index_no_lst.push_back(*it_lst);
+						// удаляем из непросмотренных
+						arch2.ar_index_not_cons_lst.erase(it_lst);
+
+						// сравниваем с архивом
+						if (arch2.check_new(vns.multi_phitness(new_to_arch)))
+							arch2.arch_modify(new_to_arch, vns.multi_phitness(new_to_arch));
+					}
+					else // i_lst не был продоминирован
+					{
+						// добавляем к просмотренным
+						arch2.ar_index_cons_lst.push_back(*it_lst);
+						// удаляем из непросмотренных
+						arch2.ar_index_not_cons_lst.erase(it_lst);
+					}
+
+				}
+
+				//выводим архив
+				//заполняем аппроксимацию мн-ва Парето
+				vns.phi_P_approx.clear();
+				sw->WriteLine("Archive after LS(GA, at the end)");
+				printf("Archive after LS(GA, at the end): \n");
+				for (int j = 0; j < vns.get_n(); j++)
+				{
+					//все живые особи = все просмотренные особи
+					list<unsigned>::const_iterator it_lst;
+					for (it_lst = arch2.ar_index_cons_lst.cbegin(); it_lst != arch2.ar_index_cons_lst.cend();it_lst++ )
+					{
+						sw->Write("{0};", arch2.archive[*it_lst][j]);
+						printf("%d\t", arch2.archive[*it_lst][j]);
+						if (j == 0) // только на одной итерации внешнего цикла
+							vns.phi_P_approx.push_back(arch2.val_crit_archive[*it_lst]);
+					}
+					sw->WriteLine();
+
+				}
+
+				//выводим аппроксимацию мн-ва Парето
+				sw->WriteLine("Approx of the Pareto set after LS(GA) (end)");
+				printf("Approx of the Pareto set after LS(GA) (end): \n");
+				for (int j = 0; j < vns.get_m(); j++)
+				{
+					for (int i = 0; i < vns.phi_P_approx.size(); i++)
+					{
+						sw->Write("{0};", vns.phi_P_approx[i][j]);
+						printf("%d\t", vns.phi_P_approx[i][j]);
+					}
+					sw->WriteLine();
+				}
+
+
+				//вычисление метрики после локального поиска в финальной популяции
+				sw->WriteLine("After LS(GA) at the end (archive)");
+				if (file_name_source_Pareto_set_str)
+				{
+					vns.evaluate_metric_of_approx(sw, phi_Pareto_set, false);
+					sw->WriteLine();
+				}
+			//засекаем время локального поиска (в конце)
+			//time_local_search_f += ::GetTickCount();
+			}
+			
+
+
+
+
+
+			//выводим аппрокимацию мн-ва Парето в отдельный файл для последующего вычисления гиперобъема
+			sw_5->WriteLine(problem_name_str+";");
+			sw_5->WriteLine("Pareto Set;");
+			for (int i = 0; i < vns.phi_P_approx.size(); i++)
+			{
+				for (int j = 0; j < vns.get_m(); j++)
+					sw_5->Write("{0};", vns.phi_P_approx[i][j]);
+				sw_5->WriteLine();
+			}
+			sw_5->WriteLine("N; {0}", vns.phi_P_approx.size());
+
 
 			 //ПОСЛЕ ОСНОВНОГО ЦИКЛА ИТЕРАЦИЙ
 			 //вычисление метрики - аппроксимации множества Парето (если выше присвоено имя файла)
@@ -2552,6 +2905,9 @@ int main_VNS(int argc, char* argv[])
 				}
 				sw->WriteLine();
 			}
+
+			//кол-во итераций
+			sw_1->WriteLine("N of iteration; {0}", iter);
 
 			//очищаем популяцию и ранги
 			vns.pop.clear();
@@ -2808,6 +3164,7 @@ int main_VNS(int argc, char* argv[])
 	sw_1->Close();
 	sw_3->Close();
 	sw_4->Close();
+	sw_5->Close();
 	sr->Close();
 
 	printf("\n");
@@ -2817,9 +3174,132 @@ int main_VNS(int argc, char* argv[])
 }
 
 
+int hyper_volume(int argc, char* argv[])
+{
+	GA_path ga_tmp(12, 50, 2, 100);
+
+	String^ file_name_rd_str_1; // = "Pareto_set_GA_1-10.csv";
+	String^ file_name_rd_str_2; // = "Pareto_set_VNS_1-10.csv";
+
+								//инициализация параметров
+	string str_temp;
+	for (int i = 1; i < argc; i++)
+	{
+		str_temp = argv[i];
+		if (str_temp == "\\GA")
+		{
+			file_name_rd_str_1 = gcnew String(argv[i + 1]);
+			continue;
+		}
+
+		if (str_temp == "\\VNS")
+		{
+			file_name_rd_str_2 = gcnew String(argv[i + 1]);
+			continue;
+		}
+	}
+
+	//считываем название задач
+	StreamReader^ sr_1 = gcnew StreamReader(file_name_rd_str_1);
+	vector<string> array_problems; // массив имен задач
+	string cur_line_str;
+	String^ cur_line_str_;
+	while (!sr_1->EndOfStream)
+	{
+		cur_line_str_ = sr_1->ReadLine();
+		if (cur_line_str_->Contains("mtsp"))
+		{
+			//преобразуем String^ в стандартный string
+			cur_line_str = (const char*)(Runtime::InteropServices::Marshal::StringToHGlobalAnsi(cur_line_str_).ToPointer());
+			cur_line_str.pop_back(); // убираем ';' в конце имени задачи
+			array_problems.push_back(cur_line_str);
+		}
+	}
+	sr_1->Close();
+
+	//считаем гиперобъемы и записываем результаты в файл	
+	StreamWriter^ sw_1 = gcnew StreamWriter("results_GA_VNS_hv_" + file_name_rd_str_1->Substring(14, file_name_rd_str_1->LastIndexOf(".csv")-14) + ".csv");
+	vector<int> r = { 0, 0 };
+
+
+	sw_1->WriteLine("vol_GA; vol_VNS;");
+	for (int i = 0; i < array_problems.size(); i++)
+	{
+		//преобразуем стандартный string в String^  
+		cur_line_str_ = gcnew String(array_problems[i].c_str());
+		//читаем мн-ва Парето, полученные двумя методами из файла
+		vector<vector<int>> Pareto_set_1 = read_Pareto_set_from_file(file_name_rd_str_1, cur_line_str_, 2); //{ {5, 0}, {2, 4}, {9, -1}, {1, 6}, {4, 3} };
+		vector<vector<int>> Pareto_set_2 = read_Pareto_set_from_file(file_name_rd_str_2, cur_line_str_, 2);
+
+		//вычисляем гиперобъемы
+		unsigned volume_val_1 = ga_tmp.hiper_volume(r, Pareto_set_1);
+		unsigned volume_val_2 = ga_tmp.hiper_volume(r, Pareto_set_2);
+		printf("volume_val_1 = %d\n", volume_val_1);
+		printf("volume_val_2 = %d\n", volume_val_2);
+		sw_1->WriteLine("{0};", cur_line_str_);
+		sw_1->WriteLine("{0}; {1};", volume_val_1, volume_val_2);
+	}
+	sw_1->Close();
+
+	system("pause");
+
+	return 0;
+}
 
 int main(int argc, char* argv[])
 {
+
+#ifdef _DEBUG_
+
+	GA_path ga_tmp(12, 50, 2, 100);
+
+	String^ file_name_rd_str_1 = "Pareto_set_GA_1-10_1-10.csv";
+	String^ file_name_rd_str_2 = "Pareto_set_VNS_1-10_1-10.csv";
+
+	//считываем название задач
+	StreamReader^ sr_1 = gcnew StreamReader(file_name_rd_str_1);
+	vector<string> array_problems; // массив имен задач
+	string cur_line_str;
+	String^ cur_line_str_;
+	while (!sr_1->EndOfStream)
+	{
+		cur_line_str_ = sr_1->ReadLine();
+		if (cur_line_str_->Contains("mtsp"))
+		{
+			//преобразуем String^ в стандартный string
+			cur_line_str = (const char*)(Runtime::InteropServices::Marshal::StringToHGlobalAnsi(cur_line_str_).ToPointer());
+			cur_line_str.pop_back(); // убираем ';' в конце имени задачи
+			array_problems.push_back(cur_line_str);
+		}
+	}
+	sr_1->Close();
+
+	//считаем гиперобъемы и записываем результаты в файл	
+	StreamWriter^ sw_1 = gcnew StreamWriter("results_GA_VNS_hiper_volume.csv");
+	vector<int> r = { 0, 0 };
+
+	for (int i = 0; i < array_problems.size(); i++)
+	{
+		//преобразуем стандартный string в String^  
+		cur_line_str_ = gcnew String(array_problems[i].c_str());
+		//читаем мн-ва Парето, полученные двумя методами из файла
+		vector<vector<int>> Pareto_set_1 = read_Pareto_set_from_file(file_name_rd_str_1, cur_line_str_, 2); //{ {5, 0}, {2, 4}, {9, -1}, {1, 6}, {4, 3} };
+		vector<vector<int>> Pareto_set_2 = read_Pareto_set_from_file(file_name_rd_str_2, cur_line_str_, 2);
+
+		//вычисляем гиперобъемы
+		unsigned volume_val_1 = ga_tmp.hiper_volume(r, Pareto_set_1);
+		unsigned volume_val_2 = ga_tmp.hiper_volume(r, Pareto_set_2);
+		printf("volume_val_1 = %d\n", volume_val_1);
+		printf("volume_val_2 = %d\n", volume_val_2);
+		sw_1->WriteLine("{0};", cur_line_str_);
+		sw_1->WriteLine("GA; {0};", volume_val_1);
+		sw_1->WriteLine("VNS; {0};", volume_val_2);
+	}
+	sw_1->Close();
+
+	system("pause");
+
+#else
 
 #ifdef ALG_GA
 	main_GA(argc, argv);
@@ -2828,5 +3308,13 @@ int main(int argc, char* argv[])
 #ifdef ALG_VNS
 	main_VNS(argc, argv);
 #endif // ALG_VNS
+
+#ifdef HYPER_VOL
+
+	hyper_volume(argc, argv);
+
+#endif // HYPER_VOL
+
+#endif
 
 }

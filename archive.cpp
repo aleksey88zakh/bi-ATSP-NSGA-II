@@ -1,3 +1,4 @@
+//#include "stdafx.h"
 #include "archive.h"
 #include "common.h"
 
@@ -123,10 +124,10 @@ void Archive::arch_modify(vector<int> pop_new, vector<int> val_crit_new)
 	}
 	else
 	{
-		if (!ar_index_not_cons_lst.empty())
+	//	if (!ar_index_not_cons_lst.empty())
 			ar_index_not_cons_lst.push_back(archive.size()); // с учетом того, что новую особь в архив не добавили
-		else
-			ar_index_not_cons_lst.push_back(0); // индекс с 0
+	//	else
+	//		ar_index_not_cons_lst.push_back(0); // индекс с 0
 
 												//добавл€ем новую особь в попул€цию (архив)
 		archive.push_back(pop_new);

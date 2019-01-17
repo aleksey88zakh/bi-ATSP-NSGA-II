@@ -1,4 +1,5 @@
-#include "common.h"
+//#include "stdafx.h"
+#include "GA_for_MTSP_source.h"
 
 #include <string>
 
@@ -6,6 +7,66 @@ using namespace std;
 using namespace System;
 using namespace System::IO;
 
+////////////////////////////////////////////////////////////////////////////////
+//Чтение множества Парето из файла
+////////////////////////////////////////////////////////////////////////////////
+vector<vector<int>> read_Pareto_set_from_file(String^ file_name_source_str, String^ problem_name_str, int num_criteria)
+{
+	//вектор назначения
+	vector<vector<int>> vector_dest;
+
+	StreamReader^ sr = gcnew StreamReader(file_name_source_str);
+
+	String^ problem_name_csv_str = problem_name_str + ";";
+	String^ cur_line_str = sr->ReadLine();
+	while (cur_line_str != problem_name_csv_str)
+		cur_line_str = sr->ReadLine();
+
+	String^ Pareto_set_name_csv_str = "Pareto Set;";
+	cur_line_str = sr->ReadLine();
+	while (cur_line_str != Pareto_set_name_csv_str)
+		cur_line_str = sr->ReadLine();
+
+	//заполнение множества Парето (вектор vector_dest)
+	vector<vector<int>> vector_dest_temp;
+	int i = 0; //индекс строки
+	vector<int> vec_temp(2);
+	string str_temp = "";
+
+	while (true)
+	{
+		cur_line_str = sr->ReadLine();
+		if (cur_line_str[0] == 'N')
+			break;
+
+		int j = 0; //индекс столбца
+				   //разбираем текущую строку
+		for (int k = 0; k < cur_line_str->Length; k++)
+		{
+			if (cur_line_str[k] == ';')
+			{
+				vec_temp[j] = stoi(str_temp);
+				//sw->Write("{0};", s_temp[i][j]);
+				//printf("%d \t", s_temp[i][j]);
+
+				j++;
+				str_temp = "";
+
+				if (j == num_criteria)
+				{
+					vector_dest.push_back(vec_temp);
+					break;
+				}
+			}
+			else
+				str_temp += cur_line_str[k];
+		}
+		i++;
+	}
+	sr->Close();
+
+	return vector_dest;
+}
 
 void time_format(unsigned long long result_time, String^ title, StreamWriter^ sw)
 {
@@ -253,3 +314,30 @@ vector<int> shaking_Kopt(vector<int> s, int k)
 	//        System.out.println();
 	return s1;
 }
+
+unsigned GA_path::hiper_volume(vector<int> r, vector<vector<int>> f)
+{
+	unsigned vol_res = 0;
+
+	//предсортировка по 1-му критерию
+	//? учесть равенство по 1-му критерию
+	//вектор фронтов (используется индекс особи в популяции pop)
+	vector<int> index_front_temp;
+	for (int i = 0; i < f.size(); i++)
+		index_front_temp.push_back(i);
+	heap_sort(f, index_front_temp, -1, 0, index_front_temp.size() - 1);
+
+	for (int i = 0; i < index_front_temp.size(); i++)
+	{
+		unsigned vol_tmp = 1;
+		for (int j = 0; j < f[0].size(); j++)
+			vol_tmp *= (f[index_front_temp[i]][j] - r[j]);
+		vol_res += vol_tmp;
+		//передвигаем точку r по первой координате
+		r[0] = f[index_front_temp[i]][0];
+
+	}
+
+	return vol_res;
+}
+

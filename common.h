@@ -13,10 +13,12 @@ using namespace std;
 using namespace System;
 using namespace System::IO;
 
-#define MAX_NUM_K_OPT 11
 
+//чтение множества Парето из файла
+vector<vector<int>> read_Pareto_set_from_file(String^ file_name_source_str, String^ problem_name_str, int num_criteria);
 void time_format(unsigned long long result_time, String^ title, StreamWriter^ sw);
 vector<int> shaking_Kopt(vector<int> s, int k);
+//unsigned hiper_volume(vector<int> r, vector<vector<int>> f);
 
 ////////////////////////////////////////////////////////////////////////////////
 //Отношение Парето

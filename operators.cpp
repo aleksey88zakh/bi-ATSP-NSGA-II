@@ -1,8 +1,14 @@
+//#include "stdafx.h"
 #include "GA_for_MTSP_source.h"
 
 //
 //Файл содержит определения операторов ГА и их вспомогательные функции
 //
+
+enum rate_crossover
+{
+	VERY_GOOD=2, GOOD=1, MEDIUM=0, BAD=-1, VERY_BAD=-2
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 //Турнирная селекция
@@ -438,7 +444,7 @@ vector<int> GA_path::DEC_new(vector< vector <vector<int> > > s, vector<int> p1, 
 	//           System.out.print((i + 1) + " ");
 	//           for (int j = 0; j < 3; ++j) {
 	//               System.out.print(list_in[i][j] + " ");
-	//           }
+	//           }	`
 	//           System.out.println();
 	//          }
 	//          System.out.println();
@@ -1421,3 +1427,92 @@ int GA_path::next(int j, int k, vector<bool> flag_S)
 	return j_next;
 }
 ////////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Обучение с подкрепелением в операторах ГА
+////////////////////////////////////////////////////////////////////////////////
+int GA_path::update_rate_crossover(vector<int> p1, vector<int> p2, vector<int> ch)
+{
+	//один из родителей доминирует другого
+	rate_crossover en_rate;
+	vector<int> phi_ch = this->multi_phitness(ch);
+	vector<int> phi_p1 = this->multi_phitness(p1);
+	vector<int> phi_p2 = this->multi_phitness(p2);
+
+	bool ch_p1 = Pareto_pref(phi_ch, phi_p1);
+	bool p1_ch = Pareto_pref(phi_p1, phi_ch);
+	bool ch_p2 = Pareto_pref(phi_ch, phi_p2);
+	bool p2_ch = Pareto_pref(phi_p2, phi_ch);
+	bool p1_p2 = Pareto_pref(phi_p1, phi_p2);
+	bool p2_p1 = Pareto_pref(phi_p2, phi_p1);
+
+	//
+	if ( p1_p2 )
+	{
+		if ( ch_p1 )
+			return VERY_GOOD;
+
+		if ( ch_p2 && !ch_p1 && !p1_ch )
+			return VERY_GOOD;
+
+		if ( !ch_p1 && !p1_ch && !ch_p2 && !p2_ch )
+			return GOOD;
+
+		if ( phi_ch == phi_p1 || phi_ch == phi_p2 )
+			return MEDIUM;
+
+		if (p1_ch && ((!ch_p2 && !p2_ch) || ch_p2))
+			return BAD;
+
+		if (p1_ch && p2_ch)
+			return VERY_BAD;
+	}
+		
+	if ( p2_p1 )
+	{
+		if (ch_p2)
+			return VERY_GOOD;
+
+		if (ch_p1 && !ch_p2 && !p2_ch)
+			return VERY_GOOD;
+
+		if (!ch_p1 && !p1_ch && !ch_p2 && !p2_ch)
+			return GOOD;
+
+		if (phi_ch == phi_p1 || phi_ch == phi_p2)
+			return MEDIUM;	
+
+		if (p2_ch && ((!ch_p1 && !p1_ch) || ch_p1))
+			return BAD;
+
+		if (p1_ch && p2_ch)
+			return VERY_BAD;
+	}
+
+	
+	//родители не доминируют друг друга
+	if (!p1_p2 && !p2_p1 )
+	{
+		if (ch_p1 && ch_p2)
+			return VERY_GOOD;
+// через return	
+		if ( (ch_p1 && !ch_p2 && !p2_ch) || (ch_p2 && !ch_p1 && !p1_ch) )
+			return VERY_GOOD;
+
+		if (!ch_p1 && !p1_ch && !ch_p2 && !p2_ch)
+			return GOOD;
+
+		if (phi_ch == phi_p1 || phi_ch == phi_p2)
+			return MEDIUM;
+
+		if ( (p2_ch && !ch_p1 && !p1_ch) ||
+			 (p1_ch && !ch_p2 && !p2_ch) )
+			return BAD;
+
+		if (p1_ch && p2_ch)
+			return VERY_BAD;
+	}
+	
+	return 0; // по идее недостижимо
+}

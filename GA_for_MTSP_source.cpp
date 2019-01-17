@@ -36,7 +36,8 @@ GA_path::GA_path(int n, int N, int m, int s_max_N)
 	i_rank_R_t.resize(2*N);
 	i_dist_R_t.resize(2*N);
 
-	this->tourn_size = 10;//размер турнира
+	this->tourn_size = TOURN_SIZE;//размер турнира
+	this->p_mut = P_MUTATION; //веротяность мутации
 
 	//this->pop = new int*[N];
 	//for (int i = 0; i < N; i++)
@@ -447,13 +448,14 @@ vector<int> GA_path::random_individual()
 ////////////////////////////////////////////////////////////////////////////////
 //Локальный поиск
 ////////////////////////////////////////////////////////////////////////////////
-vector<int> GA_path::local_search(vector<int> p, float alpha, void* p_arch)//это локальный поиск по принципу first-improvement
+vector<int> GA_path::local_search(vector<int> p, float alpha, float beta, void* p_arch)//это локальный поиск по принципу first-improvement
 																		//котороый делает полный перебор, его нужно изменить!!!!!
 {
 	//////////////////////////////////////////////////////////////////////////////////
 	vector<vector<int>> path(2, vector<int>(n));//хранит предков и потомков по туру
 	int i_head, j_head, i_next, i_temp, i_tail, j_tail;//точки разрыва цикла
-	int k = (int)(alpha*(n - 1));//число вершин для просмотра
+	int k_alpha = (int)(alpha*n);//число вершин для просмотра в перестановке pi
+	int k_beta = (int)(beta*(n - 1));//число вершин для просмотра в перестановке p_i
 	boolean is_improve;//для сигнала, что текущее решение улучшено
 	int s1_p, s2_p, s1, s2;//значения критериев на p
 	s1_p = phitness(s_m[0], p);//значение первого критерия для текущей лучшей точки
@@ -465,7 +467,7 @@ vector<int> GA_path::local_search(vector<int> p, float alpha, void* p_arch)//э�
 	//для вершин в черном списке
 	vector<boolean> tabu(this->get_n());
 	//запись перестановки pi (переменная index_pi) в очередь
-	for (int i = 0; i < this->index_pi.size(); i++) {
+	for (int i = 0; i < k_alpha; i++) {
 		pi_deque.push_back(this->index_pi[i] - 1);
 		tabu[i] = false;//изначально все вершины вне черного списка (активны!)
 	}
@@ -492,7 +494,7 @@ vector<int> GA_path::local_search(vector<int> p, float alpha, void* p_arch)//э�
 		//path[0][j_head] = -1;
 		/////////////////////////////////////////////////////////////////
 		//добавляем дугу для образования цикла (i_head,i_next) //перебираем только alpha вариантов
-		for (int i_t = 0; i_t < k; i_t++)
+		for (int i_t = 0; i_t < k_beta; i_t++)
 		{	//2
 			i_next = (this->index_p[i_head][i_t]) - 1;
 			//printf("%d %d %d %d\t", i_head, j_head, i_next,i_t);
@@ -1279,7 +1281,7 @@ bool GA_path::crowd_comp_oper(int i_p1, int i_p2) //(vector<int> p1, vector<int>
 	}
 	*/
 	
-	if ((i_rank[i_p1] < i_rank[i_p2]) || ((i_rank[i_p1] = i_rank[i_p2]) && (i_dist[i_p1] > i_dist[i_p2])))
+	if ((i_rank[i_p1] < i_rank[i_p2]) || ((i_rank[i_p1] == i_rank[i_p2]) && (i_dist[i_p1] > i_dist[i_p2])))
 		return true;
 	else
 		return false; 
@@ -1401,7 +1403,7 @@ void GA_path::heap_sort_ls(vector<vector<int>> pop_cur, vector<int>& numbers_ind
 }
 */
 
-
+//при построении crowed dist
 void GA_path::heap_sort(vector<int>& numbers_index, int index_begin, int index_end)
 {
 	// Формируем нижний ряд пирамиды
@@ -2187,69 +2189,6 @@ vector<int> GA_path::Hungarian_method(int n, int m, vector<vector<int>> cost)
 	}
 	return result;
 	//////////////////////////////////////////////////////////////////////////   
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-//Чтение множества Парето из файла
-////////////////////////////////////////////////////////////////////////////////
-vector<vector<int>> GA_path::read_Pareto_set_from_file(String^ file_name_source_str, String^ problem_name_str)
-{
-	//вектор назначения
-	vector<vector<int>> vector_dest;
-
-	StreamReader^ sr = gcnew StreamReader(file_name_source_str);
-
-	String^ problem_name_csv_str = problem_name_str + ";";
-	String^ cur_line_str = sr->ReadLine();
-	while (cur_line_str != problem_name_csv_str)
-		cur_line_str = sr->ReadLine();
-
-	String^ Pareto_set_name_csv_str = "Pareto Set;";
-	cur_line_str = sr->ReadLine();
-	while (cur_line_str != Pareto_set_name_csv_str)
-		cur_line_str = sr->ReadLine();
-
-	//заполнение множества Парето (вектор vector_dest)
-	vector<vector<int>> vector_dest_temp;
-	int i = 0; //индекс строки
-	vector<int> vec_temp(2);
-	string str_temp = "";
-
-	while (true) 
-	{
-		cur_line_str = sr->ReadLine();
-		if (cur_line_str[0] == 'N')
-			break;
-
-		int j = 0; //индекс столбца
-		//разбираем текущую строку
-		for (int k = 0; k < cur_line_str->Length; k++)
-		{
-			if (cur_line_str[k] == ';')
-			{
-				vec_temp[j] = stoi(str_temp);
-				//sw->Write("{0};", s_temp[i][j]);
-				//printf("%d \t", s_temp[i][j]);
-
-				j++;
-				str_temp = "";
-
-				if (j == this->get_m())
-				{
-					vector_dest.push_back(vec_temp);
-					break;
-				}
-			}
-			else
-				str_temp += cur_line_str[k];
-		}
-		i++;
-	}
-	sr->Close();
-
-	return vector_dest;
 }
 
 

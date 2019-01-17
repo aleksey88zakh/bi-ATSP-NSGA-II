@@ -7,13 +7,36 @@
 #include <map>
 #include <list>
 #include <string>
+#include <array>
 #include <direct.h>
 #include "common.h"
 //#include "archive.h"
 //#include "common.cpp"
 
 #define ITER_MAX 200
-#define MODIF true //ПОМЕНЯТЬ!!!
+#define MODIF true
+#define LS_VNS_from_GA 0
+
+//ГА
+//локальный поиск
+#define LS_GA_BEGIN_ALPHA   0.5
+#define LS_GA_BEGIN_BETA    0.5
+#define LS_GA_END_ALPHA     0.5
+#define LS_GA_END_BETA      0.5
+//турнирная селекция
+#define TOURN_SIZE 10
+//мутация
+#define P_MUTATION 0.1
+
+//VNS
+//локальный поиск
+#define LS_VNS_BEGIN_ALPHA    1
+#define LS_VNS_END_ALPHA      1
+#define LS_VNS_BEGIN_BETA	  1
+#define LS_VNS_END_BETA		  1
+//shaking
+#define MAX_NUM_K_OPT 11
+
 
 //эксперимент по сужению
 //число шагов для teta
@@ -41,7 +64,7 @@ using namespace System::IO;
 //};
 
 //операторы кроссинговера
-public enum class recomb_oper {DEC_new, DPX};
+public enum class recomb_oper {DEC_new, DPX, CH_MAX};
 
 //extern template bool Pareto_pref(const vector<int> a, const vector<int> b);
 //extern template bool Pareto_pref(const vector<double> a, const vector<double> b);
@@ -85,6 +108,8 @@ public:
 	void set_matrices(StreamReader^ sr);
 	//значение векторного критерия для особи
 	vector<int> multi_phitness(vector<int> p);
+	//вычисление пригодности особи
+	int phitness(vector<vector<int>> s, vector<int> p);
 	//функция строит ранжировнные фронты популяции pop_cur парето-оптимальных решений (без crowding distance)
 	vector<int> range_front(vector<vector<int>>& pop, bool flag_sort_pop);
 	//функция строит ранжировнные фронты популяции pop_cur парето-оптимальных решений (без crowding distance)
@@ -102,6 +127,7 @@ public:
 	//? сложность сортировки в multimap
 	//multimap<int, multimap<float, vector<int> > > a
 
+	//СОРТИРОВКА
 	//алгоритм быстрой сортировки
 	void quick_sort(vector<int>& arr, vector<int>& arr_index, int left, int right);
 	//void GA_path::heap_sort_new(vector<vector<int>>& pop, int i_start, int i_stop);
@@ -112,7 +138,15 @@ public:
 	//void heap_sort_ls(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_citeria, int index_begin, int index_end);
 	//сортировка по i_dist
 	void heap_sort(vector<int>& numbers_index, int index_begin, int index_end);
-	
+	// функция "просеивания" через кучу - формирование кучи
+	//flag_phi_sort = true - сортировка по компоненте критерия
+	//flag_phi_sort = false - сортировка по i_dist
+	void sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_criteria, int root, int bottom, int delta);
+	//
+	void sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index, int root, int bottom, int delta);
+	//void sift_down_ls(vector<vector<int>> pop_cur, vector<int>& numbers_index, int root, int bottom, int delta);
+	//сортировка по i_dist
+	void sift_down(vector<int>& numbers_index, int root, int bottom, int delta);
 
 	//ЛОКАЛЬНЫЙ ПОИСК
 	//препроцессинг
@@ -128,7 +162,7 @@ public:
 
 
 	//ЛОКАЛЬНЫЙ ПОИСК
-	vector<int> local_search(vector<int> p, float alpha, void* p_arch = NULL);
+	vector<int> local_search(vector<int> p, float alpha, float beta, void* p_arch = NULL);
 
 
 
@@ -145,7 +179,8 @@ public:
 	vector<int> DEC_new(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2);
 	// << julia
 	vector<int> DPX(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2);
-
+	// обучение с подкрепелением в операторах ГА
+	int GA_path::update_rate_crossover(vector<int> p1, vector<int> p2, vector<int> ch);
 
 	//МЕТРИКА
 	//построение аппроксимации мн-ва Парето (значения векторного критерия, без повторов)
@@ -164,6 +199,8 @@ public:
 	double dist_conver_P_set_to_approx_val;
 	int count_P_eq_approx;
 
+	//сравнение алгоритмов
+	unsigned hiper_volume(vector<int> r, vector<vector<int>> f);
 
 	//СУЖЕНИЕ МН-ВА ПАРЕТО
 	//сам эксперимент
@@ -189,8 +226,6 @@ public:
 	void set_tourn_size(int s) { tourn_size = s; };
 	void set_p_mut(double p) { p_mut = p; };
 
-	//чтение множества Парето из файла
-	vector<vector<int>> read_Pareto_set_from_file(String^ file_name_source_str, String^ problem_name_str);
 
 private:
 	int n;//число позиций в перестановке
@@ -200,8 +235,8 @@ private:
 	//vector<vector<int>> phi;//пригодность особей (векторный критерий)
 	//vector<vector<vector<int>>> s_m;//матрица значений по каждому критерию
 
-	int tourn_size = 10;//размер турнира
-	double p_mut = 0.1;//вероятность мутации
+	int tourn_size;//размер турнира
+	double p_mut;//вероятность мутации
 
 	int count_best_child;//число итераций где потомок лучше родителей
 	int iter_best_child;//последняя итерация где потомок лучше родителей
@@ -226,22 +261,9 @@ private:
 	int next(int j, int k, vector<bool> flag_S);
 
 
-	//вычисление пригодности особи
-	int phitness(vector<vector<int>> s, vector<int> p);
-
 	//Венгерский метод
 	vector<int> Hungarian_method(int n, int m, vector<vector<int>> cost);
 	
-	// функция "просеивания" через кучу - формирование кучи
-	//flag_phi_sort = true - сортировка по компоненте критерия
-	//flag_phi_sort = false - сортировка по i_dist
-	void sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_criteria, int root, int bottom, int delta);
-	//
-	void sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index, int root, int bottom, int delta);
-	//void sift_down_ls(vector<vector<int>> pop_cur, vector<int>& numbers_index, int root, int bottom, int delta);
-	//сортировка по i_dist
-	void sift_down(vector<int>& numbers_index, int root, int bottom, int delta);
-
 
 	//бинарный поиск
 	int binary_search_Fb(vector<vector<int>> pop_cur, int cur_index, vector<vector<int>> F_j);
