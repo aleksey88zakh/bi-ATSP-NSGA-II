@@ -15,7 +15,9 @@
 
 #define ITER_MAX 200
 #define MODIF true
-#define LS_VNS_from_GA 0
+#define flag_VNSnew          1
+#define flag_LS_VNS_from_GA  0
+#define flag_VNS_multi_start 0
 
 //ГА
 //локальный поиск
@@ -36,7 +38,8 @@
 #define LS_VNS_END_BETA		  1
 //shaking
 #define MAX_NUM_K_OPT 11
-
+//VNS_multi_start
+#define MAX_ELITE_NOT_CHANGED 5
 
 //эксперимент по сужению
 //число шагов для teta
@@ -84,10 +87,6 @@ public:
 	vector<double> i_dist;//расстояние (для ранжирования внутри форнта)
 	vector<int> s_aver;//средняя величина элемента матрицы (по каждому критерию)
 	vector<int> c_max_all; //макс длина дуги (по каждому критерию)
-	//локальный поиск
-	vector<int> index_pi;
-	vector<int> i_rank_pi;
-	vector<vector<int>> index_p;
 
 
 	//родители + потомки (R_t = P_t + Q_t)
@@ -97,6 +96,7 @@ public:
 	//вектор (для ранжирования внутри форнта) для R_t
 	vector<double> i_dist_R_t;
 
+	//НАЧАЛЬНАЯ ПОПУЛЯЦИЯ
 	///!!! уточнить про порядок start_time
 	void init_pop(vector<vector<vector<int>>> s, int S_max, unsigned long long start_time,
 		vector<int> p1, vector<int> p2, vector<int> p3, vector<int> p4);
@@ -106,6 +106,11 @@ public:
 	//функции по заполнению матриц расстояний
 	void set_matrix_criteria(vector<vector<int>> s);
 	void set_matrices(StreamReader^ sr);
+	//общая функция
+	void generate_init_pop_VNS(StreamWriter^ sw, StreamWriter^ sw_1, int iter_prbl, String^ file_name_source_Pareto_set_str,
+		vector<vector<int>> phi_Pareto_set, long long* time_local_search_b, int index_run);
+
+
 	//значение векторного критерия для особи
 	vector<int> multi_phitness(vector<int> p);
 	//вычисление пригодности особи
@@ -126,6 +131,7 @@ public:
 	//вариант для хранения проранжированной популяции (и по фронтам, и внутри фронта)
 	//? сложность сортировки в multimap
 	//multimap<int, multimap<float, vector<int> > > a
+
 
 	//СОРТИРОВКА
 	//алгоритм быстрой сортировки
@@ -148,9 +154,10 @@ public:
 	//сортировка по i_dist
 	void sift_down(vector<int>& numbers_index, int root, int bottom, int delta);
 
-	//ЛОКАЛЬНЫЙ ПОИСК
-	//препроцессинг
 
+	//ЛОКАЛЬНЫЙ ПОИСК
+	
+	//препроцессинг
 	//массив максимальных дуг по каждому критерию
 	vector<vector<int>> c_max;
 	//функция строит ранжировнные фронты популяции pop_cur парето-оптимальных решений (без crowding distance)
@@ -159,11 +166,14 @@ public:
 	//бинарный поиск
 	//для поиска фронта F_b при вычислении рангов
 	//int binary_search_Fb_ls(vector<vector<int>> pop_cur, int cur_index, vector<vector<int>> F_j);
+	vector<int> index_pi;
+	vector<int> i_rank_pi;
+	vector<vector<int>> index_p;
 
-
-	//ЛОКАЛЬНЫЙ ПОИСК
+	//функции ЛП
 	vector<int> local_search(vector<int> p, float alpha, float beta, void* p_arch = NULL);
-
+	//VNS
+	bool local_search_VNS_new(vector<int> p, float alpha, float beta, void* p_arch);
 
 
 	//ОПЕРАТОРЫ
@@ -198,9 +208,8 @@ public:
 	double dist_conver_approx_to_P_set_val;
 	double dist_conver_P_set_to_approx_val;
 	int count_P_eq_approx;
-
-	//сравнение алгоритмов
-	unsigned hiper_volume(vector<int> r, vector<vector<int>> f);
+	//гиперобъем (сравнение алгоритмов)
+	unsigned hyper_volume(vector<int> r, vector<vector<int>> f);
 
 	//СУЖЕНИЕ МН-ВА ПАРЕТО
 	//сам эксперимент
@@ -282,7 +291,7 @@ class Archive
 {
 public:
 	Archive();
-	Archive(GA_path ga); // на основе данных генетического алгоритма
+	Archive(GA_path* ga); // на основе данных генетического алгоритма
 	~Archive();
 
 	vector<vector<int>> archive;
@@ -293,4 +302,27 @@ public:
 
 	int check_new(vector<int> val_crit_new);
 	void arch_modify(vector<int> pop_new, vector<int> val_crit_new);
+	//обновление архива на основе элементов другого архива (объединение архивов)
+	// this = (this U new_arch)
+	// !!! справедлива, если текущий архив является элитой (просмотр особи = пусто, непросмотр особи = живые особи)
+	bool elite_modify(Archive new_arch);
+};
+
+class Statistics
+{
+public:
+	Statistics();
+	Statistics(double cur_val);
+
+	double total_val;
+	double max_val;
+	double min_val;
+	int cnt_val;
+	
+	void set_to_zero();
+	void refresh(double new_val);
+	void init_max_min(double val);
+	double get_aver();
+	double get_min();
+	double get_max();
 };

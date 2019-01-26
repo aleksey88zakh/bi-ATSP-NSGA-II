@@ -140,8 +140,340 @@ void GA_path::init_pop(vector<vector<vector<int>>> s, int S_max, unsigned long l
 
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//Общая функция по генерации начальной популяции
+////////////////////////////////////////////////////////////////////////////////
+void GA_path::generate_init_pop_VNS(StreamWriter^ sw, StreamWriter^ sw_1, int iter_prbl, String^ file_name_source_Pareto_set_str,
+									vector<vector<int>> phi_Pareto_set, long long* time_local_search_b, int index_run)
+{
+	unsigned long temp_time; //для рандомизатора
+
+	//для рандомизатора
+	temp_time = ::GetTickCount();
+	srand(temp_time);
+
+	//родители нач популяции
+	//4 особи по Зангу
+	vector<int> p1, p2, p3, p4;
+	p1 = this->patching_algorithm(this->s_m[0], this->c_max_all[0], false);
+	p2 = this->patching_algorithm(this->s_m[0], this->c_max_all[0], true);
+	p3 = this->patching_algorithm(this->s_m[1], this->c_max_all[1], false);
+	p4 = this->patching_algorithm(this->s_m[1], this->c_max_all[1], true);
+
+	//sw->WriteLine("p1; p2; p3; p4");
+	//printf("\np1\t p2\t p3\t p4\n");
+
+	vector<int> p1_temp(this->get_n());
+	vector<int> p2_temp(this->get_n());
+	vector<int> p3_temp(this->get_n());
+	vector<int> p4_temp(this->get_n());
+
+	p1_temp = p1;
+	p2_temp = p2;
+	p3_temp = p3;
+	p4_temp = p4;
+
+	p1_temp[0] = 1;
+	p2_temp[0] = 1;
+	p3_temp[0] = 1;
+	p4_temp[0] = 1;
+	//sw->Write("{0}; {1}; {2}; {3};", p1[0], p2[0], p3[0], p4[0]);
+	//printf("%d\t%d\t%d\t%d\t", p1[0], p2[0], p3[0], p4[0]);
+
+	int i_temp = 0;
+	for (int i = 1; i < this->get_n(); ++i)
+	{
+		p1_temp[i] = p1[i_temp] + 1;
+		i_temp = p1[i_temp];
+	}
+	i_temp = 0;
+	for (int i = 1; i < this->get_n(); ++i)
+	{
+		p2_temp[i] = p2[i_temp] + 1;
+		i_temp = p2[i_temp];
+	}
+	i_temp = 0;
+	for (int i = 1; i < this->get_n(); ++i)
+	{
+		p3_temp[i] = p3[i_temp] + 1;
+		i_temp = p3[i_temp];
+	}
+	i_temp = 0;
+	for (int i = 1; i < this->get_n(); ++i)
+	{
+		p4_temp[i] = p4[i_temp] + 1;
+		i_temp = p4[i_temp];
+	}
+
+	p1 = p1_temp;
+	p2 = p2_temp;
+	p3 = p3_temp;
+	p4 = p4_temp;
 
 
+	//0. начальная популяция
+	temp_time = ::GetTickCount(); // для рандомизатора
+	this->init_pop(this->s_m, this->c_max_all[0], temp_time, p1, p2, p3, p4);
+
+	sw->WriteLine("Initial population");
+	//sw_1->WriteLine("Initial population");
+	printf("Initial population (problem %d):\n", iter_prbl + 1);
+	for (int j = 0; j < this->get_n(); j++)
+	{
+		for (int i = 0; i < this->get_N(); i++)
+		{
+			sw->Write("{0};", this->pop[i][j]);
+			printf("%d\t", this->pop[i][j]);
+		}
+		sw->WriteLine();
+	}
+
+	sw->WriteLine();
+	printf("\n");
+
+
+
+	//заполняем значение векторного критерия по популяции
+	//phi[i][j], i - индекс критерия, j - индекс особи
+
+	sw->WriteLine("Values of vector criterion (initial population)");
+	printf("Values of vector criterion (initial population, problem %d):\n", iter_prbl + 1);
+
+	//заполнение значений критерия
+	for (int i = 0; i < this->get_N(); i++)
+		this->phi[i] = this->multi_phitness(this->pop[i]);
+
+	//вывод значений критерия
+	for (int j = 0; j < this->get_m(); j++)
+	{
+		for (int i = 0; i < this->get_N(); i++)
+		{
+			sw->Write("{0};", this->phi[i][j]);
+			printf("%d\t", this->phi[i][j]);
+		}
+		sw->WriteLine();
+		printf("\n");
+	}
+	printf("\n");
+	sw->WriteLine();
+
+
+
+	//-----------------------------------------------------------------------------------------------
+	//----------ЛОКАЛЬНЫЙ ПОИСК (нач. поп.)----------------------------------------------------------
+
+	// ПРЕПРОЦЕССИНГ см. выше
+	// выполняется один раз перед всеми запусками одной задачи
+
+
+	//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ МАССИВА pop
+
+	//время локального поиска (в начале)
+	(*time_local_search_b) -= ::GetTickCount();
+
+	vector<int> pop_new;
+	printf("Local search\n");
+	printf("\n");
+	sw->WriteLine("Local search");
+	sw->WriteLine();
+
+	for (int i = 0; i < this->get_N(); i++)
+		this->pop[i] = this->local_search(this->pop[i], LS_VNS_BEGIN_ALPHA, LS_VNS_BEGIN_BETA);
+
+	sw->WriteLine("after LS");
+	printf("afret LS:\n");
+	for (int j = 0; j <  this->get_n(); j++)
+	{
+		for (int i = 0; i <  this->get_N(); i++)
+		{
+			sw->Write("{0};", this->pop[i][j]);
+			printf("%d\t", this->pop[i][j]);
+		}
+		sw->WriteLine();
+
+	}
+
+	sw->WriteLine();
+	printf("\n");
+
+
+	//заполняем значение векторного критерия по популяции
+	sw->WriteLine("Values of vector criterion:");
+	printf("Values of vector criterion:\n");
+
+	//заполнение значений критерия
+	for (int i = 0; i <  this->get_N(); i++)
+		this->phi[i] = this->multi_phitness(this->pop[i]);
+
+	//вывод значений критерия
+	for (int j = 0; j <  this->get_m(); j++)
+	{
+		for (int i = 0; i <  this->get_N(); i++)
+		{
+			sw->Write("{0};", this->phi[i][j]);
+			printf("%d\t", this->phi[i][j]);
+		}
+		sw->WriteLine();
+		printf("\n");
+	}
+	printf("\n");
+	sw->WriteLine();
+
+	//засекаем время локального поиска (в начале)
+	(*time_local_search_b) += ::GetTickCount();
+
+	//-----------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------
+
+
+
+
+
+	//------------ПОСТРОЕНИЕ ФРОНТОВ
+	//true - популяция в явном виде отсорирована по фронтам + ранги фронтов заданы в векторе i_rank
+	//false - популяция в явном виде не отсорирована по фронтам, ранги фронтов заданы в векторе i_rank
+	vector<int> tmp2; //заглушка
+	this->i_rank = this->range_front_J(this->phi, this->pop, tmp2, 1);
+	tmp2.clear();
+	//значение векторного критерия отсортированной популяции
+	sw->WriteLine("Values of vector criterion (sorted):");
+	printf("Values of vector criterion (sorted):\n");
+
+	//заполнение значений критерия
+	for (int i = 0; i <  this->get_N(); i++)
+		this->phi[i] = this->multi_phitness(this->pop[i]);
+
+	//вывод значений критерия
+	for (int j = 0; j <  this->get_m(); j++)
+	{
+		for (int i = 0; i <  this->get_N(); i++)
+		{
+			sw->Write("{0};", this->phi[i][j]);
+			printf("%d\t", this->phi[i][j]);
+		}
+		sw->WriteLine();
+		printf("\n");
+	}
+	printf("\n");
+	sw->WriteLine();
+
+
+
+	sw->WriteLine("Ranks of population (initial population)");
+	//sw_1->WriteLine("Ranks of poulation");
+	printf("Ranks of poulation (initial population, problem %d):\n", iter_prbl + 1);
+	for (int i = 0; i <  this->get_N(); i++)
+	{
+		sw->Write("{0};", this->i_rank[i]);
+		//sw_1->Write("{0};", ga.i_rank[i]);
+		printf("%d\t", this->i_rank[i]);
+	}
+	sw->WriteLine();
+	//sw_1->WriteLine();
+	printf("\n");
+
+
+	//формируем архив:
+	//случ. популяция + ЛП
+	Archive arch(this); //как передать указатель на объект, членом которого будет данная функция?
+
+	//вывод значений векторного критерия аппроксимации мн-ва Парето для НАЧАЛЬНОЙ популяции
+	//vns.phi_P_approx.clear();
+	// архив = мн-во Парето
+	this->phi_P_approx = arch.val_crit_archive;
+
+	sw->WriteLine("Approximation of the Pareto set (initial population)");
+	//sw_1->WriteLine("Approximation of the Pareto set({0} iterations)", iter);
+	for (int i = 0; i < this->get_m(); i++)
+	{
+		for (int j = 0; j < this->phi_P_approx.size(); j++)
+			sw->Write("{0};", this->phi_P_approx[j][i]);
+
+		sw->WriteLine();
+	}
+
+	sw->WriteLine();
+
+
+	//вычисление метрики для НАЧАЛЬНОЙ популяции - аппроксимации множества Парето (если выше присвоено имя файла)
+	//if (file_name_source_Pareto_set_str)
+	//{
+	//	//заголовок
+	//	if (index_run == 0)
+	//	{
+	//		sw_1->WriteLine("N_PS; {0}", phi_Pareto_set.size());
+	//		sw_1->WriteLine();
+
+	//		sw_1->Write("Begin; ; ; ;");
+	//		sw_1->WriteLine("End;");
+
+	//		sw_1->Write("Metric 'Convergence approximation to Pareto set';");
+	//		sw_1->Write("Metric 'Convergence Pareto set to approximation';");
+	//		sw_1->Write("Points in approx to Pareto set;");
+	//		sw_1->Write("Points from Pareto set;");
+
+	//		sw_1->Write("Metric 'Convergence approximation to Pareto set';");
+	//		sw_1->Write("Metric 'Convergence Pareto set to approximation';");
+	//		sw_1->Write("Points in approx to Pareto set;");
+	//		sw_1->Write("Points from Pareto set;");
+	//		sw_1->Write("Run;");
+	//		sw_1->WriteLine("N of iterations");
+	//	}
+
+	//	//вычисляем метрики
+	//	this->count_P_eq_approx = 0;
+	//	this->evaluate_metric_of_approx(sw_1, phi_Pareto_set, true);
+	//	this->evaluate_metric_of_approx(sw, phi_Pareto_set, false);
+	//	sw->WriteLine();
+	//	sw_1->Write("{0};", this->count_P_eq_approx);
+
+	//	//для средней метрики по всем запускам
+	//	total_dist_begin_1 += this->dist_conver_approx_to_P_set_val;
+	//	total_dist_begin_2 += this->dist_conver_P_set_to_approx_val;
+
+	//	total_num_approx_P_begin += this->phi_P_approx.size();
+	//	total_num_approx_in_P_begin += this->count_P_eq_approx;
+
+	//	if (0 == index_run)
+	//	{
+	//		max_dist_begin_1 = min_dist_begin_1 = this->dist_conver_approx_to_P_set_val;
+	//		max_dist_begin_2 = min_dist_begin_2 = this->dist_conver_P_set_to_approx_val;
+	//		max_num_approx_P_begin = min_num_approx_P_begin = this->phi_P_approx.size();
+	//		max_num_approx_in_P_begin = min_num_approx_in_P_begin = this->count_P_eq_approx;
+	//	}
+
+	//	//определение максимума метрики по всем запускам
+	//	if (max_dist_begin_1 < this->dist_conver_approx_to_P_set_val)
+	//		max_dist_begin_1 = this->dist_conver_approx_to_P_set_val;
+	//	if (max_dist_begin_2 < this->dist_conver_P_set_to_approx_val)
+	//		max_dist_begin_2 = this->dist_conver_P_set_to_approx_val;
+
+	//	if (max_num_approx_P_begin < this->phi_P_approx.size())
+	//		max_num_approx_P_begin = this->phi_P_approx.size();
+	//	if (max_num_approx_in_P_begin < this->count_P_eq_approx)
+	//		max_num_approx_in_P_begin = this->count_P_eq_approx;
+
+	//	//определение минимума метрики по всем запускам
+	//	if (min_dist_begin_1 > this->dist_conver_approx_to_P_set_val)
+	//		min_dist_begin_1 = this->dist_conver_approx_to_P_set_val;
+	//	if (min_dist_begin_2 > this->dist_conver_P_set_to_approx_val)
+	//		min_dist_begin_2 = this->dist_conver_P_set_to_approx_val;
+
+	//	if (min_num_approx_P_begin > this->phi_P_approx.size())
+	//		min_num_approx_P_begin = this->phi_P_approx.size();
+	//	if (min_num_approx_in_P_begin > this->count_P_eq_approx)
+	//		min_num_approx_in_P_begin = this->count_P_eq_approx;
+	//}
+	//else
+	//	//заголовок
+	//	if (0 == index_run)
+	//	{
+	//		sw_1->Write("N of iterations;");
+	//		sw_1->Write("N of approx Pareto set;");
+	//		sw_1->WriteLine("Run;");
+	//	}
+
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -661,6 +993,145 @@ vector<int> GA_path::local_search(vector<int> p, float alpha, float beta, void* 
 		i_temp = path[1][i_temp];
 	}
 	return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//Новый локальный поиск для VNS
+////////////////////////////////////////////////////////////////////////////////
+bool GA_path::local_search_VNS_new(vector<int> p, float alpha, float beta, void* p_arch)//это локальный поиск по принципу first-improvement
+																					   //котороый делает полный перебор, его нужно изменить!!!!!
+{
+	//////////////////////////////////////////////////////////////////////////////////
+	vector<vector<int>> path(2, vector<int>(n));//хранит предков и потомков по туру
+	int i_head, j_head, i_next, i_temp, i_tail, j_tail;//точки разрыва цикла
+	int k_alpha = (int)(alpha*n);//число вершин для просмотра в перестановке pi
+	int k_beta = (int)(beta*(n - 1));//число вершин для просмотра в перестановке p_i
+	boolean is_improve;//для сигнала, что текущее решение улучшено
+	int s1_p, s2_p, s1, s2;//значения критериев на p
+	s1_p = phitness(s_m[0], p);//значение первого критерия для текущей лучшей точки
+	s2_p = phitness(s_m[1], p);//значение второго критерия для текущей лучшей точки
+
+							   //очередь вершин
+							   //объявление очереди
+	deque<int> pi_deque;
+	//запись перестановки pi (переменная index_pi) в очередь
+	for (int i = 0; i < k_alpha; i++)
+		pi_deque.push_back(this->index_pi[i] - 1);
+
+
+	for (int i = 0; i < n - 1; ++i)
+	{
+		path[1][p[i] - 1] = p[i + 1] - 1;
+		path[0][p[i + 1] - 1] = p[i] - 1;
+	}
+	path[1][p[n - 1] - 1] = p[0] - 1;
+	path[0][p[0] - 1] = p[n - 1] - 1;
+	//////////////////////////////////////////////////////////////////////////////////
+	//+++++++++++++++++++++++++++++++++++++++++++
+	//+++++++++++++++++++++++++++++++++++++++++++
+	is_improve = false;
+	//основной цикл просмотра окрестности
+	while (pi_deque.size() != 0) //перебираем только alpha вариантов
+	{//просматриваем вершины очереди по порядку
+	 //////////////////////////////////////////////////////////////////
+		i_head = pi_deque.front(); //возвращает первый элемент очереди (нет проверки сущестования)
+		pi_deque.pop_front(); //удаление первого элемента очереди (не возвращает его)
+		j_head = path[1][i_head]; //идентифицируем следующую вершину цикла 
+
+		//path[1][i_head] = -1;//удаляем дугу (i_head,j_head)
+		//path[0][j_head] = -1;
+		/////////////////////////////////////////////////////////////////
+		//добавляем дугу для образования цикла (i_head,i_next) //перебираем только beta вариантов
+		for (int i_t = 0; i_t < k_beta; i_t++)
+		{	//2
+			i_next = (this->index_p[i_head][i_t]) - 1;
+			//printf("%d %d %d %d\t", i_head, j_head, i_next,i_t);
+			//printf("\n");
+			if (i_head != i_next && j_head != i_next)
+			{	//3
+				//добавляем (i_head, i_next)
+				//path[1][i_head] = i_next;
+				i_temp = path[0][i_next];//дуга для удаления формируется однозначно
+										 //path[0][i_next] = i_head;
+										 //удаляем (i_temp, i_next)
+										 //path[1][i_temp] = -1;
+				j_tail = i_next;//просматриваем вершины цикла, j_tail - кандидат
+
+				while (true)
+				{
+					j_tail = path[1][j_tail];
+					if (j_head == j_tail) {//!
+						break;
+					}//!
+					if (j_head != j_tail)
+					{	//if1
+						//обновляем значения критериев по новому циклу
+						s1 = s1_p - s_m[0][i_head][j_head] - s_m[0][i_temp][i_next] - s_m[0][path[0][j_tail]][j_tail] +
+							s_m[0][i_head][i_next] + s_m[0][i_temp][j_tail] + s_m[0][path[0][j_tail]][j_head];
+						s2 = s2_p - s_m[1][i_head][j_head] - s_m[1][i_temp][i_next] - s_m[1][path[0][j_tail]][j_tail] +
+							s_m[1][i_head][i_next] + s_m[1][i_temp][j_tail] + s_m[1][path[0][j_tail]][j_head];
+
+											
+						// "центр" окрестности продоминировал новую особь
+						// значит ее точно не добавляем в архив
+						if ((s1_p < s1 && s2_p <= s2) || (s1_p <= s1 && s2_p < s2))
+							continue;
+
+						// формируем перестановку, соотв. новой особи
+						vector<vector<int>> path_tmp = path;
+						//удаляем (i_head,j_head)
+						path_tmp[1][i_head] = -1;
+						path_tmp[0][j_head] = -1;
+						//добавляем (i_head, i_next)
+						path_tmp[1][i_head] = i_next;
+						path_tmp[0][i_next] = i_head;
+						//удаляем (i_temp, i_next)
+						path_tmp[1][i_temp] = -1;
+						//добавляем (i_temp, j_tail)
+						path_tmp[1][i_temp] = j_tail;
+						i_tail = path_tmp[0][j_tail];
+						path_tmp[0][j_tail] = i_temp;
+						//удаляем (i_tail, j_tail)
+						path_tmp[1][i_tail] = -1;
+						//добавляем (i_tail, j_head)
+						path_tmp[1][i_tail] = j_head;
+						path_tmp[0][j_head] = i_tail;
+
+						vector<int> result_tmp(this->get_n());
+						result_tmp[0] = 1;
+						int i_temp2 = 0;
+						for (int i = 1; i < n; ++i)
+						{
+							result_tmp[i] = path_tmp[1][i_temp2] + 1;
+							i_temp2 = path_tmp[1][i_temp2];
+						}
+
+						//фиксируем кол-во неживых особей
+						int ar_index_no_lst_old = ((Archive*)p_arch)->ar_index_no_lst.size();
+
+						// сравнение новой особи с архивом
+						// удаление продоминированных элементов архива
+						if (((Archive*)p_arch)->check_new({ s1, s2 }))
+						{
+							//новая особь продоминировала особь в архве
+							// => кол-во неживых особей в архиве увеличилось
+							if (((Archive*)p_arch)->ar_index_no_lst.size() < ar_index_no_lst_old)
+								// существует улучшение в 3-opt окрестности
+								is_improve = true;
+
+							// добавление новой особи в архив
+							((Archive*)p_arch)->arch_modify(result_tmp, { s1, s2 });
+						}
+					}
+				}//while(true)
+			}//3
+		}//2
+
+	}//while(pi_deque.size()!=0)
+	 //+++++++++++++++++++++++++++++++++++++++++++
+	 //+++++++++++++++++++++++++++++++++++++++++++
+
+	return is_improve;
 }
 
 

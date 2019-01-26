@@ -315,29 +315,5 @@ vector<int> shaking_Kopt(vector<int> s, int k)
 	return s1;
 }
 
-unsigned GA_path::hiper_volume(vector<int> r, vector<vector<int>> f)
-{
-	unsigned vol_res = 0;
 
-	//предсортировка по 1-му критерию
-	//? учесть равенство по 1-му критерию
-	//вектор фронтов (используется индекс особи в популяции pop)
-	vector<int> index_front_temp;
-	for (int i = 0; i < f.size(); i++)
-		index_front_temp.push_back(i);
-	heap_sort(f, index_front_temp, -1, 0, index_front_temp.size() - 1);
-
-	for (int i = 0; i < index_front_temp.size(); i++)
-	{
-		unsigned vol_tmp = 1;
-		for (int j = 0; j < f[0].size(); j++)
-			vol_tmp *= (f[index_front_temp[i]][j] - r[j]);
-		vol_res += vol_tmp;
-		//передвигаем точку r по первой координате
-		r[0] = f[index_front_temp[i]][0];
-
-	}
-
-	return vol_res;
-}
 

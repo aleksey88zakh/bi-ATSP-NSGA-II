@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>\INPUT "Example_MTSP_m2_n20_N50_1_10.txt" \FILE_PARETO "Example_MTSP_m2_n20_N50_1_10_Temp.csv" \RUN 2</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>\INPUT "Example_MTSP_m2_n20_N50_1_10.txt" \RUNS 2 \TIME 1 23.4 \ALPHA_LS 1 0.7 0.8 \BETA_LS 0.8 0.6 1</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <RemoteDebuggerCommandArguments>\INPUT "Example_MTSP_m2_n20_N50_1_10.txt" \REDUCE</RemoteDebuggerCommandArguments>
   </PropertyGroup>

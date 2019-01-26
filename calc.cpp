@@ -191,3 +191,54 @@ vector<vector<int>> GA_path::build_phi_P_enum(vector<vector<double>> init_set, v
 	return res_set;
 }
 
+//гиперобъем
+unsigned GA_path::hyper_volume(vector<int> r, vector<vector<int>> f)
+{
+	unsigned vol_res = 0;
+
+	//предсортировка по 1-му критерию
+	//? учесть равенство по 1-му критерию
+	//вектор фронтов (используетс€ индекс особи в попул€ции pop)
+	vector<int> index_front_temp;
+	for (int i = 0; i < f.size(); i++)
+		index_front_temp.push_back(i);
+	heap_sort(f, index_front_temp, -1, 0, index_front_temp.size() - 1);
+
+	for (int i = 0; i < index_front_temp.size(); i++)
+	{
+		unsigned vol_tmp = 1;
+		for (int j = 0; j < f[0].size(); j++)
+			vol_tmp *= (r[j] - f[index_front_temp[i]][j]);
+		vol_res += vol_tmp;
+		//передвигаем точку r по первой координате
+		r[1] = f[index_front_temp[i]][1];
+
+	}
+
+	return vol_res;
+}
+
+//гиперобъем
+float K_measure(vector<vector<int>> P_set_1, vector<vector<int>> P_set_2)
+{
+	float cnt_improved = 0;
+
+	// пробегаемс€ по элементам 1-го множества
+	for (int i = 0; i < P_set_1.size(); i++)
+	{
+		// пробегаемс€ по индексам элементов 2-го множества
+		for (int j = 0; j < P_set_2.size(); j++)
+		{
+			if (Pareto_pref(P_set_1[i], P_set_2[j]) || P_set_1[i] == P_set_2[j])
+			{
+				cnt_improved++;
+			}
+			/*else
+				if (Pareto_pref(P_set_2[j], P_set_1[i]))
+					return 0;*/
+		}
+	}
+		
+		
+	return cnt_improved/ P_set_1.size();
+}

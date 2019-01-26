@@ -30,8 +30,10 @@ int main_GA(int argc, char* argv[])
 	//кол-во запусков на одной задаче
 	int num_runs = 1;
 
-	//время работы на одной задаче
-	unsigned long time_run = 0;
+	//массив времени работы на каждой задаче
+	//если кол-во указанных времен < кол-ва задач,
+	//то для ост. задач время выполнения = 0 (=останов по числу итераций)
+	vector<unsigned> time_run;
 
 	//имя файла, с которого считываем
 	String^ file_name_rd_str = "Example_MTSP_m2_n20_N50_12.txt";//ПОМЕНЯТЬ!!!
@@ -45,8 +47,11 @@ int main_GA(int argc, char* argv[])
 	//оператор рекомбинации
 	recomb_oper rec_oper = recomb_oper::DEC_new;
 
-	//флаг локального поиска
-	bool flag_no_LS = false;
+	//флаги локального поиска
+	bool flag_no_LS_begin = false;
+	bool flag_no_LS_end = false;
+	float _alpha_LS_[] = { 0.5, 0.5, 0.5 };
+	float _beta_LS_[] = {0.5, 0.5, 0.5};
 
 	//"кванты информации"
 	unsigned quantum_inf = _1ST_2ND_ + _2ND_1ST_;
@@ -61,36 +66,48 @@ int main_GA(int argc, char* argv[])
 	//для статистики по метрике
 	double total_dist_begin_1 = 0;
 	double total_dist_begin_2 = 0;
+	double total_dist_middle_1 = 0;
+	double total_dist_middle_2 = 0;
 	double total_dist_end_1 = 0;
 	double total_dist_end_2 = 0;
 
 	double max_dist_begin_1 = 0;
 	double max_dist_begin_2 = 0;
+	double max_dist_middle_1 = 0;
+	double max_dist_middle_2 = 0;
 	double max_dist_end_1 = 0;
 	double max_dist_end_2 = 0;
 
 	double min_dist_begin_1 = 0;
 	double min_dist_begin_2 = 0;
+	double min_dist_middle_1 = 0;
+	double min_dist_middle_2 = 0;
 	double min_dist_end_1 = 0;
 	double min_dist_end_2 = 0;
 
 	//для статистики аппроксимации мн-ва Парето
 	double total_num_approx_P_begin = 0;
+	double total_num_approx_P_middle = 0;
 	double total_num_approx_P_end = 0;
 
 	int max_num_approx_P_begin = 0;
+	int max_num_approx_P_middle = 0;
 	int max_num_approx_P_end = 0;
 
 	int min_num_approx_P_begin = 0;
+	int min_num_approx_P_middle = 0;
 	int min_num_approx_P_end = 0;
 
 	double total_num_approx_in_P_begin = 0;
+	double total_num_approx_in_P_middle = 0;
 	double total_num_approx_in_P_end = 0;
 
 	int max_num_approx_in_P_begin = 0;
+	int max_num_approx_in_P_middle = 0;
 	int max_num_approx_in_P_end = 0;
 
 	int min_num_approx_in_P_begin = 0;
+	int min_num_approx_in_P_middle = 0;
 	int min_num_approx_in_P_end = 0;
 
 	//статистика эксперимента по сужению мн-ва Парето
@@ -159,13 +176,52 @@ int main_GA(int argc, char* argv[])
 
 		if (str_temp == "\\TIME")
 		{
-			// в мсек.
-			time_run = stof(argv[i + 1]) * 1000;
+			int j = 1;
+			try
+			{
+				while (1)
+				{
+					//если параметр /TIME написан последним
+					//и считали все значения времени
+					if (i + j == argc)
+					{
+						i = argc;
+						break;
+					}
+					// в мсек.
+					time_run.push_back(stof(argv[i + j]) * 1000);
+					j++;
+				}
+			}
+			catch (std::invalid_argument)
+			{
+				i = i + j - 1;
+				continue;
+			}
+
+		}
+
+		if (str_temp == "\\ALPHA_LS")
+		{
+			_alpha_LS_[0] = stof(argv[i + 1]);
+			_alpha_LS_[1] = stof(argv[i + 2]);
+			_alpha_LS_[2] = stof(argv[i + 3]);
 			continue;
 		}
 
-		if (str_temp == "\\NO_LS")
-			flag_no_LS = true;
+		if (str_temp == "\\BETA_LS")
+		{
+			_beta_LS_[0] = stof(argv[i + 1]);
+			_beta_LS_[1] = stof(argv[i + 2]);
+			_beta_LS_[2] = stof(argv[i + 3]);
+			continue;
+		}
+
+		if (str_temp == "\\NO_LS_begin")
+			flag_no_LS_begin = true;
+
+		if (str_temp == "\\NO_LS_end")
+			flag_no_LS_end = true;
 
 		if (str_temp == "\\REDUCE")
 			reduction = true;
@@ -176,6 +232,7 @@ int main_GA(int argc, char* argv[])
 		if (str_temp == "\\Q_learn")
 			rec_oper = recomb_oper::CH_MAX;
 	}
+
 	
 	//открываем для считывания
 	StreamReader^ sr = gcnew StreamReader(file_name_rd_str);
@@ -238,11 +295,14 @@ int main_GA(int argc, char* argv[])
 		num_prbl_val = stoi(str_temp);
 	}
 
-	
+	//для задач, у которых не указано время, уставливаем его в ноль
+	int time_run_size = time_run.size();
+	for (int i = 0; i < num_prbl_val - time_run_size; i++)
+		time_run.push_back(0);
 
 
-	//ЗАДАЧИ
-	//цикл по всем задачам
+//ЗАДАЧИ
+//ЦИКЛ ПО ВСЕМ ЗАДАЧАМ
 	for (int iter_prbl = 0; iter_prbl < num_prbl_val; iter_prbl++) 
 	{
 		//если не указано название задачи
@@ -321,15 +381,23 @@ int main_GA(int argc, char* argv[])
 		sw_1->WriteLine("N; {0}", ga.get_N());
 		sw_1->WriteLine("iter; {0}", num_iter);
 		sw_1->WriteLine("run; {0}", num_runs);
-		if (flag_no_LS)
-			sw_1->WriteLine("NO_LS");
+		if (flag_no_LS_begin)
+			sw_1->WriteLine("NO_LS_begin");
 		else
 		{
 			sw_1->WriteLine("LS begin alpha; {0:F2}", LS_GA_BEGIN_ALPHA);
+			sw_1->WriteLine("LS begin beta; {0:F2}", LS_GA_BEGIN_BETA);
+		}
+		if (flag_no_LS_end)
+			sw_1->WriteLine("NO_LS_end");
+		else
+		{
 			sw_1->WriteLine("LS end alpha; {0:F2}", LS_GA_END_ALPHA);
+			sw_1->WriteLine("LS end beta; {0:F2}", LS_GA_END_BETA);
 		}
 		sw_1->WriteLine("tourn size; {0}", ga.get_tourn_size());
 		sw_1->WriteLine("p_mut; {0:F2}", ga.get_p_mut());
+		sw_1->WriteLine();
 		
 
 		//файл для записи эксперимента по сужению мн-ва Парето
@@ -355,35 +423,48 @@ int main_GA(int argc, char* argv[])
 		//сбрасываем значения перед циклом по всем запускам
 		total_dist_begin_1 = 0;
 		total_dist_begin_2 = 0;
+		total_dist_middle_1 = 0;
+		total_dist_middle_2 = 0;
+		total_dist_begin_2 = 0;
 		total_dist_end_1 = 0;
 		total_dist_end_2 = 0;
 
 		max_dist_begin_1 = 0;
 		max_dist_begin_2 = 0;
+		max_dist_middle_1 = 0;
+		max_dist_middle_2 = 0;
 		max_dist_end_1 = 0;
 		max_dist_end_2 = 0;
 
 		min_dist_begin_1 = 0;
 		min_dist_begin_2 = 0;
+		min_dist_middle_1 = 0;
+		min_dist_middle_2 = 0;
 		min_dist_end_1 = 0;
 		min_dist_end_2 = 0;
 
 		total_num_approx_P_begin = 0;
+		total_num_approx_P_middle = 0;
 		total_num_approx_P_end = 0;
 
 		max_num_approx_P_begin = 0;
+		max_num_approx_P_middle = 0;
 		max_num_approx_P_end = 0;
 
 		min_num_approx_P_begin = 0;
+		min_num_approx_P_middle = 0;
 		min_num_approx_P_end = 0;
 
 		total_num_approx_in_P_begin = 0;
+		total_num_approx_in_P_middle = 0;
 		total_num_approx_in_P_end = 0;
 
 		max_num_approx_in_P_begin = 0;
+		max_num_approx_in_P_middle = 0;
 		max_num_approx_in_P_end = 0;
 
 		min_num_approx_in_P_begin = 0;
+		min_num_approx_in_P_middle = 0;
 		min_num_approx_in_P_end = 0;
 
 		//для сужения делаем только один запуск
@@ -397,7 +478,7 @@ int main_GA(int argc, char* argv[])
 
 
 //ПРЕПРОЦЕССИНГ для локального поиска
-		if (!flag_no_LS)
+		if (!flag_no_LS_begin)
 		{
 			//построение перестановки pi (переменная index_pi)
 			//? определение fronts_struct_temp с размерностью
@@ -614,7 +695,7 @@ int main_GA(int argc, char* argv[])
 //----------ЛОКАЛЬНЫЙ ПОИСК (нач. поп.)----------------------------------------------------------
 			//время локального поиска (в начале)
 			time_local_search_b -= ::GetTickCount();
-			if (!flag_no_LS)
+			if (!flag_no_LS_begin)
 			{
 				// ПРЕПРОЦЕССИНГ см. выше
 				// выполняется один раз перед всеми запусками одной задачи
@@ -628,7 +709,7 @@ int main_GA(int argc, char* argv[])
 				sw->WriteLine();
 
 				for (int i = 0; i < ga.get_N(); i++)
-					ga.pop[i] = ga.local_search(ga.pop[i], LS_GA_BEGIN_ALPHA, LS_GA_BEGIN_BETA);
+					ga.pop[i] = ga.local_search(ga.pop[i], _alpha_LS_[0], _beta_LS_[0]);
 
 				sw->WriteLine("after LS");
 				printf("afret LS:\n");
@@ -788,7 +869,8 @@ int main_GA(int argc, char* argv[])
 			sw->WriteLine();
 			//sw_1->WriteLine();
 
-			//вычисление метрики для НАЧАЛЬНОЙ популяции - аппроксимации множества Парето (если выше присвоено имя файла)
+			//вычисление метрики для НАЧАЛЬНОЙ популяции - аппроксимации множества Парето
+			//если мн-во Парето задано
 			if (file_name_source_Pareto_set_str)
 			{
 				//заголовок
@@ -798,17 +880,30 @@ int main_GA(int argc, char* argv[])
 					sw_1->WriteLine();
 
 					sw_1->Write("Begin; ; ; ;");
-					sw_1->WriteLine("End;");
+					sw_1->Write("End before LS; ; ; ;");
+					sw_1->WriteLine("End after LS; ; ; ;");
 
+					//в начале после ЛП
 					sw_1->Write("Metric 'Convergence approximation to Pareto set';");
 					sw_1->Write("Metric 'Convergence Pareto set to approximation';");
 					sw_1->Write("Points in approx to Pareto set;");
 					sw_1->Write("Points from Pareto set;");
 
+					//в конце до ЛП
 					sw_1->Write("Metric 'Convergence approximation to Pareto set';");
 					sw_1->Write("Metric 'Convergence Pareto set to approximation';");
 					sw_1->Write("Points in approx to Pareto set;");
 					sw_1->Write("Points from Pareto set;");
+
+					//в конце после ЛП
+					sw_1->Write("Metric 'Convergence approximation to Pareto set';");
+					sw_1->Write("Metric 'Convergence Pareto set to approximation';");
+					sw_1->Write("Points in approx to Pareto set;");
+					sw_1->Write("Points from Pareto set;");
+
+					if (time_run[iter_prbl] > 0)
+						sw_1->Write("N of iter;");
+
 					sw_1->WriteLine("Run");
 				}
 
@@ -856,6 +951,33 @@ int main_GA(int argc, char* argv[])
 				if (min_num_approx_in_P_begin > ga.count_P_eq_approx)
 					min_num_approx_in_P_begin = ga.count_P_eq_approx;
 			}
+			//если мн-во Парето не задано
+			else 
+			{
+				//заголовок
+				if (index_run == 0)
+				{
+					sw_1->Write("Begin (after LS); ;");
+					sw_1->Write("End (before LS); ;");
+					sw_1->WriteLine("End (after LS); ;");
+
+					sw_1->Write("Rank 1;");
+					sw_1->Write("Hyper vol;");
+					sw_1->Write("Rank 1;");
+					sw_1->Write("Hyper vol;");
+					sw_1->Write("Rank 1;");
+
+					sw_1->Write("Hyper vol;");
+					
+					if (time_run[iter_prbl] > 0)	
+						sw_1->Write("N of iter;");
+					
+					sw_1->WriteLine("Run");
+					
+				}
+				sw_1->Write("{0};", ga.phi_P_approx.size());
+				sw_1->Write("{0};", ga.hyper_volume({ ga.c_max_all[0]*ga.get_n(), ga.c_max_all[1]*ga.get_n() }, ga.phi_P_approx));
+			}
 
 
 			int i_p1, i_p2;
@@ -869,6 +991,7 @@ int main_GA(int argc, char* argv[])
 			//вектор рангов фронтов для R_t - сделан членом класса GA_path
 			//vector<int> i_rank_R_t(2 * ga.get_N());
 
+//обучение с подкреплением
 			//функция выигрыша в кроссинговере 
 	//		vector<vector<float>> Q_cross[2];
 	//		/*for (int i = 0; i < ga.get_N(); i++)
@@ -885,8 +1008,8 @@ int main_GA(int argc, char* argv[])
 			int iter = 0;
 			unsigned long cur_time_start = ::GetTickCount();
 			unsigned long cur_time = 0;
-			/*условие на кол-во итераций*/         /*условие на время*/
-			while ((++iter <= num_iter && time_run == 0) || (cur_time <= time_run))
+			                   /*условие на кол-во итераций*/         /*условие на время*/
+			while ((++iter <= num_iter && time_run[iter_prbl] == 0) || (cur_time <= time_run[iter_prbl]))
 			{
 				ga.pop_R_t = ga.pop; //R_t = P_t
 				for (int i = 0; i < ga.get_N(); i++)
@@ -949,7 +1072,7 @@ int main_GA(int argc, char* argv[])
 							child = ga.DEC_new(ga.s_m, p1, p2);
 							if (MODIF)
 							{
-								// если потомок совпадает с одним из родителей, применяем DPX
+								// если потомок совпадает с одним из родителей или хуже, применяем DPX
 								vector<int> phi_child = ga.multi_phitness(child);
 										/*потомок совпадает с одним из родителей*/
 								if ( (phi_child == phi_p1) || (phi_child == phi_p2)  ||
@@ -1024,9 +1147,9 @@ int main_GA(int argc, char* argv[])
 					//Юлечка
 					if (MODIF)
 					{					
-						// если потомок опять совпадает с одним из родителей,
-						// применяем мутацию обмена
-						if ( (ga.multi_phitness(child) == phi_p1) || (ga.multi_phitness(child) == phi_p2) )
+						// применяем мутацию обмена, если потомок хуже одного из родителей
+						// после DPX потомок не может совпадать с родителями
+						if ( Pareto_pref(phi_p1, ga.multi_phitness(child)) || Pareto_pref(phi_p2, ga.multi_phitness(child)) )
 						{
 							//для рандомизатора
 							temp_time = ::GetTickCount();
@@ -1045,6 +1168,9 @@ int main_GA(int argc, char* argv[])
 
 						
 					}
+
+					//применяем ЛП к потомку после рекомбинации
+					child = ga.local_search(child, _alpha_LS_[1], _beta_LS_[1]);
 
 					ga.pop_R_t.push_back(child);//R_t = P_t + child
 				}
@@ -1263,8 +1389,65 @@ int main_GA(int argc, char* argv[])
 
 			}//основной цикл итераций
 
+
+			//до ЛП
+			//формируем значения векторного критерия аппроксимации мн-ва Парето (без повторов)
+			ga.phi_P_approx.clear();
+			ga.build_phi_P_approx();
+			//вычисление метрики для КОНЕЧНОЙ популяции до ЛП - аппроксимации множества Парето
+			//если мн-во Парето задано
+			if (file_name_source_Pareto_set_str)
+			{
+				//вычисляем метрики
+				ga.count_P_eq_approx = 0;
+				ga.evaluate_metric_of_approx(sw_1, phi_Pareto_set, true);
+				sw_1->Write("{0};", ga.count_P_eq_approx);
+
+				//для средней метрики по всем запускам
+				total_dist_middle_1 += ga.dist_conver_approx_to_P_set_val;
+				total_dist_middle_2 += ga.dist_conver_P_set_to_approx_val;
+
+				total_num_approx_P_middle += ga.phi_P_approx.size();
+				total_num_approx_in_P_middle += ga.count_P_eq_approx;
+
+				if (0 == index_run)
+				{
+					max_dist_middle_1 = min_dist_middle_1 = ga.dist_conver_approx_to_P_set_val;
+					max_dist_middle_2 = min_dist_middle_2 = ga.dist_conver_P_set_to_approx_val;
+					max_num_approx_P_middle = min_num_approx_P_middle = ga.phi_P_approx.size();
+					max_num_approx_in_P_middle = min_num_approx_in_P_middle = ga.count_P_eq_approx;
+				}
+
+				//определение максимума метрики по всем запускам
+				if (max_dist_middle_1 < ga.dist_conver_approx_to_P_set_val)
+					max_dist_middle_1 = ga.dist_conver_approx_to_P_set_val;
+				if (max_dist_middle_2 < ga.dist_conver_P_set_to_approx_val)
+					max_dist_middle_2 = ga.dist_conver_P_set_to_approx_val;
+
+				if (max_num_approx_P_middle < ga.phi_P_approx.size())
+					max_num_approx_P_middle = ga.phi_P_approx.size();
+				if (max_num_approx_in_P_middle < ga.count_P_eq_approx)
+					max_num_approx_in_P_middle = ga.count_P_eq_approx;
+
+				//определение минимума метрики по всем запускам
+				if (min_dist_middle_1 > ga.dist_conver_approx_to_P_set_val)
+					min_dist_middle_1 = ga.dist_conver_approx_to_P_set_val;
+				if (min_dist_middle_2 > ga.dist_conver_P_set_to_approx_val)
+					min_dist_middle_2 = ga.dist_conver_P_set_to_approx_val;
+
+				if (min_num_approx_P_middle > ga.phi_P_approx.size())
+					min_num_approx_P_middle = ga.phi_P_approx.size();
+				if (min_num_approx_in_P_middle > ga.count_P_eq_approx)
+					min_num_approx_in_P_middle = ga.count_P_eq_approx;
+			}
+			else //если мн-во Парето не задано
+			{
+				sw_1->Write("{0};", ga.phi_P_approx.size());
+				sw_1->Write("{0};", ga.hyper_volume({ ga.c_max_all[0]*ga.get_n(), ga.c_max_all[1]*ga.get_n() }, ga.phi_P_approx));
+			}
+
 			//если запуск был на время, выводим результат последней итерации
-			if (time_run > 0)
+			if (time_run[iter_prbl] > 0)
 			{
 				sw->WriteLine("Run {0}, Iteration {1}", index_run + 1, iter);
 				for (int j = 0; j < ga.get_n(); j++)
@@ -1326,10 +1509,10 @@ int main_GA(int argc, char* argv[])
 
 			//время локального поиска (в конце)
 			time_local_search_f -= ::GetTickCount();
-			if (!flag_no_LS)
+			if (!flag_no_LS_end)
 			{
 				//формируем архив из особей с раном 1
-				Archive arch(ga);
+				Archive arch(&ga);
 				//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ АРХИВА
 				vector<int> new_to_arch;
 				printf("\n Local search at the end\n");
@@ -1352,7 +1535,7 @@ int main_GA(int argc, char* argv[])
 					i_tmp = *it_lst;
 
 					// локальный поиск
-					vector<int> new_to_arch = ga.local_search(arch.archive[i_tmp], LS_GA_END_ALPHA, LS_GA_END_BETA, &arch);
+					vector<int> new_to_arch = ga.local_search(arch.archive[i_tmp], _alpha_LS_[2], _beta_LS_[2], &arch);
 					if (!new_to_arch.empty()) // не пустой, если i_lst был продоминирован
 					{
 						// добавляем в список неживых
@@ -1436,7 +1619,7 @@ int main_GA(int argc, char* argv[])
 
 		
 
-			//ПОСЛЕ ОСНОВНОГО ЦИКЛА ИТЕРАЦИЙ
+			//ПОСЛЕ ОСНОВНОГО ЦИКЛА ИТЕРАЦИЙ и ЛП
 			//вычисление метрики - аппроксимации множества Парето (если выше присвоено имя файла)
 			if (file_name_source_Pareto_set_str)
 			{
@@ -1445,6 +1628,8 @@ int main_GA(int argc, char* argv[])
 				ga.evaluate_metric_of_approx(sw_1, phi_Pareto_set, true);
 				sw->WriteLine();
 				sw_1->Write("{0};", ga.count_P_eq_approx);
+				if (time_run[iter_prbl] > 0)
+					sw_1->Write("{0};", iter);
 				sw_1->WriteLine("{0};", index_run + 1);
 
 				//для средней метрики по всем запускам
@@ -1499,6 +1684,16 @@ int main_GA(int argc, char* argv[])
 					sw->WriteLine();
 				}
 				sw->WriteLine();
+			}
+			else
+			{
+				sw_1->Write("{0};", ga.phi_P_approx.size());
+				sw_1->Write("{0};", ga.hyper_volume({ ga.c_max_all[0]*ga.get_n(), ga.c_max_all[1]*ga.get_n() }, ga.phi_P_approx));
+				
+				if (time_run[iter_prbl] > 0)
+					sw_1->Write("{0};", iter);
+			
+				sw_1->WriteLine("{0};", index_run + 1);
 			}
 
 			//очищаем популяцию и ранги
@@ -1601,20 +1796,28 @@ int main_GA(int argc, char* argv[])
 		if (file_name_source_Pareto_set_str)
 		{
 			total_dist_begin_1 = total_dist_begin_1 / num_runs;
+			total_dist_middle_1 = total_dist_middle_1 / num_runs;
 			total_dist_end_1 = total_dist_end_1 / num_runs;
 			total_dist_begin_2 = total_dist_begin_2 / num_runs;
+			total_dist_middle_2 = total_dist_middle_2 / num_runs;
 			total_dist_end_2 = total_dist_end_2 / num_runs;
 
 			total_num_approx_P_begin = total_num_approx_P_begin / num_runs;
+			total_num_approx_P_middle = total_num_approx_P_middle / num_runs;
 			total_num_approx_P_end = total_num_approx_P_end / num_runs;
 
 			total_num_approx_in_P_begin = total_num_approx_in_P_begin / num_runs;
+			total_num_approx_in_P_middle = total_num_approx_in_P_middle / num_runs;
 			total_num_approx_in_P_end = total_num_approx_in_P_end / num_runs;
 						
 			sw->Write("{0:F4};", total_dist_begin_1);
 			sw->Write("{0:F4};", total_dist_begin_2);
 			sw->Write("{0:F2};", total_num_approx_P_begin);
 			sw->Write("{0:F2};", total_num_approx_in_P_begin);
+			sw->Write("{0:F4};", total_dist_middle_1);
+			sw->Write("{0:F4};", total_dist_middle_2);
+			sw->Write("{0:F2};", total_num_approx_P_middle);
+			sw->Write("{0:F2};", total_num_approx_in_P_middle);
 			sw->Write("{0:F4};", total_dist_end_1);
 			sw->Write("{0:F4};", total_dist_end_2);
 			sw->Write("{0:F2};", total_num_approx_P_end);
@@ -1625,6 +1828,10 @@ int main_GA(int argc, char* argv[])
 			sw->Write("{0:F4};", max_dist_begin_2);
 			sw->Write("{0};", max_num_approx_P_begin);
 			sw->Write("{0};", max_num_approx_in_P_begin);
+			sw->Write("{0:F4};", max_dist_middle_1);
+			sw->Write("{0:F4};", max_dist_middle_2);
+			sw->Write("{0};", max_num_approx_P_middle);
+			sw->Write("{0};", max_num_approx_in_P_middle);
 			sw->Write("{0:F4};", max_dist_end_1);
 			sw->Write("{0:F4};", max_dist_end_2);
 			sw->Write("{0};", max_num_approx_P_end);
@@ -1635,6 +1842,10 @@ int main_GA(int argc, char* argv[])
 			sw->Write("{0:F4};", min_dist_begin_2);
 			sw->Write("{0};", min_num_approx_P_begin);
 			sw->Write("{0};", min_num_approx_in_P_begin);
+			sw->Write("{0:F4};", min_dist_middle_1);
+			sw->Write("{0:F4};", min_dist_middle_2);
+			sw->Write("{0};", min_num_approx_P_middle);
+			sw->Write("{0};", min_num_approx_in_P_middle);
 			sw->Write("{0:F4};", min_dist_end_1);
 			sw->Write("{0:F4};", min_dist_end_2);
 			sw->Write("{0};", min_num_approx_P_end);
@@ -1646,6 +1857,10 @@ int main_GA(int argc, char* argv[])
 			sw_1->Write("{0:F4};", total_dist_begin_2);
 			sw_1->Write("{0};", total_num_approx_P_begin);
 			sw_1->Write("{0};", total_num_approx_in_P_begin);
+			sw_1->Write("{0:F4};", total_dist_middle_1);
+			sw_1->Write("{0:F4};", total_dist_middle_2);
+			sw_1->Write("{0};", total_num_approx_P_middle);
+			sw_1->Write("{0};", total_num_approx_in_P_middle);
 			sw_1->Write("{0:F4};", total_dist_end_1);
 			sw_1->Write("{0:F4};", total_dist_end_2);
 			sw_1->Write("{0};", total_num_approx_P_end);
@@ -1656,6 +1871,10 @@ int main_GA(int argc, char* argv[])
 			sw_1->Write("{0:F4};", max_dist_begin_2);
 			sw_1->Write("{0};", max_num_approx_P_begin);
 			sw_1->Write("{0};", max_num_approx_in_P_begin);
+			sw_1->Write("{0:F4};", max_dist_middle_1);
+			sw_1->Write("{0:F4};", max_dist_middle_2);
+			sw_1->Write("{0};", max_num_approx_P_middle);
+			sw_1->Write("{0};", max_num_approx_in_P_middle);
 			sw_1->Write("{0:F4};", max_dist_end_1);
 			sw_1->Write("{0:F4};", max_dist_end_2);
 			sw_1->Write("{0};", max_num_approx_P_end);
@@ -1666,11 +1885,19 @@ int main_GA(int argc, char* argv[])
 			sw_1->Write("{0:F4};", min_dist_begin_2);
 			sw_1->Write("{0:F2};", min_num_approx_P_begin);
 			sw_1->Write("{0:F2};", min_num_approx_in_P_begin);
+			sw_1->Write("{0:F4};", min_dist_middle_1);
+			sw_1->Write("{0:F4};", min_dist_middle_2);
+			sw_1->Write("{0:F2};", min_num_approx_P_middle);
+			sw_1->Write("{0:F2};", min_num_approx_in_P_middle);
 			sw_1->Write("{0:F4};", min_dist_end_1);
 			sw_1->Write("{0:F4};", min_dist_end_2);
 			sw_1->Write("{0:F2};", min_num_approx_P_end);
 			sw_1->Write("{0:F2};", min_num_approx_in_P_end);
 			sw_1->WriteLine("Min");
+			sw_1->WriteLine();
+		}
+		else
+		{
 			sw_1->WriteLine();
 		}
 
@@ -1794,8 +2021,13 @@ int main_VNS(int argc, char* argv[])
 								//чтение множества Парето из файла
 	String^ file_name_source_Pareto_set_str;
 
-	//оператор рекомбинации
-	//recomb_oper rec_oper = recomb_oper::DEC_new;
+	//VNS с мультистартом
+	//максимальное число необновления элиты
+	int _max_iter_elite_VNS_multi_ = 5;
+	//максимальное число необновления архива
+	int _max_iter_arch_VNS_multi_ = 5;
+	//флаг, задано ли _max_iter_arch_VNS_multi_ пользователем
+	bool flag_max_iter_arch_VNS_multi = false;
 
 	//"кванты информации"
 	unsigned quantum_inf = _1ST_2ND_ + _2ND_1ST_;
@@ -1916,8 +2148,18 @@ int main_VNS(int argc, char* argv[])
 			continue;
 		}
 
-		//if (str_temp == "\\DPX")
-		//	rec_oper = recomb_oper::DPX;
+		if (str_temp == "\\MAX_ARCH_VNS_MULTI")
+		{
+			_max_iter_arch_VNS_multi_ = stoi(argv[i + 1]);
+			flag_max_iter_arch_VNS_multi = true;
+			continue;
+		}
+
+		if (str_temp == "\\MAX_ELITE_VNS_MULTI")
+		{
+			_max_iter_elite_VNS_multi_ = stoi(argv[i + 1]);
+			continue;
+		}
 	}
 
 	//открываем для считывания
@@ -1972,8 +2214,8 @@ int main_VNS(int argc, char* argv[])
 
 
 
-	//ЗАДАЧИ
-	//цикл по всем задачам
+//ЗАДАЧИ
+//ЦИКЛ ПО ВСЕМ ЗАДАЧАМ
 	for (int iter_prbl = 0; iter_prbl < num_prbl_val; iter_prbl++)
 	{
 		//если не указано название задачи
@@ -2046,6 +2288,7 @@ int main_VNS(int argc, char* argv[])
 		sw_1->WriteLine("LS begin alpha; {0:F2}", LS_VNS_BEGIN_ALPHA);
 		sw_1->WriteLine("LS end alpha; {0:F2}", LS_VNS_END_ALPHA);
 		sw_1->WriteLine("K shaking; {0}", MAX_NUM_K_OPT);
+		sw_1->WriteLine();
 
 		//файл для записи эксперимента по сужению мн-ва Парето
 		if (reduction)
@@ -2176,12 +2419,15 @@ int main_VNS(int argc, char* argv[])
 		sw->WriteLine();
 		printf("\n");
 
-		//засекаем время препроцессинга
+		//засекаем время препроцессинга ЛП (в начале)
 		long time_local_search_b_pre = ::GetTickCount() - start_time;
 		//время локального поиска (в начале)
 		long long time_local_search_b = 0;
 		//время локального поиска (в конце)
 		long long time_local_search_f = 0;
+
+		// общее кол-во итераций за все запуски (run) и старты (start) (для VNS_multi_start)
+		int total_iter_run = 0;
 
 		////////////////////////////////////////////////////////////////////////
 
@@ -2189,644 +2435,1439 @@ int main_VNS(int argc, char* argv[])
 		//цикл по запускам (на одной задаче)
 		for (int index_run = 0; index_run < num_runs; index_run++)
 		{
-			sw->WriteLine("Problem{0} Run {1}", iter_prbl + 1, index_run + 1);
-			//для рандомизатора
-			temp_time = ::GetTickCount();
-			srand(temp_time);
+			sw->WriteLine("Problem {0}; Run {1}", iter_prbl + 1, index_run + 1);
+			
+			int iter;
+			// счетчик "срабатывания" k-shaking
+			int cnt_k_shaking_works = 0;
 
-			//родители нач популяции
-			//4 особи по Зангу
-			vector<int> p1, p2, p3, p4;
-			p1 = vns.patching_algorithm(vns.s_m[0], vns.c_max_all[0], false);
-			p2 = vns.patching_algorithm(vns.s_m[0], vns.c_max_all[0], true);
-			p3 = vns.patching_algorithm(vns.s_m[1], vns.c_max_all[1], false);
-			p4 = vns.patching_algorithm(vns.s_m[1], vns.c_max_all[1], true);
-
-			//sw->WriteLine("p1; p2; p3; p4");
-			//printf("\np1\t p2\t p3\t p4\n");
-
-			vector<int> p1_temp(vns.get_n());
-			vector<int> p2_temp(vns.get_n());
-			vector<int> p3_temp(vns.get_n());
-			vector<int> p4_temp(vns.get_n());
-
-			p1_temp = p1;
-			p2_temp = p2;
-			p3_temp = p3;
-			p4_temp = p4;
-
-			p1_temp[0] = 1;
-			p2_temp[0] = 1;
-			p3_temp[0] = 1;
-			p4_temp[0] = 1;
-			//sw->Write("{0}; {1}; {2}; {3};", p1[0], p2[0], p3[0], p4[0]);
-			//printf("%d\t%d\t%d\t%d\t", p1[0], p2[0], p3[0], p4[0]);
-
-			int i_temp = 0;
-			for (int i = 1; i < vns.get_n(); ++i)
+///////////////////////////////////////////////////////
+//////////////////// VNSnew
+//////////////////////////////////////////////////////
+			if (flag_VNSnew)
 			{
-				p1_temp[i] = p1[i_temp] + 1;
-				i_temp = p1[i_temp];
-			}
-			i_temp = 0;
-			for (int i = 1; i < vns.get_n(); ++i)
-			{
-				p2_temp[i] = p2[i_temp] + 1;
-				i_temp = p2[i_temp];
-			}
-			i_temp = 0;
-			for (int i = 1; i < vns.get_n(); ++i)
-			{
-				p3_temp[i] = p3[i_temp] + 1;
-				i_temp = p3[i_temp];
-			}
-			i_temp = 0;
-			for (int i = 1; i < vns.get_n(); ++i)
-			{
-				p4_temp[i] = p4[i_temp] + 1;
-				i_temp = p4[i_temp];
-			}
-
-			p1 = p1_temp;
-			p2 = p2_temp;
-			p3 = p3_temp;
-			p4 = p4_temp;
-
-			/*
-			for (int i = 0; i < ga.get_n(); i++)
-			{
-			sw->Write("{0};", p1[i]);
-			printf("%d\t", p1[i]);
-
-			sw->Write("{0};", p2[i]);
-			printf("%d\t", p2[i]);
-
-			sw->Write("{0};", p3[i]);
-			printf("%d\t", p3[i]);
-
-			sw->Write("{0};", p4[i]);
-			printf("%d\t", p4[i]);
-
-			sw->WriteLine();
-			printf("\n");
-			}
-
-			sw->WriteLine();
-			printf("\n");
-			*/
-
-
-			//0. начальная популяция
-			temp_time = ::GetTickCount(); // для рандомизатора
-			vns.init_pop(vns.s_m, vns.c_max_all[0], temp_time, p1, p2, p3, p4);
-
-			sw->WriteLine("Initial population");
-			//sw_1->WriteLine("Initial population");
-			printf("Initial population (problem %d):\n", iter_prbl + 1);
-			for (int j = 0; j < vns.get_n(); j++)
-			{
-				for (int i = 0; i < vns.get_N(); i++)
-				{
-					sw->Write("{0};", vns.pop[i][j]);
-					printf("%d\t", vns.pop[i][j]);
-				}
-				sw->WriteLine();
-			}
-
-			sw->WriteLine();
-			printf("\n");
-
-
-
-			//заполняем значение векторного критерия по популяции
-			//phi[i][j], i - индекс критерия, j - индекс особи
-
-			sw->WriteLine("Values of vector criterion (initial population)");
-			printf("Values of vector criterion (initial population, problem %d):\n", iter_prbl + 1);
-
-			//заполнение значений критерия
-			for (int i = 0; i < vns.get_N(); i++)
-				vns.phi[i] = vns.multi_phitness(vns.pop[i]);
-
-			//вывод значений критерия
-			for (int j = 0; j < vns.get_m(); j++)
-			{
-				for (int i = 0; i < vns.get_N(); i++)
-				{
-					sw->Write("{0};", vns.phi[i][j]);
-					printf("%d\t", vns.phi[i][j]);
-				}
-				sw->WriteLine();
-				printf("\n");
-			}
-			printf("\n");
-			sw->WriteLine();
-
-
-
-			//-----------------------------------------------------------------------------------------------
-			//----------ЛОКАЛЬНЫЙ ПОИСК (нач. поп.)----------------------------------------------------------
-
-			// ПРЕПРОЦЕССИНГ см. выше
-			// выполняется один раз перед всеми запусками одной задачи
-
-
-			//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ МАССИВА pop
-
-			//время локального поиска (в начале)
-			time_local_search_b -= ::GetTickCount();
-
-			vector<int> pop_new;
-			printf("Local search\n");
-			printf("\n");
-			sw->WriteLine("Local search");
-			sw->WriteLine();
-
-			for (int i = 0; i < vns.get_N(); i++)
-				vns.pop[i] = vns.local_search(vns.pop[i], LS_VNS_BEGIN_ALPHA LS_VNS_BEGIN_BETA);
-
-			sw->WriteLine("after LS");
-			printf("afret LS:\n");
-			for (int j = 0; j < vns.get_n(); j++)
-			{
-				for (int i = 0; i < vns.get_N(); i++)
-				{
-					sw->Write("{0};", vns.pop[i][j]);
-					printf("%d\t", vns.pop[i][j]);
-				}
-				sw->WriteLine();
-
-			}
-
-			sw->WriteLine();
-			printf("\n");
-
-
-			//заполняем значение векторного критерия по популяции
-			sw->WriteLine("Values of vector criterion:");
-			printf("Values of vector criterion:\n");
-
-			//заполнение значений критерия
-			for (int i = 0; i < vns.get_N(); i++)
-				vns.phi[i] = vns.multi_phitness(vns.pop[i]);
-
-			//вывод значений критерия
-			for (int j = 0; j < vns.get_m(); j++)
-			{
-				for (int i = 0; i < vns.get_N(); i++)
-				{
-					sw->Write("{0};", vns.phi[i][j]);
-					printf("%d\t", vns.phi[i][j]);
-				}
-				sw->WriteLine();
-				printf("\n");
-			}
-			printf("\n");
-			sw->WriteLine();
-
-			//засекаем время локального поиска (в начале)
-			time_local_search_b += ::GetTickCount();
-
-			//-----------------------------------------------------------------------------------------------
-			//-----------------------------------------------------------------------------------------------
-
-
-
-
-
-			//------------ПОСТРОЕНИЕ ФРОНТОВ
-			//true - популяция в явном виде отсорирована по фронтам + ранги фронтов заданы в векторе i_rank
-			//false - популяция в явном виде не отсорирована по фронтам, ранги фронтов заданы в векторе i_rank
-			vector<int> tmp2; //заглушка
-			vns.i_rank = vns.range_front_J(vns.phi, vns.pop, tmp2, 1);
-			tmp2.clear();
-			//значение векторного критерия отсортированной популяции
-			sw->WriteLine("Values of vector criterion (sorted):");
-			printf("Values of vector criterion (sorted):\n");
-
-			//заполнение значений критерия
-			for (int i = 0; i < vns.get_N(); i++)
-				vns.phi[i] = vns.multi_phitness(vns.pop[i]);
-
-			//вывод значений критерия
-			for (int j = 0; j < vns.get_m(); j++)
-			{
-				for (int i = 0; i < vns.get_N(); i++)
-				{
-					sw->Write("{0};", vns.phi[i][j]);
-					printf("%d\t", vns.phi[i][j]);
-				}
-				sw->WriteLine();
-				printf("\n");
-			}
-			printf("\n");
-			sw->WriteLine();
-
-
-
-			sw->WriteLine("Ranks of population (initial population)");
-			//sw_1->WriteLine("Ranks of poulation");
-			printf("Ranks of poulation (initial population, problem %d):\n", iter_prbl + 1);
-			for (int i = 0; i < vns.get_N(); i++)
-			{
-				sw->Write("{0};", vns.i_rank[i]);
-				//sw_1->Write("{0};", ga.i_rank[i]);
-				printf("%d\t", vns.i_rank[i]);
-			}
-			sw->WriteLine();
-			//sw_1->WriteLine();
-			printf("\n");
-
-
-			//формируем архив:
-			//случ. популяция + ЛП
-			Archive arch(vns);
-
-			//вывод значений векторного критерия аппроксимации мн-ва Парето для НАЧАЛЬНОЙ популяции
-			//vns.phi_P_approx.clear();
-			// архив = мн-во Парето
-			vns.phi_P_approx = arch.val_crit_archive;
-
-			sw->WriteLine("Approximation of the Pareto set (initial population)");
-			//sw_1->WriteLine("Approximation of the Pareto set({0} iterations)", iter);
-			for (int i = 0; i < vns.get_m(); i++)
-			{
-				for (int j = 0; j < vns.phi_P_approx.size(); j++)
-					sw->Write("{0};", vns.phi_P_approx[j][i]);
-
-				sw->WriteLine();
-			}
-
-			sw->WriteLine();
-
-
-			//вычисление метрики для НАЧАЛЬНОЙ популяции - аппроксимации множества Парето (если выше присвоено имя файла)
-			if (file_name_source_Pareto_set_str)
-			{
-				//заголовок
-				if (index_run == 0)
-				{
-					sw_1->WriteLine("N_PS; {0}", phi_Pareto_set.size());
-					sw_1->WriteLine();
-
-					sw_1->Write("Begin; ; ; ;");
-					sw_1->WriteLine("End;");
-
-					sw_1->Write("Metric 'Convergence approximation to Pareto set';");
-					sw_1->Write("Metric 'Convergence Pareto set to approximation';");
-					sw_1->Write("Points in approx to Pareto set;");
-					sw_1->Write("Points from Pareto set;");
-
-					sw_1->Write("Metric 'Convergence approximation to Pareto set';");
-					sw_1->Write("Metric 'Convergence Pareto set to approximation';");
-					sw_1->Write("Points in approx to Pareto set;");
-					sw_1->Write("Points from Pareto set;");
-					sw_1->WriteLine("Run");
-				}
-
-				//вычисляем метрики
-				vns.count_P_eq_approx = 0;
-				vns.evaluate_metric_of_approx(sw_1, phi_Pareto_set, true);
-				vns.evaluate_metric_of_approx(sw, phi_Pareto_set, false);
-				sw->WriteLine();
-				sw_1->Write("{0};", vns.count_P_eq_approx);
-
-				//для средней метрики по всем запускам
-				total_dist_begin_1 += vns.dist_conver_approx_to_P_set_val;
-				total_dist_begin_2 += vns.dist_conver_P_set_to_approx_val;
-
-				total_num_approx_P_begin += vns.phi_P_approx.size();
-				total_num_approx_in_P_begin += vns.count_P_eq_approx;
-
-				if (0 == index_run)
-				{
-					max_dist_begin_1 = min_dist_begin_1 = vns.dist_conver_approx_to_P_set_val;
-					max_dist_begin_2 = min_dist_begin_2 = vns.dist_conver_P_set_to_approx_val;
-					max_num_approx_P_begin = min_num_approx_P_begin = vns.phi_P_approx.size();
-					max_num_approx_in_P_begin = min_num_approx_in_P_begin = vns.count_P_eq_approx;
-				}
-
-				//определение максимума метрики по всем запускам
-				if (max_dist_begin_1 < vns.dist_conver_approx_to_P_set_val)
-					max_dist_begin_1 = vns.dist_conver_approx_to_P_set_val;
-				if (max_dist_begin_2 < vns.dist_conver_P_set_to_approx_val)
-					max_dist_begin_2 = vns.dist_conver_P_set_to_approx_val;
-
-				if (max_num_approx_P_begin < vns.phi_P_approx.size())
-					max_num_approx_P_begin = vns.phi_P_approx.size();
-				if (max_num_approx_in_P_begin < vns.count_P_eq_approx)
-					max_num_approx_in_P_begin = vns.count_P_eq_approx;
-
-				//определение минимума метрики по всем запускам
-				if (min_dist_begin_1 > vns.dist_conver_approx_to_P_set_val)
-					min_dist_begin_1 = vns.dist_conver_approx_to_P_set_val;
-				if (min_dist_begin_2 > vns.dist_conver_P_set_to_approx_val)
-					min_dist_begin_2 = vns.dist_conver_P_set_to_approx_val;
-
-				if (min_num_approx_P_begin > vns.phi_P_approx.size())
-					min_num_approx_P_begin = vns.phi_P_approx.size();
-				if (min_num_approx_in_P_begin > vns.count_P_eq_approx)
-					min_num_approx_in_P_begin = vns.count_P_eq_approx;
-			}
-
-
-			int i_p1, i_p2;
-			p1_temp = p1;
-			p2_temp = p2;
-
-
-			//СФОРМИРОВАН АРХИВ: СЛУЧ. ПОП. + ЛП			
-
-
-			//ОСНОВНОЙ ЦИКЛ ПО ИТЕРАЦИЯМ
-			// итерация: VNS к особи. особь выбир. случ.
-			// ограничение на число итерация num_iter
-
-			int iter = 0;
-			unsigned long cur_time_start = ::GetTickCount();
-			unsigned long cur_time = 0;
-		               /*условие на кол-во итераций*/         /*условие на время*/
-			while ( (++iter <= num_iter && time_run == 0) || (cur_time <= time_run) )
-			{
-
-				/////////////////////////////////////////////////////////
-				//////////////////// ЛОКАЛЬНЫЙ ПОИСК (конеч. поп.)
-				////////////////////////////////////////////////////////
-
-				//время локального поиска (в конце)
-				//time_local_search_f -= ::GetTickCount();
-
-
-				//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ АРХИВА
-				//vector<int> new_to_arch;
-				unsigned i_tmp;
-				printf("\n Local search at the end\n");
-				sw->WriteLine();
-				sw->WriteLine("Local search at the end");
 
 				//для рандомизатора
 				temp_time = ::GetTickCount();
 				srand(temp_time);
 
-				// весь архив просмотрен
-				if (arch.ar_index_not_cons_lst.empty())
-					break;
-				else
-					i_tmp = rand() % arch.ar_index_not_cons_lst.size();
+				//родители нач популяции
+				//4 особи по Зангу
+				vector<int> p1, p2, p3, p4;
+				p1 = vns.patching_algorithm(vns.s_m[0], vns.c_max_all[0], false);
+				p2 = vns.patching_algorithm(vns.s_m[0], vns.c_max_all[0], true);
+				p3 = vns.patching_algorithm(vns.s_m[1], vns.c_max_all[1], false);
+				p4 = vns.patching_algorithm(vns.s_m[1], vns.c_max_all[1], true);
 
-				// переходим к элементу архива, соотв. случ. сгенерированному индексу
-				list<unsigned>::const_iterator it_lst = arch.ar_index_not_cons_lst.cbegin();
-				advance(it_lst, i_tmp);
-				// дальше итератор it_lst использовать нельзя,
-				// т.к. на его позиции удаляется элелемент ar_index_not_cons_lst
-				i_tmp = *it_lst;
-				// добавляем к просмотренным
-				arch.ar_index_cons_lst.push_back(i_tmp);
-				// удаляем из непросмотренных
-				arch.ar_index_not_cons_lst.erase(it_lst);
-				//индекс окрестности
-				int k_opt = 3;
-				vector<int> new_to_arch;
+				//sw->WriteLine("p1; p2; p3; p4");
+				//printf("\np1\t p2\t p3\t p4\n");
 
-				// локальный поиск - ПЕРЕДЕЛАТЬ: по окр.1-6          /* 6 */
-				while ( k_opt < MAX_NUM_K_OPT + 2 )
+				vector<int> p1_temp(vns.get_n());
+				vector<int> p2_temp(vns.get_n());
+				vector<int> p3_temp(vns.get_n());
+				vector<int> p4_temp(vns.get_n());
+
+				p1_temp = p1;
+				p2_temp = p2;
+				p3_temp = p3;
+				p4_temp = p4;
+
+				p1_temp[0] = 1;
+				p2_temp[0] = 1;
+				p3_temp[0] = 1;
+				p4_temp[0] = 1;
+				//sw->Write("{0}; {1}; {2}; {3};", p1[0], p2[0], p3[0], p4[0]);
+				//printf("%d\t%d\t%d\t%d\t", p1[0], p2[0], p3[0], p4[0]);
+
+				int i_temp = 0;
+				for (int i = 1; i < vns.get_n(); ++i)
 				{
-					new_to_arch = shaking_Kopt(arch.archive[i_tmp], k_opt);
-					// ЛП как на начальной популяции
-					new_to_arch = vns.local_search(new_to_arch, LS_VNS_END_ALPHA, LS_VNS_END_BETA)
-					if (!new_to_arch.empty()) // не пустой, если i_lst был продоминирован
-					{
-						// сравниваем с архивом
-						if (arch.check_new(vns.multi_phitness(new_to_arch))) // true, если new_to_arch не был продоминирован
-						{
-							arch.arch_modify(new_to_arch, vns.multi_phitness(new_to_arch));
-							break;
-						}
-						//ОТЛАДКА
-						/*int count_repit = 0;
-						list<unsigned>::iterator it_lst_2;
-						list<unsigned>::iterator it_lst_3;
-						for (it_lst_2 = arch.ar_index_not_cons_lst.begin(); it_lst_2 != arch.ar_index_not_cons_lst.end(); )
-						{
-							if (arch.val_crit_archive[*it_lst_2] == vns.multi_phitness(new_to_arch))
-								count_repit++;
-							it_lst_2++;
-						}
-						for (it_lst_3 = arch.ar_index_cons_lst.begin(); it_lst_3 != arch.ar_index_cons_lst.end(); )
-						{
-							if (arch.val_crit_archive[*it_lst_3] == vns.multi_phitness(new_to_arch))
-								count_repit++;
-							it_lst_3++;
-						}
-						if (count_repit > 1)
-						{
-							printf("repit!");
-							sw_1->WriteLine("repit!");
-						}*/
-						//ОТЛАДКА
-
-
-					}
-					k_opt += 2;
-
+					p1_temp[i] = p1[i_temp] + 1;
+					i_temp = p1[i_temp];
 				}
-						
+				i_temp = 0;
+				for (int i = 1; i < vns.get_n(); ++i)
+				{
+					p2_temp[i] = p2[i_temp] + 1;
+					i_temp = p2[i_temp];
+				}
+				i_temp = 0;
+				for (int i = 1; i < vns.get_n(); ++i)
+				{
+					p3_temp[i] = p3[i_temp] + 1;
+					i_temp = p3[i_temp];
+				}
+				i_temp = 0;
+				for (int i = 1; i < vns.get_n(); ++i)
+				{
+					p4_temp[i] = p4[i_temp] + 1;
+					i_temp = p4[i_temp];
+				}
 
-				sw->WriteLine("k_neigh = {0}", k_opt);
+				p1 = p1_temp;
+				p2 = p2_temp;
+				p3 = p3_temp;
+				p4 = p4_temp;
 
-				sw->WriteLine("Iteration {0}; problem {1}", iter, iter_prbl + 1);
-				printf("Iteration %d, problem %d \n", iter, iter_prbl + 1);
 
-				sw->WriteLine("Population");
-				printf("Population \n");
+				//0. начальная популяция
+				temp_time = ::GetTickCount(); // для рандомизатора
+				vns.init_pop(vns.s_m, vns.c_max_all[0], temp_time, p1, p2, p3, p4);
+
+				sw->WriteLine("Initial population");
+				//sw_1->WriteLine("Initial population");
+				printf("Initial population (problem %d):\n", iter_prbl + 1);
 				for (int j = 0; j < vns.get_n(); j++)
 				{
-					for (it_lst = arch.ar_index_not_cons_lst.cbegin(); it_lst != arch.ar_index_not_cons_lst.cend(); )
+					for (int i = 0; i < vns.get_N(); i++)
 					{
-						sw->Write("{0};", arch.archive[*it_lst][j]);
-						printf("%d\t", arch.archive[*it_lst][j]);
-						it_lst++;
-					}
-					for (it_lst = arch.ar_index_cons_lst.cbegin(); it_lst != arch.ar_index_cons_lst.cend(); )
-					{
-						sw->Write("{0};", arch.archive[*it_lst][j]);
-						printf("%d\t", arch.archive[*it_lst][j]);
-						it_lst++;
+						sw->Write("{0};", vns.pop[i][j]);
+						printf("%d\t", vns.pop[i][j]);
 					}
 					sw->WriteLine();
-					printf("\n");
 				}
 
-				sw->WriteLine("Values of vector criterion");
-				printf("Values of vector criterion \n");
+				sw->WriteLine();
+				printf("\n");
+
+
+
+				//заполняем значение векторного критерия по популяции
+				//phi[i][j], i - индекс критерия, j - индекс особи
+
+				sw->WriteLine("Values of vector criterion (initial population)");
+				printf("Values of vector criterion (initial population, problem %d):\n", iter_prbl + 1);
+
+				//заполнение значений критерия
+				for (int i = 0; i < vns.get_N(); i++)
+					vns.phi[i] = vns.multi_phitness(vns.pop[i]);
+
+				//вывод значений критерия
 				for (int j = 0; j < vns.get_m(); j++)
 				{
-					for (it_lst = arch.ar_index_not_cons_lst.cbegin(); it_lst != arch.ar_index_not_cons_lst.cend(); )
+					for (int i = 0; i < vns.get_N(); i++)
 					{
-						sw->Write("{0};", arch.val_crit_archive[*it_lst][j]);
-						printf("%d\t", arch.val_crit_archive[*it_lst][j]);
-						it_lst++;
-					}
-					for (it_lst = arch.ar_index_cons_lst.cbegin(); it_lst != arch.ar_index_cons_lst.cend(); )
-					{
-						sw->Write("{0};", arch.val_crit_archive[*it_lst][j]);
-						printf("%d\t", arch.val_crit_archive[*it_lst][j]);
-						it_lst++;
+						sw->Write("{0};", vns.phi[i][j]);
+						printf("%d\t", vns.phi[i][j]);
 					}
 					sw->WriteLine();
 					printf("\n");
 				}
+				printf("\n");
+				sw->WriteLine();
 
 
-				//вычисление метрики после локального поиска в финальной популяции
-				//vns.phi_P_approx = arch.val_crit_archive;
-				vns.phi_P_approx.clear();
-				for (it_lst = arch.ar_index_not_cons_lst.cbegin(); it_lst != arch.ar_index_not_cons_lst.cend(); )
+
+				//-----------------------------------------------------------------------------------------------
+				//----------ЛОКАЛЬНЫЙ ПОИСК (нач. поп.)----------------------------------------------------------
+
+				// ПРЕПРОЦЕССИНГ см. выше
+				// выполняется один раз перед всеми запусками одной задачи
+
+
+				//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ МАССИВА pop
+
+				//время локального поиска (в начале)
+				time_local_search_b -= ::GetTickCount();
+
+				vector<int> pop_new;
+				printf("Local search\n");
+				printf("\n");
+				sw->WriteLine("Local search");
+				sw->WriteLine();
+
+				for (int i = 0; i < vns.get_N(); i++)
+					vns.pop[i] = vns.local_search(vns.pop[i], LS_VNS_BEGIN_ALPHA, LS_VNS_BEGIN_BETA);
+
+				sw->WriteLine("after LS");
+				printf("afret LS:\n");
+				for (int j = 0; j < vns.get_n(); j++)
 				{
-					vns.phi_P_approx.push_back(arch.val_crit_archive[*it_lst]);
-					it_lst++;
+					for (int i = 0; i < vns.get_N(); i++)
+					{
+						sw->Write("{0};", vns.pop[i][j]);
+						printf("%d\t", vns.pop[i][j]);
+					}
+					sw->WriteLine();
+
 				}
-				for (it_lst = arch.ar_index_cons_lst.cbegin(); it_lst != arch.ar_index_cons_lst.cend(); )
-				{
-					vns.phi_P_approx.push_back(arch.val_crit_archive[*it_lst]);
-					it_lst++;
-				}
 
-				sw->WriteLine("Metrics after VNS");
-				if (file_name_source_Pareto_set_str)
+				sw->WriteLine();
+				printf("\n");
+
+
+				//заполняем значение векторного критерия по популяции
+				sw->WriteLine("Values of vector criterion:");
+				printf("Values of vector criterion:\n");
+
+				//заполнение значений критерия
+				for (int i = 0; i < vns.get_N(); i++)
+					vns.phi[i] = vns.multi_phitness(vns.pop[i]);
+
+				//вывод значений критерия
+				for (int j = 0; j < vns.get_m(); j++)
 				{
-					vns.evaluate_metric_of_approx(sw, phi_Pareto_set, false);
+					for (int i = 0; i < vns.get_N(); i++)
+					{
+						sw->Write("{0};", vns.phi[i][j]);
+						printf("%d\t", vns.phi[i][j]);
+					}
+					sw->WriteLine();
+					printf("\n");
+				}
+				printf("\n");
+				sw->WriteLine();
+
+				//засекаем время локального поиска (в начале)
+				time_local_search_b += ::GetTickCount();
+
+				//-----------------------------------------------------------------------------------------------
+				//-----------------------------------------------------------------------------------------------
+
+
+
+
+
+				//------------ПОСТРОЕНИЕ ФРОНТОВ
+				//true - популяция в явном виде отсорирована по фронтам + ранги фронтов заданы в векторе i_rank
+				//false - популяция в явном виде не отсорирована по фронтам, ранги фронтов заданы в векторе i_rank
+				vector<int> tmp2; //заглушка
+				vns.i_rank = vns.range_front_J(vns.phi, vns.pop, tmp2, 1);
+				tmp2.clear();
+				//значение векторного критерия отсортированной популяции
+				sw->WriteLine("Values of vector criterion (sorted):");
+				printf("Values of vector criterion (sorted):\n");
+
+				//заполнение значений критерия
+				for (int i = 0; i < vns.get_N(); i++)
+					vns.phi[i] = vns.multi_phitness(vns.pop[i]);
+
+				//вывод значений критерия
+				for (int j = 0; j < vns.get_m(); j++)
+				{
+					for (int i = 0; i < vns.get_N(); i++)
+					{
+						sw->Write("{0};", vns.phi[i][j]);
+						printf("%d\t", vns.phi[i][j]);
+					}
+					sw->WriteLine();
+					printf("\n");
+				}
+				printf("\n");
+				sw->WriteLine();
+
+
+
+				sw->WriteLine("Ranks of population (initial population)");
+				//sw_1->WriteLine("Ranks of poulation");
+				printf("Ranks of poulation (initial population, problem %d):\n", iter_prbl + 1);
+				for (int i = 0; i < vns.get_N(); i++)
+				{
+					sw->Write("{0};", vns.i_rank[i]);
+					//sw_1->Write("{0};", ga.i_rank[i]);
+					printf("%d\t", vns.i_rank[i]);
+				}
+				sw->WriteLine();
+				//sw_1->WriteLine();
+				printf("\n");
+
+
+				//формируем архив:
+				//случ. популяция + ЛП
+				Archive arch(&vns);
+
+				//вывод значений векторного критерия аппроксимации мн-ва Парето для НАЧАЛЬНОЙ популяции
+				//vns.phi_P_approx.clear();
+				// архив = мн-во Парето
+				vns.phi_P_approx = arch.val_crit_archive;
+
+				sw->WriteLine("Approximation of the Pareto set (initial population)");
+				//sw_1->WriteLine("Approximation of the Pareto set({0} iterations)", iter);
+				for (int i = 0; i < vns.get_m(); i++)
+				{
+					for (int j = 0; j < vns.phi_P_approx.size(); j++)
+						sw->Write("{0};", vns.phi_P_approx[j][i]);
+
 					sw->WriteLine();
 				}
 
-				//засекаем время локального поиска (в конце)
-				//time_local_search_f += ::GetTickCount();
-
-
-				////////////////////////////////////////////////////////////////////////////////////
-				////////////////////////////////////////////////////////////////////////////////////				
-			
-			//обновляем текущее время работы
-			cur_time = ::GetTickCount() - cur_time_start;
-
-			}//основной цикл итераций
-			
-
-
-			/////////////////////////////////////////////////////////
-			//////////////////// ЛОКАЛЬНЫЙ ПОИСК из ГА (конеч. поп.)
-			////////////////////////////////////////////////////////
-
-			
-			if (LS_VNS_from_GA)
-			{
-				//время локального поиска (в конце)
-				time_local_search_f -= ::GetTickCount();
-
-				//формируем архив из архива - рез-тата работы VNS
-				Archive arch2;
-				list<unsigned>::const_iterator it_lst;
-				int cnt_arch2 = 0;
-				for (it_lst = arch.ar_index_cons_lst.cbegin(); it_lst != arch.ar_index_cons_lst.cend(); it_lst++)
-				{
-					arch2.archive.push_back(arch.archive[*it_lst]);
-					arch2.val_crit_archive.push_back(arch.val_crit_archive[*it_lst]);
-					arch2.ar_index_not_cons_lst.push_back(cnt_arch2);
-					cnt_arch2++;
-				}
-				
-				//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ АРХИВА
-				vector<int> new_to_arch;
-				printf("\n Local search at the end\n");
 				sw->WriteLine();
-				sw->WriteLine("Local search at the end");
 
-				// цикл, пока архив непросмотренных не пуст
-				while (!arch2.ar_index_not_cons_lst.empty())
+
+				//вычисление метрики для НАЧАЛЬНОЙ популяции - аппроксимации множества Парето (если выше присвоено имя файла)
+				if (file_name_source_Pareto_set_str)
 				{
+					//заголовок
+					if (index_run == 0)
+					{
+						sw_1->WriteLine("N_PS; {0}", phi_Pareto_set.size());
+						sw_1->WriteLine();
+
+						sw_1->Write("Begin; ; ; ;");
+						sw_1->WriteLine("End;");
+
+						sw_1->Write("Metric 'Convergence approximation to Pareto set';");
+						sw_1->Write("Metric 'Convergence Pareto set to approximation';");
+						sw_1->Write("Points in approx to Pareto set;");
+						sw_1->Write("Points from Pareto set;");
+
+						sw_1->Write("Metric 'Convergence approximation to Pareto set';");
+						sw_1->Write("Metric 'Convergence Pareto set to approximation';");
+						sw_1->Write("Points in approx to Pareto set;");
+						sw_1->Write("Points from Pareto set;");
+						sw_1->Write("Run;");
+						sw_1->WriteLine("N of iterations");
+					}
+
+					//вычисляем метрики
+					vns.count_P_eq_approx = 0;
+					vns.evaluate_metric_of_approx(sw_1, phi_Pareto_set, true);
+					vns.evaluate_metric_of_approx(sw, phi_Pareto_set, false);
+					sw->WriteLine();
+					sw_1->Write("{0};", vns.count_P_eq_approx);
+
+					//для средней метрики по всем запускам
+					total_dist_begin_1 += vns.dist_conver_approx_to_P_set_val;
+					total_dist_begin_2 += vns.dist_conver_P_set_to_approx_val;
+
+					total_num_approx_P_begin += vns.phi_P_approx.size();
+					total_num_approx_in_P_begin += vns.count_P_eq_approx;
+
+					if (0 == index_run)
+					{
+						max_dist_begin_1 = min_dist_begin_1 = vns.dist_conver_approx_to_P_set_val;
+						max_dist_begin_2 = min_dist_begin_2 = vns.dist_conver_P_set_to_approx_val;
+						max_num_approx_P_begin = min_num_approx_P_begin = vns.phi_P_approx.size();
+						max_num_approx_in_P_begin = min_num_approx_in_P_begin = vns.count_P_eq_approx;
+					}
+
+					//определение максимума метрики по всем запускам
+					if (max_dist_begin_1 < vns.dist_conver_approx_to_P_set_val)
+						max_dist_begin_1 = vns.dist_conver_approx_to_P_set_val;
+					if (max_dist_begin_2 < vns.dist_conver_P_set_to_approx_val)
+						max_dist_begin_2 = vns.dist_conver_P_set_to_approx_val;
+
+					if (max_num_approx_P_begin < vns.phi_P_approx.size())
+						max_num_approx_P_begin = vns.phi_P_approx.size();
+					if (max_num_approx_in_P_begin < vns.count_P_eq_approx)
+						max_num_approx_in_P_begin = vns.count_P_eq_approx;
+
+					//определение минимума метрики по всем запускам
+					if (min_dist_begin_1 > vns.dist_conver_approx_to_P_set_val)
+						min_dist_begin_1 = vns.dist_conver_approx_to_P_set_val;
+					if (min_dist_begin_2 > vns.dist_conver_P_set_to_approx_val)
+						min_dist_begin_2 = vns.dist_conver_P_set_to_approx_val;
+
+					if (min_num_approx_P_begin > vns.phi_P_approx.size())
+						min_num_approx_P_begin = vns.phi_P_approx.size();
+					if (min_num_approx_in_P_begin > vns.count_P_eq_approx)
+						min_num_approx_in_P_begin = vns.count_P_eq_approx;
+				}
+				else
+				{
+					//заголовок
+					if (index_run == 0)
+					{
+						sw_1->Write("Begin (after LS); ;");
+						sw_1->WriteLine("End; ;");
+
+						sw_1->Write("Rank 1;");
+						sw_1->Write("Hyper vol;");
+						sw_1->Write("Rank 1;");
+						sw_1->Write("Hyper vol;");
+						sw_1->Write("N of iter;");
+						sw_1->Write("N k_shaking;");
+						sw_1->WriteLine("Run;");
+					}
+
+					unsigned int hyper_vol = vns.hyper_volume({ vns.c_max_all[0] * vns.get_n(), vns.c_max_all[1] * vns.get_n() }, vns.phi_P_approx);
+					sw_1->Write("{0};", vns.phi_P_approx.size());
+					sw_1->Write("{0};", hyper_vol);
+
+					//для статистики по всем запускам
+					total_dist_begin_1 += hyper_vol;
+					total_num_approx_P_begin += vns.phi_P_approx.size();
+
+					if (0 == index_run)
+					{
+						max_dist_begin_1 = min_dist_begin_1 = hyper_vol;
+						max_num_approx_P_begin = min_num_approx_P_begin = vns.phi_P_approx.size();
+					}
+
+					//определение максимума метрики по всем запускам
+					if (max_dist_begin_1 < hyper_vol)
+						max_dist_begin_1 = hyper_vol;
+
+					if (max_num_approx_P_begin < vns.phi_P_approx.size())
+						max_num_approx_P_begin = vns.phi_P_approx.size();
+
+					//определение минимума метрики по всем запускам
+					if (min_dist_begin_1 > hyper_vol)
+						min_dist_begin_1 = hyper_vol;
+
+					if (min_num_approx_P_begin > vns.phi_P_approx.size())
+						min_num_approx_P_begin = vns.phi_P_approx.size();
+
+				}
+
+
+				//СФОРМИРОВАН АРХИВ: СЛУЧ. ПОП. + ЛП			
+
+
+				//ОСНОВНОЙ ЦИКЛ ПО ИТЕРАЦИЯМ
+				// итерация: VNS к особи., особь выбир. случ.
+				// ограничение на число итерация num_iter
+
+
+				iter = 0;
+				unsigned long cur_time_start = ::GetTickCount();
+				unsigned long cur_time = 0;
+				         /*условие на кол-во итераций*/         /*условие на время*/
+				while ((++iter <= num_iter && time_run == 0) || (cur_time <= time_run))
+				{
+
+					/////////////////////////////////////////////////////////
+					//////////////////// ОСНОВНАЯ ИТЕРАЦИЯ VNS
+					////////////////////////////////////////////////////////
+
+					unsigned i_tmp;
+					sw->WriteLine("Iteration {0}; problem {1}", iter, iter_prbl + 1);
+					printf("Iteration %d, problem %d \n", iter, iter_prbl + 1);
+
 					//для рандомизатора
 					temp_time = ::GetTickCount();
 					srand(temp_time);
-					unsigned i_tmp = rand() % arch2.ar_index_not_cons_lst.size(); // случ. число из интервала [0, size-1]
+
+					// весь архив просмотрен
+					if (arch.ar_index_not_cons_lst.empty())
+						break;
+					else
+						i_tmp = rand() % arch.ar_index_not_cons_lst.size();
 
 					// переходим к элементу архива, соотв. случ. сгенерированному индексу
-					list<unsigned>::const_iterator it_lst = arch2.ar_index_not_cons_lst.cbegin();
-					advance(it_lst, i_tmp); // передвигает итератор на i_tmp позиций
+					list<unsigned>::const_iterator it_lst = arch.ar_index_not_cons_lst.cbegin();
+					advance(it_lst, i_tmp);
 					// дальше итератор it_lst использовать нельзя,
 					// т.к. на его позиции удаляется элелемент ar_index_not_cons_lst
 					i_tmp = *it_lst;
+					// добавляем к просмотренным
+					arch.ar_index_cons_lst.push_back(i_tmp);
+					// удаляем из непросмотренных
+					arch.ar_index_not_cons_lst.erase(it_lst);
+					//индекс окрестности (кол-во заменяемых дуг)
+					int k_opt = 3;
+					// новая особь
+					vector<int> new_to_arch;
+					//флаг "соабатывания" k-shking
+					bool is_k_shaking_works = false;
+					//кол-во неживых особей в архиве
+					int ar_index_no_lst_old;
 
-					// локальный поиск
-					vector<int> new_to_arch = vns.local_search(arch2.archive[i_tmp], LS_GA_END_ALPHA, LS_GA_END_BETA, &arch2);
-					if (!new_to_arch.empty()) // не пустой, если i_lst был продоминирован
+					// просматриваем окрестность выбранной точки
+					vns.local_search_VNS_new(arch.archive[i_tmp], LS_VNS_END_ALPHA, LS_VNS_END_BETA, &arch);
+
+					// shaking + новый ЛП по 3-opt окрестности
+					while (k_opt < MAX_NUM_K_OPT + 2)
 					{
-						// добавляем в список неживых
-						arch2.ar_index_no_lst.push_back(*it_lst);
-						// удаляем из непросмотренных
-						arch2.ar_index_not_cons_lst.erase(it_lst);
+						new_to_arch = shaking_Kopt(arch.archive[i_tmp], k_opt);
+						//фиксируем кол-во неживых особей
+						ar_index_no_lst_old = arch.ar_index_no_lst.size();
+						// сравниваем "центр" 3-opt окрестности c архивом
+						if (arch.check_new(vns.multi_phitness(new_to_arch))) // true, если new_to_arch не был продоминирован
+						{
+							//"центр" 3-opt окрестности продоминировал особь в архве
+							// => кол-во неживых особей в архиве увеличилось
+							if (arch.ar_index_no_lst.size() < ar_index_no_lst_old)
+								is_k_shaking_works = true;
+							arch.arch_modify(new_to_arch, vns.multi_phitness(new_to_arch));
+						}
 
-						// сравниваем с архивом
-						if (arch2.check_new(vns.multi_phitness(new_to_arch)))
-							arch2.arch_modify(new_to_arch, vns.multi_phitness(new_to_arch));
+						// новый ЛП
+						// true, если найдено улучшение в окрестности
+						if (vns.local_search_VNS_new(new_to_arch, LS_VNS_END_ALPHA, LS_VNS_END_BETA, &arch))
+						{
+							is_k_shaking_works = true;
+							break;
+						}
+						else
+							k_opt += 2;
 					}
-					else // i_lst не был продоминирован
+
+					if (is_k_shaking_works)
+						cnt_k_shaking_works++;
+
+					sw->WriteLine("k_neigh = {0}", k_opt);
+
+					sw->WriteLine("Population");
+					printf("Population \n");
+					vns.phi_P_approx.clear();
+					for (int j = 0; j < vns.get_n(); j++)
 					{
-						// добавляем к просмотренным
-						arch2.ar_index_cons_lst.push_back(*it_lst);
-						// удаляем из непросмотренных
-						arch2.ar_index_not_cons_lst.erase(it_lst);
+						for (it_lst = arch.ar_index_not_cons_lst.cbegin(); it_lst != arch.ar_index_not_cons_lst.cend(); it_lst++)
+						{
+							sw->Write("{0};", arch.archive[*it_lst][j]);
+							printf("%d\t", arch.archive[*it_lst][j]);
+							if (j == 0) // только на одной итерации внешнего цикла
+								vns.phi_P_approx.push_back(arch.val_crit_archive[*it_lst]);
+						}
+						for (it_lst = arch.ar_index_cons_lst.cbegin(); it_lst != arch.ar_index_cons_lst.cend(); it_lst++)
+						{
+							sw->Write("{0};", arch.archive[*it_lst][j]);
+							printf("%d\t", arch.archive[*it_lst][j]);
+							if (j == 0) // только на одной итерации внешнего цикла
+								vns.phi_P_approx.push_back(arch.val_crit_archive[*it_lst]);
+
+						}
+						sw->WriteLine();
+						printf("\n");
 					}
 
-				}
-
-				//выводим архив
-				//заполняем аппроксимацию мн-ва Парето
-				vns.phi_P_approx.clear();
-				sw->WriteLine("Archive after LS(GA, at the end)");
-				printf("Archive after LS(GA, at the end): \n");
-				for (int j = 0; j < vns.get_n(); j++)
-				{
-					//все живые особи = все просмотренные особи
-					list<unsigned>::const_iterator it_lst;
-					for (it_lst = arch2.ar_index_cons_lst.cbegin(); it_lst != arch2.ar_index_cons_lst.cend();it_lst++ )
+					sw->WriteLine("Values of vector criterion");
+					printf("Values of vector criterion \n");
+					for (int j = 0; j < vns.get_m(); j++)
 					{
-						sw->Write("{0};", arch2.archive[*it_lst][j]);
-						printf("%d\t", arch2.archive[*it_lst][j]);
-						if (j == 0) // только на одной итерации внешнего цикла
-							vns.phi_P_approx.push_back(arch2.val_crit_archive[*it_lst]);
+						for (int i = 0; i < vns.phi_P_approx.size(); i++)
+						{
+							sw->Write("{0};", vns.phi_P_approx[i][j]);
+							printf("%d\t", vns.phi_P_approx[i][j]);
+						}
+						sw->WriteLine();
+						printf("\n");
 					}
-					sw->WriteLine();
 
-				}
 
-				//выводим аппроксимацию мн-ва Парето
-				sw->WriteLine("Approx of the Pareto set after LS(GA) (end)");
-				printf("Approx of the Pareto set after LS(GA) (end): \n");
-				for (int j = 0; j < vns.get_m(); j++)
-				{
-					for (int i = 0; i < vns.phi_P_approx.size(); i++)
+					//вычисление метрики после локального поиска в финальной популяции
+					sw->WriteLine("Metrics after VNS");
+					if (file_name_source_Pareto_set_str)
 					{
-						sw->Write("{0};", vns.phi_P_approx[i][j]);
-						printf("%d\t", vns.phi_P_approx[i][j]);
+						vns.evaluate_metric_of_approx(sw, phi_Pareto_set, false);
+						sw->WriteLine();
 					}
-					sw->WriteLine();
-				}
 
+					////////////////////////////////////////////////////////////////////////////////////
+					////////////////////////////////////////////////////////////////////////////////////				
 
-				//вычисление метрики после локального поиска в финальной популяции
-				sw->WriteLine("After LS(GA) at the end (archive)");
+				//обновляем текущее время работы
+					cur_time = ::GetTickCount() - cur_time_start;
+
+				}//основной цикл итераций
+
+				 //ПОСЛЕ ОСНОВНОГО ЦИКЛА ИТЕРАЦИЙ
+				 //вычисление метрики - аппроксимации множества Парето (если выше присвоено имя файла)
 				if (file_name_source_Pareto_set_str)
 				{
-					vns.evaluate_metric_of_approx(sw, phi_Pareto_set, false);
+					//в файл sw выводим в цикле итераций
+					vns.count_P_eq_approx = 0;
+					vns.evaluate_metric_of_approx(sw_1, phi_Pareto_set, true);
+					sw->WriteLine();
+					sw_1->Write("{0};", vns.count_P_eq_approx);
+					sw_1->Write("{0};", index_run + 1);
+					sw_1->WriteLine("{0};", iter); //кол-во итераций
+
+					//для средней метрики по всем запускам
+					total_dist_end_1 += vns.dist_conver_approx_to_P_set_val;
+					total_dist_end_2 += vns.dist_conver_P_set_to_approx_val;
+
+					//для среднего числа точек в аппрокс мн-ва Парето по всем запускам
+					total_num_approx_P_end += vns.phi_P_approx.size();
+					total_num_approx_in_P_end += vns.count_P_eq_approx;
+
+					if (0 == index_run)
+					{
+						max_dist_end_1 = min_dist_end_1 = vns.dist_conver_approx_to_P_set_val;
+						max_dist_end_2 = min_dist_end_2 = vns.dist_conver_P_set_to_approx_val;
+						max_num_approx_P_end = min_num_approx_P_end = vns.phi_P_approx.size();
+						max_num_approx_in_P_end = min_num_approx_in_P_end = vns.count_P_eq_approx;
+					}
+
+					//определение максимума метрики по всем запускам
+					if (max_dist_end_1 < vns.dist_conver_approx_to_P_set_val)
+						max_dist_end_1 = vns.dist_conver_approx_to_P_set_val;
+					if (max_dist_end_2 < vns.dist_conver_P_set_to_approx_val)
+						max_dist_end_2 = vns.dist_conver_P_set_to_approx_val;
+
+					if (max_num_approx_P_end < vns.phi_P_approx.size())
+						max_num_approx_P_end = vns.phi_P_approx.size();
+
+					if (max_num_approx_in_P_end < vns.count_P_eq_approx)
+						max_num_approx_in_P_end = vns.count_P_eq_approx;
+
+					//определение минимума метрики по всем запускам
+					if (min_dist_end_1 > vns.dist_conver_approx_to_P_set_val)
+						min_dist_end_1 = vns.dist_conver_approx_to_P_set_val;
+					if (min_dist_end_2 > vns.dist_conver_P_set_to_approx_val)
+						min_dist_end_2 = vns.dist_conver_P_set_to_approx_val;
+
+					if (min_num_approx_P_end > vns.phi_P_approx.size())
+						min_num_approx_P_end = vns.phi_P_approx.size();
+
+					if (min_num_approx_in_P_end > vns.count_P_eq_approx)
+						min_num_approx_in_P_end = vns.count_P_eq_approx;
+
+
+					//множество Парето (векторный критерий)
+					sw->WriteLine("The Pareto set");
+					for (int i = 0; i < vns.get_m(); i++)
+					{
+						for (int j = 0; j < phi_Pareto_set.size(); j++)
+						{
+							sw->Write("{0};", phi_Pareto_set[j][i]);
+						}
+						sw->WriteLine();
+					}
 					sw->WriteLine();
 				}
-			//засекаем время локального поиска (в конце)
-			//time_local_search_f += ::GetTickCount();
-			}
-			
+				else
+				{
+					unsigned int hyper_vol = vns.hyper_volume({ vns.c_max_all[0] * vns.get_n(), vns.c_max_all[1] * vns.get_n() }, vns.phi_P_approx);
+
+					sw_1->Write("{0};", vns.phi_P_approx.size()); // кол-во точек в аппроксимации мн-ва Парето
+					sw_1->Write("{0};", hyper_vol);
+					sw_1->Write("{0};", iter); //кол-во итераций
+					sw_1->Write("{0};", cnt_k_shaking_works); //счетчик "срабатывания k-shaking"
+					sw_1->WriteLine("{0};", index_run + 1); // номер запуска
+
+															//для средней статистики по всем запускам
+					total_dist_end_1 += hyper_vol;
+					total_dist_end_2 += iter;
+
+					//для среднего числа точек в аппрокс мн-ва Парето по всем запускам
+					total_num_approx_P_end += vns.phi_P_approx.size();
+					total_num_approx_in_P_end += cnt_k_shaking_works;
+
+					if (0 == index_run)
+					{
+						max_dist_end_1 = min_dist_end_1 = hyper_vol;
+						max_dist_end_2 = min_dist_end_2 = iter;
+						max_num_approx_P_end = min_num_approx_P_end = vns.phi_P_approx.size();
+						max_num_approx_in_P_end = min_num_approx_in_P_end = cnt_k_shaking_works;
+					}
+
+					//определение максимума метрики по всем запускам
+					if (max_dist_end_1 < hyper_vol)
+						max_dist_end_1 = hyper_vol;
+					if (max_dist_end_2 < iter)
+						max_dist_end_2 = iter;
+
+					if (max_num_approx_P_end < vns.phi_P_approx.size())
+						max_num_approx_P_end = vns.phi_P_approx.size();
+
+					if (max_num_approx_in_P_end < cnt_k_shaking_works)
+						max_num_approx_in_P_end = cnt_k_shaking_works;
+
+					//определение минимума метрики по всем запускам
+					if (min_dist_end_1 > hyper_vol)
+						min_dist_end_1 = hyper_vol;
+					if (min_dist_end_2 > iter)
+						min_dist_end_2 = iter;
+
+					if (min_num_approx_P_end > vns.phi_P_approx.size())
+						min_num_approx_P_end = vns.phi_P_approx.size();
+
+					if (min_num_approx_in_P_end > cnt_k_shaking_works)
+						min_num_approx_in_P_end = cnt_k_shaking_works;
+				}
+
+
+			} //VNSnew
+
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////
+//////////////////// VNS_multi_start
+//////////////////////////////////////////////////////
+			if (flag_VNS_multi_start)
+			{
+				//инициализируем элиту
+					// класс Archive      | что в элите 
+					// особи              = особи
+					// знач критерия      = знач критерия
+					// просмотр индексы   = пусто
+					// непросмотр индексы = живые особи
+					// нежив особи        = нежив особи
+				Archive elite;
+				// счетчик стационарности элиты
+				int cnt_elite_not_changed = 0;
+				// счетчик стартов VNS
+				int cnt_start_VNS = 0;
+
+				//вывод кол-ва точек во мн-ве Парето
+				//вывод заголовка
+				if (0 == index_run)
+				{
+					if (file_name_source_Pareto_set_str)
+					{
+						sw_1->WriteLine("N_PS; {0}", phi_Pareto_set.size());
+						sw_1->WriteLine();
+
+						sw_1->Write("Begin; ; ; ;");
+						sw_1->Write("Current archive; ; ; ;");
+						sw_1->WriteLine("Current elite;");
+
+						sw_1->Write("Metric 'Convergence approximation to Pareto set';");
+						sw_1->Write("Metric 'Convergence Pareto set to approximation';");
+						sw_1->Write("Points in approx to Pareto set;");
+						sw_1->Write("Points from Pareto set;");
+
+						sw_1->Write("Metric 'Convergence approximation to Pareto set';");
+						sw_1->Write("Metric 'Convergence Pareto set to approximation';");
+						sw_1->Write("Points in approx to Pareto set;");
+						sw_1->Write("Points from Pareto set;");
+
+						sw_1->Write("Metric 'Convergence approximation to Pareto set';");
+						sw_1->Write("Metric 'Convergence Pareto set to approximation';");
+						sw_1->Write("Points in approx to Pareto set;");
+						sw_1->Write("Points from Pareto set;");
+
+						sw_1->Write("N of iteration;");
+						sw_1->Write("N elite not changed;");
+						sw_1->Write("Start;");
+						sw_1->WriteLine("Run;");
+						
+						
+					}
+					else
+					{
+						sw_1->Write("Begin; ;");
+						sw_1->Write("Current archive; ;");
+						sw_1->WriteLine("Current elite;");
+
+						sw_1->Write("Rank 1;");
+						sw_1->Write("Hyper vol;");
+						sw_1->Write("Rank 1;");
+						sw_1->Write("Hyper vol;");
+						sw_1->Write("Rank 1;");
+						sw_1->Write("Hyper vol;");
+						
+						sw_1->Write("N of iter;");
+						sw_1->Write("N k_shaking;");
+						sw_1->Write("Start;");
+						sw_1->WriteLine("Run;");
+
+					}
+				}
+				
+				//ЦИКЛ ПО СТАРТАМ (VNS_multi_start)
+				while (cnt_elite_not_changed < _max_iter_elite_VNS_multi_)
+				{
+					sw->WriteLine("Start; {0};", ++cnt_start_VNS);
+					
+					//для рандомизатора
+					temp_time = ::GetTickCount();
+					srand(temp_time);
+
+					//родители нач популяции
+					//4 особи по Зангу
+					vector<int> p1, p2, p3, p4;
+					p1 = vns.patching_algorithm(vns.s_m[0], vns.c_max_all[0], false);
+					p2 = vns.patching_algorithm(vns.s_m[0], vns.c_max_all[0], true);
+					p3 = vns.patching_algorithm(vns.s_m[1], vns.c_max_all[1], false);
+					p4 = vns.patching_algorithm(vns.s_m[1], vns.c_max_all[1], true);
+
+					//sw->WriteLine("p1; p2; p3; p4");
+					//printf("\np1\t p2\t p3\t p4\n");
+
+					vector<int> p1_temp(vns.get_n());
+					vector<int> p2_temp(vns.get_n());
+					vector<int> p3_temp(vns.get_n());
+					vector<int> p4_temp(vns.get_n());
+
+					p1_temp = p1;
+					p2_temp = p2;
+					p3_temp = p3;
+					p4_temp = p4;
+
+					p1_temp[0] = 1;
+					p2_temp[0] = 1;
+					p3_temp[0] = 1;
+					p4_temp[0] = 1;
+					//sw->Write("{0}; {1}; {2}; {3};", p1[0], p2[0], p3[0], p4[0]);
+					//printf("%d\t%d\t%d\t%d\t", p1[0], p2[0], p3[0], p4[0]);
+
+					int i_temp = 0;
+					for (int i = 1; i < vns.get_n(); ++i)
+					{
+						p1_temp[i] = p1[i_temp] + 1;
+						i_temp = p1[i_temp];
+					}
+					i_temp = 0;
+					for (int i = 1; i < vns.get_n(); ++i)
+					{
+						p2_temp[i] = p2[i_temp] + 1;
+						i_temp = p2[i_temp];
+					}
+					i_temp = 0;
+					for (int i = 1; i < vns.get_n(); ++i)
+					{
+						p3_temp[i] = p3[i_temp] + 1;
+						i_temp = p3[i_temp];
+					}
+					i_temp = 0;
+					for (int i = 1; i < vns.get_n(); ++i)
+					{
+						p4_temp[i] = p4[i_temp] + 1;
+						i_temp = p4[i_temp];
+					}
+
+					p1 = p1_temp;
+					p2 = p2_temp;
+					p3 = p3_temp;
+					p4 = p4_temp;
+
+
+					//0. начальная популяция
+					temp_time = ::GetTickCount(); // для рандомизатора
+					vns.init_pop(vns.s_m, vns.c_max_all[0], temp_time, p1, p2, p3, p4);
+
+					sw->WriteLine("Initial population");
+					//sw_1->WriteLine("Initial population");
+					printf("Initial population (problem %d):\n", iter_prbl + 1);
+					for (int j = 0; j < vns.get_n(); j++)
+					{
+						for (int i = 0; i < vns.get_N(); i++)
+						{
+							sw->Write("{0};", vns.pop[i][j]);
+							printf("%d\t", vns.pop[i][j]);
+						}
+						sw->WriteLine();
+					}
+
+					sw->WriteLine();
+					printf("\n");
 
 
 
+					//заполняем значение векторного критерия по популяции
+					//phi[i][j], i - индекс критерия, j - индекс особи
+
+					sw->WriteLine("Values of vector criterion (initial population)");
+					printf("Values of vector criterion (initial population, problem %d):\n", iter_prbl + 1);
+
+					//заполнение значений критерия
+					for (int i = 0; i < vns.get_N(); i++)
+						vns.phi[i] = vns.multi_phitness(vns.pop[i]);
+
+					//вывод значений критерия
+					for (int j = 0; j < vns.get_m(); j++)
+					{
+						for (int i = 0; i < vns.get_N(); i++)
+						{
+							sw->Write("{0};", vns.phi[i][j]);
+							printf("%d\t", vns.phi[i][j]);
+						}
+						sw->WriteLine();
+						printf("\n");
+					}
+					printf("\n");
+					sw->WriteLine();
+
+
+
+					//-----------------------------------------------------------------------------------------------
+					//----------ЛОКАЛЬНЫЙ ПОИСК (нач. поп.)----------------------------------------------------------
+
+					// ПРЕПРОЦЕССИНГ см. выше
+					// выполняется один раз перед всеми запусками одной задачи
+
+
+					//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ МАССИВА pop
+
+					//время локального поиска (в начале)
+					time_local_search_b -= ::GetTickCount();
+
+					vector<int> pop_new;
+					printf("Local search\n");
+					printf("\n");
+					sw->WriteLine("Local search");
+					sw->WriteLine();
+
+					for (int i = 0; i < vns.get_N(); i++)
+						vns.pop[i] = vns.local_search(vns.pop[i], LS_VNS_BEGIN_ALPHA, LS_VNS_BEGIN_BETA);
+
+					sw->WriteLine("after LS");
+					printf("afret LS:\n");
+					for (int j = 0; j < vns.get_n(); j++)
+					{
+						for (int i = 0; i < vns.get_N(); i++)
+						{
+							sw->Write("{0};", vns.pop[i][j]);
+							printf("%d\t", vns.pop[i][j]);
+						}
+						sw->WriteLine();
+
+					}
+
+					sw->WriteLine();
+					printf("\n");
+
+
+					//заполняем значение векторного критерия по популяции
+					sw->WriteLine("Values of vector criterion:");
+					printf("Values of vector criterion:\n");
+
+					//заполнение значений критерия
+					for (int i = 0; i < vns.get_N(); i++)
+						vns.phi[i] = vns.multi_phitness(vns.pop[i]);
+
+					//вывод значений критерия
+					for (int j = 0; j < vns.get_m(); j++)
+					{
+						for (int i = 0; i < vns.get_N(); i++)
+						{
+							sw->Write("{0};", vns.phi[i][j]);
+							printf("%d\t", vns.phi[i][j]);
+						}
+						sw->WriteLine();
+						printf("\n");
+					}
+					printf("\n");
+					sw->WriteLine();
+
+					//засекаем время локального поиска (в начале)
+					time_local_search_b += ::GetTickCount();
+
+					//-----------------------------------------------------------------------------------------------
+					//-----------------------------------------------------------------------------------------------
+
+
+
+
+
+					//------------ПОСТРОЕНИЕ ФРОНТОВ
+					//true - популяция в явном виде отсорирована по фронтам + ранги фронтов заданы в векторе i_rank
+					//false - популяция в явном виде не отсорирована по фронтам, ранги фронтов заданы в векторе i_rank
+					vector<int> tmp2; //заглушка
+					vns.i_rank = vns.range_front_J(vns.phi, vns.pop, tmp2, 1);
+					tmp2.clear();
+					//значение векторного критерия отсортированной популяции
+					sw->WriteLine("Values of vector criterion (sorted):");
+					printf("Values of vector criterion (sorted):\n");
+
+					//заполнение значений критерия
+					for (int i = 0; i < vns.get_N(); i++)
+						vns.phi[i] = vns.multi_phitness(vns.pop[i]);
+
+					//вывод значений критерия
+					for (int j = 0; j < vns.get_m(); j++)
+					{
+						for (int i = 0; i < vns.get_N(); i++)
+						{
+							sw->Write("{0};", vns.phi[i][j]);
+							printf("%d\t", vns.phi[i][j]);
+						}
+						sw->WriteLine();
+						printf("\n");
+					}
+					printf("\n");
+					sw->WriteLine();
+
+
+
+					sw->WriteLine("Ranks of population (initial population)");
+					//sw_1->WriteLine("Ranks of poulation");
+					printf("Ranks of poulation (initial population, problem %d):\n", iter_prbl + 1);
+					for (int i = 0; i < vns.get_N(); i++)
+					{
+						sw->Write("{0};", vns.i_rank[i]);
+						//sw_1->Write("{0};", ga.i_rank[i]);
+						printf("%d\t", vns.i_rank[i]);
+					}
+					sw->WriteLine();
+					//sw_1->WriteLine();
+					printf("\n");
+
+
+					//формируем архив:
+					//случ. популяция + ЛП
+					Archive arch(&vns);
+
+					//вывод значений векторного критерия аппроксимации мн-ва Парето для НАЧАЛЬНОЙ популяции
+					// архив = мн-во Парето
+					vns.phi_P_approx = arch.val_crit_archive;
+
+					sw->WriteLine("Approximation of the Pareto set (initial population)");
+					//sw_1->WriteLine("Approximation of the Pareto set({0} iterations)", iter);
+					for (int i = 0; i < vns.get_m(); i++)
+					{
+						for (int j = 0; j < vns.phi_P_approx.size(); j++)
+							sw->Write("{0};", vns.phi_P_approx[j][i]);
+
+						sw->WriteLine();
+					}
+
+					sw->WriteLine();
+
+
+					//вычисление метрики для НАЧАЛЬНОЙ популяции - аппроксимации множества Парето (если выше присвоено имя файла)
+					if (file_name_source_Pareto_set_str)
+					{					
+						//вычисляем метрики
+						vns.count_P_eq_approx = 0;
+						vns.evaluate_metric_of_approx(sw_1, phi_Pareto_set, true);
+						vns.evaluate_metric_of_approx(sw, phi_Pareto_set, false);
+						sw->WriteLine();
+						sw_1->Write("{0};", vns.count_P_eq_approx);
+
+						//для средней метрики по всем запускам
+						total_dist_begin_1 += vns.dist_conver_approx_to_P_set_val;
+						total_dist_begin_2 += vns.dist_conver_P_set_to_approx_val;
+
+						total_num_approx_P_begin += vns.phi_P_approx.size();
+						total_num_approx_in_P_begin += vns.count_P_eq_approx;
+
+						if (0 == index_run)
+						{
+							max_dist_begin_1 = min_dist_begin_1 = vns.dist_conver_approx_to_P_set_val;
+							max_dist_begin_2 = min_dist_begin_2 = vns.dist_conver_P_set_to_approx_val;
+							max_num_approx_P_begin = min_num_approx_P_begin = vns.phi_P_approx.size();
+							max_num_approx_in_P_begin = min_num_approx_in_P_begin = vns.count_P_eq_approx;
+						}
+
+						//определение максимума метрики по всем запускам
+						if (max_dist_begin_1 < vns.dist_conver_approx_to_P_set_val)
+							max_dist_begin_1 = vns.dist_conver_approx_to_P_set_val;
+						if (max_dist_begin_2 < vns.dist_conver_P_set_to_approx_val)
+							max_dist_begin_2 = vns.dist_conver_P_set_to_approx_val;
+
+						if (max_num_approx_P_begin < vns.phi_P_approx.size())
+							max_num_approx_P_begin = vns.phi_P_approx.size();
+						if (max_num_approx_in_P_begin < vns.count_P_eq_approx)
+							max_num_approx_in_P_begin = vns.count_P_eq_approx;
+
+						//определение минимума метрики по всем запускам
+						if (min_dist_begin_1 > vns.dist_conver_approx_to_P_set_val)
+							min_dist_begin_1 = vns.dist_conver_approx_to_P_set_val;
+						if (min_dist_begin_2 > vns.dist_conver_P_set_to_approx_val)
+							min_dist_begin_2 = vns.dist_conver_P_set_to_approx_val;
+
+						if (min_num_approx_P_begin > vns.phi_P_approx.size())
+							min_num_approx_P_begin = vns.phi_P_approx.size();
+						if (min_num_approx_in_P_begin > vns.count_P_eq_approx)
+							min_num_approx_in_P_begin = vns.count_P_eq_approx;
+					}
+					else
+					{
+						unsigned int hyper_vol = vns.hyper_volume({ vns.c_max_all[0] * vns.get_n(), vns.c_max_all[1] * vns.get_n() }, vns.phi_P_approx);
+						sw_1->Write("{0};", vns.phi_P_approx.size());
+						sw_1->Write("{0};", hyper_vol);
+					}
+
+
+
+					//ЦИКЛ ПО ТЕКУЩЕМУ АРХИВУ
+					// итерация: VNS прим. к особи., особь выбир. случ.
+					// ограничение на число итерация num_iter
+
+
+					iter = 0;
+					unsigned long cur_time_start = ::GetTickCount();
+					unsigned long cur_time = 0;
+					int cnt_arch_not_changed;
+					//если пользователем не задано макс кол-во необновления текущего архива
+					if (!flag_max_iter_arch_VNS_multi)
+						_max_iter_arch_VNS_multi_ = arch.val_crit_archive.size();
+					         /*условие на кол-во итераций*/         /*условие на время*/        /*не происходит обновление архива*/
+					while ((++iter <= num_iter && time_run == 0) || (cur_time <= time_run) || cnt_arch_not_changed < _max_iter_arch_VNS_multi_)
+					{
+
+						/////////////////////////////////////////////////////////
+						//////////////////// ЛОКАЛЬНЫЙ ПОИСК (конеч. поп.)
+						////////////////////////////////////////////////////////
+
+
+						//ПРИМЕНЕНИЕ ЛОКАЛЬНОГО ПОИСКА К ОСОБЯМ ИЗ АРХИВА
+						//vector<int> new_to_arch;
+						unsigned i_tmp;
+						printf("\n Local search at the end\n");
+						sw->WriteLine();
+						sw->WriteLine("Local search at the end");
+
+						//для рандомизатора
+						temp_time = ::GetTickCount();
+						srand(temp_time);
+
+						// весь архив просмотрен
+						if (arch.ar_index_not_cons_lst.empty())
+							break;
+						else
+							i_tmp = rand() % arch.ar_index_not_cons_lst.size();
+
+						// переходим к элементу архива, соотв. случ. сгенерированному индексу
+						list<unsigned>::const_iterator it_lst = arch.ar_index_not_cons_lst.cbegin();
+						advance(it_lst, i_tmp);
+						// дальше итератор it_lst использовать нельзя,
+						// т.к. на его позиции удаляется элелемент ar_index_not_cons_lst
+						i_tmp = *it_lst;
+						// добавляем к просмотренным
+						arch.ar_index_cons_lst.push_back(i_tmp);
+						// удаляем из непросмотренных
+						arch.ar_index_not_cons_lst.erase(it_lst);
+						//индекс окрестности
+						int k_opt = 3;
+						vector<int> new_to_arch;
+
+						// локальный поиск - по окр. 3-5-7-9-11 (5 типов окрестностей)
+						while (k_opt < MAX_NUM_K_OPT + 2)
+						{
+							new_to_arch = shaking_Kopt(arch.archive[i_tmp], k_opt);
+							// ЛП как на начальной популяции
+							new_to_arch = vns.local_search(new_to_arch, LS_VNS_END_ALPHA, LS_VNS_END_BETA);
+							// сравниваем с архивом
+							if (arch.check_new(vns.multi_phitness(new_to_arch))) // true, если new_to_arch не был продоминирован
+							{
+								arch.arch_modify(new_to_arch, vns.multi_phitness(new_to_arch));
+								break;
+							}
+							k_opt += 2;
+						}
+
+						//просмотрели все типы окр. k-shaking и не обновили архив
+						if (MAX_NUM_K_OPT + 2 == k_opt)
+							cnt_arch_not_changed++;
+						else
+							cnt_arch_not_changed = 0;
+
+						sw->WriteLine("k_neigh = {0}", k_opt);
+
+						sw->WriteLine("Iteration {0}; problem {1}", iter, iter_prbl + 1);
+						printf("Iteration %d, problem %d \n", iter, iter_prbl + 1);
+
+						sw->WriteLine("Population");
+						printf("Population \n");
+						for (int j = 0; j < vns.get_n(); j++)
+						{
+							for (it_lst = arch.ar_index_not_cons_lst.cbegin(); it_lst != arch.ar_index_not_cons_lst.cend(); )
+							{
+								sw->Write("{0};", arch.archive[*it_lst][j]);
+								printf("%d\t", arch.archive[*it_lst][j]);
+								it_lst++;
+							}
+							for (it_lst = arch.ar_index_cons_lst.cbegin(); it_lst != arch.ar_index_cons_lst.cend(); )
+							{
+								sw->Write("{0};", arch.archive[*it_lst][j]);
+								printf("%d\t", arch.archive[*it_lst][j]);
+								it_lst++;
+							}
+							sw->WriteLine();
+							printf("\n");
+						}
+
+						sw->WriteLine("Values of vector criterion");
+						printf("Values of vector criterion \n");
+						for (int j = 0; j < vns.get_m(); j++)
+						{
+							for (it_lst = arch.ar_index_not_cons_lst.cbegin(); it_lst != arch.ar_index_not_cons_lst.cend(); )
+							{
+								sw->Write("{0};", arch.val_crit_archive[*it_lst][j]);
+								printf("%d\t", arch.val_crit_archive[*it_lst][j]);
+								it_lst++;
+							}
+							for (it_lst = arch.ar_index_cons_lst.cbegin(); it_lst != arch.ar_index_cons_lst.cend(); )
+							{
+								sw->Write("{0};", arch.val_crit_archive[*it_lst][j]);
+								printf("%d\t", arch.val_crit_archive[*it_lst][j]);
+								it_lst++;
+							}
+							sw->WriteLine();
+							printf("\n");
+						}
+
+
+						//вычисление метрики после локального поиска в финальной популяции
+						//vns.phi_P_approx = arch.val_crit_archive;
+						vns.phi_P_approx.clear();
+						for (it_lst = arch.ar_index_not_cons_lst.cbegin(); it_lst != arch.ar_index_not_cons_lst.cend(); )
+						{
+							vns.phi_P_approx.push_back(arch.val_crit_archive[*it_lst]);
+							it_lst++;
+						}
+						for (it_lst = arch.ar_index_cons_lst.cbegin(); it_lst != arch.ar_index_cons_lst.cend(); )
+						{
+							vns.phi_P_approx.push_back(arch.val_crit_archive[*it_lst]);
+							it_lst++;
+						}
+
+						sw->WriteLine("Metrics after VNS");
+						if (file_name_source_Pareto_set_str)
+						{
+							vns.evaluate_metric_of_approx(sw, phi_Pareto_set, false);
+							sw->WriteLine();
+						}
+
+
+						////////////////////////////////////////////////////////////////////////////////////
+						////////////////////////////////////////////////////////////////////////////////////				
+
+						//обновляем текущее время работы
+						cur_time = ::GetTickCount() - cur_time_start;
+
+					}//цикл по текущему архиву
+
+					total_iter_run += iter;
+
+					//обновляем элиту текущим архивом
+					// на 1-ой интерации: элита = текущий архив
+					if (elite.archive.empty())
+					{
+						elite.archive = arch.archive;
+						elite.val_crit_archive = arch.val_crit_archive;
+						elite.ar_index_not_cons_lst = arch.ar_index_cons_lst;
+						elite.ar_index_no_lst = arch.ar_index_no_lst;
+					}
+					else
+					{
+						//возращает true, если элита изменилась
+						if (!elite.elite_modify(arch))
+							cnt_elite_not_changed++;
+						else
+							cnt_elite_not_changed = 0;
+					}
+
+					// метрика по текущему архиву
+					if (file_name_source_Pareto_set_str)
+					{
+						//в файл sw выводим в цикле итераций
+						vns.count_P_eq_approx = 0;
+						vns.evaluate_metric_of_approx(sw_1, phi_Pareto_set, true);
+						sw->WriteLine();
+						sw_1->Write("{0};", vns.count_P_eq_approx);
+						//sw_1->Write("{0};", index_run + 1);
+						//sw_1->Write("{0};", iter); //кол-во итераций
+						//sw_1->Write("{0};", cnt_start_VNS); //номер старта VNS
+						//sw_1->Write("{0};", cnt_elite_not_changed); //счетчик необновления элиты
+
+						//для средней метрики по всем запускам
+						total_dist_end_1 += vns.dist_conver_approx_to_P_set_val;
+						total_dist_end_2 += vns.dist_conver_P_set_to_approx_val;
+
+						//для среднего числа точек в аппрокс мн-ва Парето по всем запускам
+						total_num_approx_P_end += vns.phi_P_approx.size();
+						total_num_approx_in_P_end += vns.count_P_eq_approx;
+
+						if (0 == index_run)
+						{
+							max_dist_end_1 = min_dist_end_1 = vns.dist_conver_approx_to_P_set_val;
+							max_dist_end_2 = min_dist_end_2 = vns.dist_conver_P_set_to_approx_val;
+							max_num_approx_P_end = min_num_approx_P_end = vns.phi_P_approx.size();
+							max_num_approx_in_P_end = min_num_approx_in_P_end = vns.count_P_eq_approx;
+						}
+
+						//определение максимума метрики по всем запускам
+						if (max_dist_end_1 < vns.dist_conver_approx_to_P_set_val)
+							max_dist_end_1 = vns.dist_conver_approx_to_P_set_val;
+						if (max_dist_end_2 < vns.dist_conver_P_set_to_approx_val)
+							max_dist_end_2 = vns.dist_conver_P_set_to_approx_val;
+
+						if (max_num_approx_P_end < vns.phi_P_approx.size())
+							max_num_approx_P_end = vns.phi_P_approx.size();
+
+						if (max_num_approx_in_P_end < vns.count_P_eq_approx)
+							max_num_approx_in_P_end = vns.count_P_eq_approx;
+
+						//определение минимума метрики по всем запускам
+						if (min_dist_end_1 > vns.dist_conver_approx_to_P_set_val)
+							min_dist_end_1 = vns.dist_conver_approx_to_P_set_val;
+						if (min_dist_end_2 > vns.dist_conver_P_set_to_approx_val)
+							min_dist_end_2 = vns.dist_conver_P_set_to_approx_val;
+
+						if (min_num_approx_P_end > vns.phi_P_approx.size())
+							min_num_approx_P_end = vns.phi_P_approx.size();
+
+						if (min_num_approx_in_P_end > vns.count_P_eq_approx)
+							min_num_approx_in_P_end = vns.count_P_eq_approx;
+
+					}
+					else
+					{
+						unsigned int hyper_vol = vns.hyper_volume({ vns.c_max_all[0] * vns.get_n(), vns.c_max_all[1] * vns.get_n() }, vns.phi_P_approx);
+
+						sw_1->Write("{0};", vns.phi_P_approx.size()); // кол-во точек в аппроксимации мн-ва Парето
+						sw_1->Write("{0};", hyper_vol);
+						//sw_1->Write("{0};", iter); //кол-во итераций
+						//sw_1->Write("{0};", cnt_k_shaking_works); //счетчик "срабатывания k-shaking"
+						//sw_1->WriteLine("{0};", index_run + 1); // номер запуска
+					}
+
+					sw->WriteLine("N elite not changed; {0}", cnt_elite_not_changed);
+					//sw_1->WriteLine("N elite not changed; {0}", cnt_elite_not_changed);
+
+					//формируем аппроксимацию мн-ва Парето по текущей элите
+					vns.phi_P_approx.clear();
+					for (list<unsigned>::const_iterator it_lst = elite.ar_index_not_cons_lst.cbegin(); it_lst != elite.ar_index_not_cons_lst.cend(); it_lst++)
+						vns.phi_P_approx.push_back(elite.val_crit_archive[*it_lst]);
+
+///////////////////////////////////////////////////////////
+/////////ОТЛАДКА
+					sw->WriteLine("Cur elite");
+					for (int j = 0; j < vns.get_m(); j++)
+					{
+						for (list<unsigned>::const_iterator it_lst = elite.ar_index_not_cons_lst.cbegin(); it_lst != elite.ar_index_not_cons_lst.cend();  it_lst++)
+						{
+							sw->Write("{0};", elite.val_crit_archive[*it_lst][j]);
+						}
+						sw->WriteLine();
+					}
+					sw->WriteLine();
+					for (list<unsigned>::const_iterator it_lst = elite.ar_index_not_cons_lst.cbegin(); it_lst != elite.ar_index_not_cons_lst.cend(); it_lst++)
+					{
+						sw->Write("{0};", *it_lst);
+					}
+					sw->WriteLine();
+///////////////////////////////////////////////////////////
+
+					// метрика по элите
+					if (file_name_source_Pareto_set_str)
+					{
+						//в файл sw выводим в цикле итераций
+						vns.count_P_eq_approx = 0;
+						vns.evaluate_metric_of_approx(sw_1, phi_Pareto_set, true);
+						sw->WriteLine();
+						sw_1->Write("{0};", vns.count_P_eq_approx);
+                        sw_1->Write("{0};", iter); //кол-во итераций
+						sw_1->Write("{0};", cnt_elite_not_changed); //счетчик необновления элиты
+						sw_1->Write("{0};", cnt_start_VNS); //номер старта VNS
+						sw_1->WriteLine("{0};", index_run + 1);
+
+						//												//для средней метрики по всем запускам
+						//total_dist_end_1 += vns.dist_conver_approx_to_P_set_val;
+						//total_dist_end_2 += vns.dist_conver_P_set_to_approx_val;
+
+						////для среднего числа точек в аппрокс мн-ва Парето по всем запускам
+						//total_num_approx_P_end += vns.phi_P_approx.size();
+						//total_num_approx_in_P_end += vns.count_P_eq_approx;
+
+						//if (0 == index_run)
+						//{
+						//	max_dist_end_1 = min_dist_end_1 = vns.dist_conver_approx_to_P_set_val;
+						//	max_dist_end_2 = min_dist_end_2 = vns.dist_conver_P_set_to_approx_val;
+						//	max_num_approx_P_end = min_num_approx_P_end = vns.phi_P_approx.size();
+						//	max_num_approx_in_P_end = min_num_approx_in_P_end = vns.count_P_eq_approx;
+						//}
+
+						////определение максимума метрики по всем запускам
+						//if (max_dist_end_1 < vns.dist_conver_approx_to_P_set_val)
+						//	max_dist_end_1 = vns.dist_conver_approx_to_P_set_val;
+						//if (max_dist_end_2 < vns.dist_conver_P_set_to_approx_val)
+						//	max_dist_end_2 = vns.dist_conver_P_set_to_approx_val;
+
+						//if (max_num_approx_P_end < vns.phi_P_approx.size())
+						//	max_num_approx_P_end = vns.phi_P_approx.size();
+
+						//if (max_num_approx_in_P_end < vns.count_P_eq_approx)
+						//	max_num_approx_in_P_end = vns.count_P_eq_approx;
+
+						////определение минимума метрики по всем запускам
+						//if (min_dist_end_1 > vns.dist_conver_approx_to_P_set_val)
+						//	min_dist_end_1 = vns.dist_conver_approx_to_P_set_val;
+						//if (min_dist_end_2 > vns.dist_conver_P_set_to_approx_val)
+						//	min_dist_end_2 = vns.dist_conver_P_set_to_approx_val;
+
+						//if (min_num_approx_P_end > vns.phi_P_approx.size())
+						//	min_num_approx_P_end = vns.phi_P_approx.size();
+
+						//if (min_num_approx_in_P_end > vns.count_P_eq_approx)
+						//	min_num_approx_in_P_end = vns.count_P_eq_approx;
+
+
+					}
+					else
+					{
+						unsigned int hyper_vol = vns.hyper_volume({ vns.c_max_all[0] * vns.get_n(), vns.c_max_all[1] * vns.get_n() }, vns.phi_P_approx);
+						
+						sw_1->Write("{0};", vns.phi_P_approx.size()); // кол-во точек в аппроксимации мн-ва Парето
+						sw_1->Write("{0};", hyper_vol);
+						sw_1->Write("{0};", iter); //кол-во итераций
+						sw_1->Write("{0};", cnt_elite_not_changed); //счетчик необновления элиты
+						sw_1->Write("{0};", cnt_start_VNS); //номер старта VNS
+						sw_1->WriteLine("{0};", index_run + 1);
+					}
+
+					//очищаем популяцию и ранги
+					vns.pop.clear();
+					for (int l = 0; l < vns.get_N(); l++)
+						vns.i_rank[l] = 0;
+
+
+				} // while (cnt_elite_not_changed < _max_iter_elite_VNS_multi_) //цикл по элите
+
+//				iter = total_iter / cnt_start_VNS;
+
+
+				  //ПОСЛЕ ОСНОВНОГО ЦИКЛА ИТЕРАЦИЙ
+				  //вычисление метрики - аппроксимации множества Парето (если выше присвоено имя файла)
+				if (file_name_source_Pareto_set_str)
+				{
+					//в файл sw выводим в цикле итераций
+					//vns.count_P_eq_approx = 0;
+					//vns.evaluate_metric_of_approx(sw_1, phi_Pareto_set, true);
+					//sw->WriteLine();
+					//sw_1->Write("{0};", vns.count_P_eq_approx);
+					//sw_1->Write("{0};", index_run + 1);
+					//sw_1->WriteLine("{0};", iter); //кол-во итераций
+
+					////для средней метрики по всем запускам
+					//total_dist_end_1 += vns.dist_conver_approx_to_P_set_val;
+					//total_dist_end_2 += vns.dist_conver_P_set_to_approx_val;
+
+					////для среднего числа точек в аппрокс мн-ва Парето по всем запускам
+					//total_num_approx_P_end += vns.phi_P_approx.size();
+					//total_num_approx_in_P_end += vns.count_P_eq_approx;
+
+					//if (0 == index_run)
+					//{
+					//	max_dist_end_1 = min_dist_end_1 = vns.dist_conver_approx_to_P_set_val;
+					//	max_dist_end_2 = min_dist_end_2 = vns.dist_conver_P_set_to_approx_val;
+					//	max_num_approx_P_end = min_num_approx_P_end = vns.phi_P_approx.size();
+					//	max_num_approx_in_P_end = min_num_approx_in_P_end = vns.count_P_eq_approx;
+					//}
+
+					////определение максимума метрики по всем запускам
+					//if (max_dist_end_1 < vns.dist_conver_approx_to_P_set_val)
+					//	max_dist_end_1 = vns.dist_conver_approx_to_P_set_val;
+					//if (max_dist_end_2 < vns.dist_conver_P_set_to_approx_val)
+					//	max_dist_end_2 = vns.dist_conver_P_set_to_approx_val;
+
+					//if (max_num_approx_P_end < vns.phi_P_approx.size())
+					//	max_num_approx_P_end = vns.phi_P_approx.size();
+
+					//if (max_num_approx_in_P_end < vns.count_P_eq_approx)
+					//	max_num_approx_in_P_end = vns.count_P_eq_approx;
+
+					////определение минимума метрики по всем запускам
+					//if (min_dist_end_1 > vns.dist_conver_approx_to_P_set_val)
+					//	min_dist_end_1 = vns.dist_conver_approx_to_P_set_val;
+					//if (min_dist_end_2 > vns.dist_conver_P_set_to_approx_val)
+					//	min_dist_end_2 = vns.dist_conver_P_set_to_approx_val;
+
+					//if (min_num_approx_P_end > vns.phi_P_approx.size())
+					//	min_num_approx_P_end = vns.phi_P_approx.size();
+
+					//if (min_num_approx_in_P_end > vns.count_P_eq_approx)
+					//	min_num_approx_in_P_end = vns.count_P_eq_approx;
+
+
+					//множество Парето (векторный критерий)
+					sw->WriteLine("The Pareto set");
+					for (int i = 0; i < vns.get_m(); i++)
+					{
+						for (int j = 0; j < phi_Pareto_set.size(); j++)
+						{
+							sw->Write("{0};", phi_Pareto_set[j][i]);
+						}
+						sw->WriteLine();
+					}
+					sw->WriteLine();
+				}
+
+				
+
+				
+			} // if (VNS_multi_start)
+
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
 
 
 			//выводим аппрокимацию мн-ва Парето в отдельный файл для последующего вычисления гиперобъема
@@ -2841,73 +3882,7 @@ int main_VNS(int argc, char* argv[])
 			sw_5->WriteLine("N; {0}", vns.phi_P_approx.size());
 
 
-			 //ПОСЛЕ ОСНОВНОГО ЦИКЛА ИТЕРАЦИЙ
-			 //вычисление метрики - аппроксимации множества Парето (если выше присвоено имя файла)
-			if (file_name_source_Pareto_set_str)
-			{
-				//в файл sw выводим в цикле итераций
-				vns.count_P_eq_approx = 0;
-				vns.evaluate_metric_of_approx(sw_1, phi_Pareto_set, true);
-				sw->WriteLine();
-				sw_1->Write("{0};", vns.count_P_eq_approx);
-				sw_1->WriteLine("{0};", index_run + 1);
-
-				//для средней метрики по всем запускам
-				total_dist_end_1 += vns.dist_conver_approx_to_P_set_val;
-				total_dist_end_2 += vns.dist_conver_P_set_to_approx_val;
-
-				//для среднего числа точек в аппрокс мн-ва Парето по всем запускам
-				total_num_approx_P_end += vns.phi_P_approx.size();
-				total_num_approx_in_P_end += vns.count_P_eq_approx;
-
-				if (0 == index_run)
-				{
-					max_dist_end_1 = min_dist_end_1 = vns.dist_conver_approx_to_P_set_val;
-					max_dist_end_2 = min_dist_end_2 = vns.dist_conver_P_set_to_approx_val;
-					max_num_approx_P_end = min_num_approx_P_end = vns.phi_P_approx.size();
-					max_num_approx_in_P_end = min_num_approx_in_P_end = vns.count_P_eq_approx;
-				}
-
-				//определение максимума метрики по всем запускам
-				if (max_dist_end_1 < vns.dist_conver_approx_to_P_set_val)
-					max_dist_end_1 = vns.dist_conver_approx_to_P_set_val;
-				if (max_dist_end_2 < vns.dist_conver_P_set_to_approx_val)
-					max_dist_end_2 = vns.dist_conver_P_set_to_approx_val;
-
-				if (max_num_approx_P_end < vns.phi_P_approx.size())
-					max_num_approx_P_end = vns.phi_P_approx.size();
-
-				if (max_num_approx_in_P_end < vns.count_P_eq_approx)
-					max_num_approx_in_P_end = vns.count_P_eq_approx;
-
-				//определение минимума метрики по всем запускам
-				if (min_dist_end_1 > vns.dist_conver_approx_to_P_set_val)
-					min_dist_end_1 = vns.dist_conver_approx_to_P_set_val;
-				if (min_dist_end_2 > vns.dist_conver_P_set_to_approx_val)
-					min_dist_end_2 = vns.dist_conver_P_set_to_approx_val;
-
-				if (min_num_approx_P_end > vns.phi_P_approx.size())
-					min_num_approx_P_end = vns.phi_P_approx.size();
-
-				if (min_num_approx_in_P_end > vns.count_P_eq_approx)
-					min_num_approx_in_P_end = vns.count_P_eq_approx;
-
-
-				//множество Парето (векторный критерий)
-				sw->WriteLine("The Pareto set");
-				for (int i = 0; i < vns.get_m(); i++)
-				{
-					for (int j = 0; j < phi_Pareto_set.size(); j++)
-					{
-						sw->Write("{0};", phi_Pareto_set[j][i]);
-					}
-					sw->WriteLine();
-				}
-				sw->WriteLine();
-			}
-
-			//кол-во итераций
-			sw_1->WriteLine("N of iteration; {0}", iter);
+			 
 
 			//очищаем популяцию и ранги
 			vns.pop.clear();
@@ -2915,8 +3890,10 @@ int main_VNS(int argc, char* argv[])
 				vns.i_rank[l] = 0;
 //			arch.~Archive();
 
-		}//цикл запусков
+//			sw_1->WriteLine();
 
+		}//цикл запусков
+		sw_1->WriteLine();
 
 		 //время окончания решения одной задачи (все запуски)
 		unsigned long long stop_time = ::GetTickCount();
@@ -3004,83 +3981,121 @@ int main_VNS(int argc, char* argv[])
 
 
 
-
+//ИСПРАВИТЬ!
 		 //статистика по метрике после всех запусков
-		if (file_name_source_Pareto_set_str)
-		{
-			total_dist_begin_1 = total_dist_begin_1 / num_runs;
-			total_dist_end_1 = total_dist_end_1 / num_runs;
-			total_dist_begin_2 = total_dist_begin_2 / num_runs;
-			total_dist_end_2 = total_dist_end_2 / num_runs;
+		//if (file_name_source_Pareto_set_str)
+		//{
+		//	total_dist_begin_1 = total_dist_begin_1 / num_runs;
+		//	total_dist_end_1 = total_dist_end_1 / num_runs;
+		//	total_dist_begin_2 = total_dist_begin_2 / num_runs;
+		//	total_dist_end_2 = total_dist_end_2 / num_runs;
 
-			total_num_approx_P_begin = total_num_approx_P_begin / num_runs;
-			total_num_approx_P_end = total_num_approx_P_end / num_runs;
+		//	total_num_approx_P_begin = total_num_approx_P_begin / num_runs;
+		//	total_num_approx_P_end = total_num_approx_P_end / num_runs;
 
-			total_num_approx_in_P_begin = total_num_approx_in_P_begin / num_runs;
-			total_num_approx_in_P_end = total_num_approx_in_P_end / num_runs;
+		//	total_num_approx_in_P_begin = total_num_approx_in_P_begin / num_runs;
+		//	total_num_approx_in_P_end = total_num_approx_in_P_end / num_runs;
 
-			sw->Write("{0:F4};", total_dist_begin_1);
-			sw->Write("{0:F4};", total_dist_begin_2);
-			sw->Write("{0:F2};", total_num_approx_P_begin);
-			sw->Write("{0:F2};", total_num_approx_in_P_begin);
-			sw->Write("{0:F4};", total_dist_end_1);
-			sw->Write("{0:F4};", total_dist_end_2);
-			sw->Write("{0:F2};", total_num_approx_P_end);
-			sw->Write("{0:F2};", total_num_approx_in_P_end);
-			sw->WriteLine("Average");
+		//	sw->Write("{0:F4};", total_dist_begin_1);
+		//	sw->Write("{0:F4};", total_dist_begin_2);
+		//	sw->Write("{0:F2};", total_num_approx_P_begin);
+		//	sw->Write("{0:F2};", total_num_approx_in_P_begin);
+		//	sw->Write("{0:F4};", total_dist_end_1);
+		//	sw->Write("{0:F4};", total_dist_end_2);
+		//	sw->Write("{0:F2};", total_num_approx_P_end);
+		//	sw->Write("{0:F2};", total_num_approx_in_P_end);
+		//	sw->WriteLine("Average");
 
-			sw->Write("{0:F4};", max_dist_begin_1);
-			sw->Write("{0:F4};", max_dist_begin_2);
-			sw->Write("{0};", max_num_approx_P_begin);
-			sw->Write("{0};", max_num_approx_in_P_begin);
-			sw->Write("{0:F4};", max_dist_end_1);
-			sw->Write("{0:F4};", max_dist_end_2);
-			sw->Write("{0};", max_num_approx_P_end);
-			sw->Write("{0};", max_num_approx_in_P_end);
-			sw->WriteLine("Max");
+		//	sw->Write("{0:F4};", max_dist_begin_1);
+		//	sw->Write("{0:F4};", max_dist_begin_2);
+		//	sw->Write("{0};", max_num_approx_P_begin);
+		//	sw->Write("{0};", max_num_approx_in_P_begin);
+		//	sw->Write("{0:F4};", max_dist_end_1);
+		//	sw->Write("{0:F4};", max_dist_end_2);
+		//	sw->Write("{0};", max_num_approx_P_end);
+		//	sw->Write("{0};", max_num_approx_in_P_end);
+		//	sw->WriteLine("Max");
 
-			sw->Write("{0:F4};", min_dist_begin_1);
-			sw->Write("{0:F4};", min_dist_begin_2);
-			sw->Write("{0};", min_num_approx_P_begin);
-			sw->Write("{0};", min_num_approx_in_P_begin);
-			sw->Write("{0:F4};", min_dist_end_1);
-			sw->Write("{0:F4};", min_dist_end_2);
-			sw->Write("{0};", min_num_approx_P_end);
-			sw->Write("{0};", min_num_approx_in_P_end);
-			sw->WriteLine("Min");
-			sw->WriteLine();
+		//	sw->Write("{0:F4};", min_dist_begin_1);
+		//	sw->Write("{0:F4};", min_dist_begin_2);
+		//	sw->Write("{0};", min_num_approx_P_begin);
+		//	sw->Write("{0};", min_num_approx_in_P_begin);
+		//	sw->Write("{0:F4};", min_dist_end_1);
+		//	sw->Write("{0:F4};", min_dist_end_2);
+		//	sw->Write("{0};", min_num_approx_P_end);
+		//	sw->Write("{0};", min_num_approx_in_P_end);
+		//	sw->WriteLine("Min");
+		//	sw->WriteLine();
 
-			sw_1->Write("{0:F4};", total_dist_begin_1);
-			sw_1->Write("{0:F4};", total_dist_begin_2);
-			sw_1->Write("{0};", total_num_approx_P_begin);
-			sw_1->Write("{0};", total_num_approx_in_P_begin);
-			sw_1->Write("{0:F4};", total_dist_end_1);
-			sw_1->Write("{0:F4};", total_dist_end_2);
-			sw_1->Write("{0};", total_num_approx_P_end);
-			sw_1->Write("{0};", total_num_approx_in_P_end);
-			sw_1->WriteLine("Average");
+		//	sw_1->Write("{0:F4};", total_dist_begin_1);
+		//	sw_1->Write("{0:F4};", total_dist_begin_2);
+		//	sw_1->Write("{0};", total_num_approx_P_begin);
+		//	sw_1->Write("{0};", total_num_approx_in_P_begin);
+		//	sw_1->Write("{0:F4};", total_dist_end_1);
+		//	sw_1->Write("{0:F4};", total_dist_end_2);
+		//	sw_1->Write("{0};", total_num_approx_P_end);
+		//	sw_1->Write("{0};", total_num_approx_in_P_end);
+		//	sw_1->WriteLine("Average");
 
-			sw_1->Write("{0:F4};", max_dist_begin_1);
-			sw_1->Write("{0:F4};", max_dist_begin_2);
-			sw_1->Write("{0};", max_num_approx_P_begin);
-			sw_1->Write("{0};", max_num_approx_in_P_begin);
-			sw_1->Write("{0:F4};", max_dist_end_1);
-			sw_1->Write("{0:F4};", max_dist_end_2);
-			sw_1->Write("{0};", max_num_approx_P_end);
-			sw_1->Write("{0};", max_num_approx_in_P_end);
-			sw_1->WriteLine("Max");
+		//	sw_1->Write("{0:F4};", max_dist_begin_1);
+		//	sw_1->Write("{0:F4};", max_dist_begin_2);
+		//	sw_1->Write("{0};", max_num_approx_P_begin);
+		//	sw_1->Write("{0};", max_num_approx_in_P_begin);
+		//	sw_1->Write("{0:F4};", max_dist_end_1);
+		//	sw_1->Write("{0:F4};", max_dist_end_2);
+		//	sw_1->Write("{0};", max_num_approx_P_end);
+		//	sw_1->Write("{0};", max_num_approx_in_P_end);
+		//	sw_1->WriteLine("Max");
 
-			sw_1->Write("{0:F4};", min_dist_begin_1);
-			sw_1->Write("{0:F4};", min_dist_begin_2);
-			sw_1->Write("{0:F2};", min_num_approx_P_begin);
-			sw_1->Write("{0:F2};", min_num_approx_in_P_begin);
-			sw_1->Write("{0:F4};", min_dist_end_1);
-			sw_1->Write("{0:F4};", min_dist_end_2);
-			sw_1->Write("{0:F2};", min_num_approx_P_end);
-			sw_1->Write("{0:F2};", min_num_approx_in_P_end);
-			sw_1->WriteLine("Min");
-			sw_1->WriteLine();
-		}
+		//	sw_1->Write("{0:F4};", min_dist_begin_1);
+		//	sw_1->Write("{0:F4};", min_dist_begin_2);
+		//	sw_1->Write("{0:F2};", min_num_approx_P_begin);
+		//	sw_1->Write("{0:F2};", min_num_approx_in_P_begin);
+		//	sw_1->Write("{0:F4};", min_dist_end_1);
+		//	sw_1->Write("{0:F4};", min_dist_end_2);
+		//	sw_1->Write("{0:F2};", min_num_approx_P_end);
+		//	sw_1->Write("{0:F2};", min_num_approx_in_P_end);
+		//	sw_1->WriteLine("Min");
+		//	sw_1->WriteLine();
+		//}
+		//else
+		//{
+		//	total_num_approx_P_begin = total_num_approx_P_begin / num_runs; //ранг 1
+		//	total_dist_begin_1 = total_dist_begin_1 / num_runs; // гиперобъем
+		//	
+		//	total_num_approx_P_end = total_num_approx_P_end / num_runs; //ранг 1
+		//	total_dist_end_1 = total_dist_end_1 / num_runs; // гиперобъем
+		//	total_dist_end_2 = total_dist_end_2 / num_runs; //итерации
+		//	total_num_approx_in_P_end = total_num_approx_in_P_end / num_runs; // k_shaking
+
+		//	sw_1->Write("{0:F2};", total_num_approx_P_begin);
+		//	sw_1->Write("{0:F2};", total_dist_begin_1);
+		//	sw_1->Write("{0:F2};", total_num_approx_P_end);
+		//	sw_1->Write("{0:F2};", total_dist_end_1);
+		//	sw_1->Write("{0:F2};", total_dist_end_2);
+		//	sw_1->Write("{0:F2};", total_num_approx_in_P_end);
+		//	sw_1->WriteLine("Average");
+
+		//	
+		//	sw_1->Write("{0};", max_num_approx_P_begin);
+		//	sw_1->Write("{0};", max_dist_begin_1);
+		//	sw_1->Write("{0};", max_num_approx_P_end);
+		//	sw_1->Write("{0};", max_dist_end_1);
+		//	sw_1->Write("{0};", max_dist_end_2);
+		//	sw_1->Write("{0};", max_num_approx_in_P_end);
+		//	sw_1->WriteLine("Max");
+
+
+		//	sw_1->Write("{0};", min_num_approx_P_begin);
+		//	sw_1->Write("{0};", min_dist_begin_1);
+		//	sw_1->Write("{0};", min_num_approx_P_end);
+		//	sw_1->Write("{0};", min_dist_end_1);
+		//	sw_1->Write("{0};", min_dist_end_2);
+		//	sw_1->Write("{0};", min_num_approx_in_P_end);
+		//	sw_1->WriteLine("Min");
+		//	
+		//	sw_1->WriteLine();
+		//}
 
 
 		//вычисляем время решения одной задачи (все запуски)
@@ -3089,35 +4104,51 @@ int main_VNS(int argc, char* argv[])
 		total_time += result_time; //общее время решения всех задач
 								   //printf("Time: %d\n", result_time);
 		time_format(result_time, "Total time (one problem)", sw);
-		time_format(result_time, "Total time (one problem)", sw_1);
+		time_format(result_time, "Total time", sw_1);
 		time_format(result_time, "Total time (one problem)", sw_3);
 		sw_3->WriteLine();
 		sw_3->WriteLine();
 
 		sw_4->WriteLine(problem_name_str);
-		time_format(result_time, "Total time (one problem)", sw_4);
+		time_format(result_time, "Total time", sw_4);
 		sw_4->WriteLine();
 
-
-		if (num_runs > 1)
+		if (flag_VNSnew)
 		{
-			aver_time = result_time / num_runs;
-			time_format(aver_time, "Average total time of all runs (one problem)", sw);
-			time_format(aver_time, "Average total time of all runs (one problem)", sw_1);
+			if (num_runs > 1)
+			{
+				aver_time = result_time / num_runs;
+				time_format(aver_time, "Average total time through all runs", sw);
+				time_format(aver_time, "Average total time through all runs", sw_1);
+			}
+			
+			// среднее время работы алгоритма без локальных поисков
+			time_format(((double)result_alg_time) / num_runs, "Average time of algorithm through all runs", sw);
+			time_format(((double)result_alg_time) / num_runs, "Average time of algorithm through all runs", sw_1);
+
+			// среднее время локального поиска (начальная популяция)
+			time_format(((double)time_local_search_b) / num_runs + time_local_search_b_pre, "Average time of LS (begin)", sw);
+			time_format(((double)time_local_search_b) / num_runs + time_local_search_b_pre, "Average time of LS (begin)", sw_1);
 		}
 
-
-		// среднее время работы алгоритма без локальных поисков
-		time_format(((double)result_alg_time) / num_runs, "Average time of algorithm", sw);
-		time_format(((double)result_alg_time) / num_runs, "Average time of algorithm", sw_1);
-
-		// среднее время локального поиска (начальная популяция)
-		time_format(((double)time_local_search_b) / num_runs + time_local_search_b_pre, "Average time of LS (begin)", sw);
-		time_format(((double)time_local_search_b) / num_runs + time_local_search_b_pre, "Average time of LS (begin)", sw_1);
-
-		// среднее время локального поиска (конечная популяция)
-		//time_format(((double)time_local_search_f) / num_runs, "Average time of LS (end)", sw);
-		//time_format(((double)time_local_search_f) / num_runs, "Average time of LS (end)", sw_1);
+		if (flag_VNS_multi_start)
+		{
+			if (num_runs > 1)
+			{
+				aver_time = result_time / num_runs;
+				// среднее время работы алгоритма по всем запускам
+				time_format(aver_time, "Average time of all runs", sw);
+				time_format(aver_time, "Average time of all runs", sw_1);
+			}
+			
+			// среднее время работы алгоритма по всем стартам и запускам
+			time_format(((double)result_time) / total_iter_run, "Average time of all starts and runs", sw_1);
+			time_format(((double)result_time) / total_iter_run, "Average time of all starts and runs", sw_1);
+		
+			// среднее время локального поиска (начальная популяция)
+			time_format(((double)time_local_search_b) / total_iter_run + time_local_search_b_pre, "Average time of LS (begin)", sw);
+			time_format(((double)time_local_search_b) / total_iter_run + time_local_search_b_pre, "Average time of LS (begin)", sw_1);
+		}
 
 
 		sw->WriteLine();
@@ -3176,6 +4207,9 @@ int main_VNS(int argc, char* argv[])
 
 int hyper_volume(int argc, char* argv[])
 {
+	
+	
+	
 	GA_path ga_tmp(12, 50, 2, 100);
 
 	String^ file_name_rd_str_1; // = "Pareto_set_GA_1-10.csv";
@@ -3232,8 +4266,8 @@ int hyper_volume(int argc, char* argv[])
 		vector<vector<int>> Pareto_set_2 = read_Pareto_set_from_file(file_name_rd_str_2, cur_line_str_, 2);
 
 		//вычисляем гиперобъемы
-		unsigned volume_val_1 = ga_tmp.hiper_volume(r, Pareto_set_1);
-		unsigned volume_val_2 = ga_tmp.hiper_volume(r, Pareto_set_2);
+		unsigned volume_val_1 = ga_tmp.hyper_volume(r, Pareto_set_1);
+		unsigned volume_val_2 = ga_tmp.hyper_volume(r, Pareto_set_2);
 		printf("volume_val_1 = %d\n", volume_val_1);
 		printf("volume_val_2 = %d\n", volume_val_2);
 		sw_1->WriteLine("{0};", cur_line_str_);
@@ -3253,8 +4287,9 @@ int main(int argc, char* argv[])
 
 	GA_path ga_tmp(12, 50, 2, 100);
 
-	String^ file_name_rd_str_1 = "Pareto_set_GA_1-10_1-10.csv";
-	String^ file_name_rd_str_2 = "Pareto_set_VNS_1-10_1-10.csv";
+	
+	String^ file_name_rd_str_1 = "Pareto_set_VNS_n50_1_20.csv";
+	//String^ file_name_rd_str_2 = "Pareto_set_VNS_1-10_1-10.csv";
 
 	//считываем название задач
 	StreamReader^ sr_1 = gcnew StreamReader(file_name_rd_str_1);
@@ -3275,29 +4310,40 @@ int main(int argc, char* argv[])
 	sr_1->Close();
 
 	//считаем гиперобъемы и записываем результаты в файл	
-	StreamWriter^ sw_1 = gcnew StreamWriter("results_GA_VNS_hiper_volume.csv");
-	vector<int> r = { 0, 0 };
+	//StreamWriter^ sw_1 = gcnew StreamWriter("results_GA_VNS_hiper_volume.csv");
+	
+	vector<int> r = { 12, 11 };
 
+	
 	for (int i = 0; i < array_problems.size(); i++)
 	{
 		//преобразуем стандартный string в String^  
 		cur_line_str_ = gcnew String(array_problems[i].c_str());
 		//читаем мн-ва Парето, полученные двумя методами из файла
-		vector<vector<int>> Pareto_set_1 = read_Pareto_set_from_file(file_name_rd_str_1, cur_line_str_, 2); //{ {5, 0}, {2, 4}, {9, -1}, {1, 6}, {4, 3} };
-		vector<vector<int>> Pareto_set_2 = read_Pareto_set_from_file(file_name_rd_str_2, cur_line_str_, 2);
+		vector<vector<int>> Pareto_set_1 = { {2, 10}, {6, 9}, {7, 6}, {9, 5}, {10, 3} };
+			//= read_Pareto_set_from_file(file_name_rd_str_1, cur_line_str_, 2);
+	//	vector<vector<int>> Pareto_set_2 = read_Pareto_set_from_file(file_name_rd_str_2, cur_line_str_, 2);
 
 		//вычисляем гиперобъемы
-		unsigned volume_val_1 = ga_tmp.hiper_volume(r, Pareto_set_1);
-		unsigned volume_val_2 = ga_tmp.hiper_volume(r, Pareto_set_2);
+		unsigned volume_val_1 = ga_tmp.hyper_volume(r, Pareto_set_1);
+	//	unsigned volume_val_2 = ga_tmp.hiper_volume(r, Pareto_set_2);
 		printf("volume_val_1 = %d\n", volume_val_1);
-		printf("volume_val_2 = %d\n", volume_val_2);
-		sw_1->WriteLine("{0};", cur_line_str_);
-		sw_1->WriteLine("GA; {0};", volume_val_1);
-		sw_1->WriteLine("VNS; {0};", volume_val_2);
+	//	printf("volume_val_2 = %d\n", volume_val_2);
+	//	sw_1->WriteLine("{0};", cur_line_str_);
+	//	sw_1->WriteLine("GA; {0};", volume_val_1);
+	//	sw_1->WriteLine("VNS; {0};", volume_val_2);
 	}
-	sw_1->Close();
+	//sw_1->Close();
 
 	system("pause");
+	
+	/*
+	vector<vector<int>> Pareto_set_1 = { {4, 3}, {7, 2}, {1, 6}, {3, 5} };
+	unsigned volume_val_1 = ga_tmp.hyper_volume(r, Pareto_set_1);
+	printf("volume_val_1 = %d\n", volume_val_1);
+
+	system("pause");
+	*/
 
 #else
 
