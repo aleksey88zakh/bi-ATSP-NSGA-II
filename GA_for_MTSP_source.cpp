@@ -16,6 +16,7 @@ GA_path::GA_path(int n, int N, int m, int s_max_N)
 	this->m = m;//число критериев
 
 	phi.resize(2*N);
+	
 	//for (int i = 0; i < N; i++)  - инициализируется через phi[i] = ...
 	//	phi[i].resize(m);
 
@@ -25,6 +26,7 @@ GA_path::GA_path(int n, int N, int m, int s_max_N)
 	c_max.resize(n);
 	for (int i = 0; i < n; i++)
 		c_max[i].resize(m);
+	c_all.resize(2);
 
 	i_rank_pi.resize(n);
 	index_p.resize(n);
@@ -35,6 +37,8 @@ GA_path::GA_path(int n, int N, int m, int s_max_N)
 
 	i_rank_R_t.resize(2*N);
 	i_dist_R_t.resize(2*N);
+
+		
 
 	this->tourn_size = TOURN_SIZE;//размер турнира
 	this->p_mut = P_MUTATION; //веротяность мутации
@@ -493,7 +497,8 @@ void GA_path::set_matrices(StreamReader^ sr)
 	//временный контейнер для матриц расстояний
 	vector<vector<int>> s_temp(this->get_n(), vector<int>(this->get_n()));
 	int c_max_temp = 0;
-	int s_aver_temp = 0;
+	double s_aver_temp = 0;
+	int cnt = 0;
 	
 	while (cur_line_str != "s1=")
 		cur_line_str = sr->ReadLine();
@@ -520,7 +525,16 @@ void GA_path::set_matrices(StreamReader^ sr)
 				//printf("%d \t", s_temp[i][j]);
 
 				//подсчет среднего элемента
-				s_aver_temp += s_temp[i][j];
+				if (i != j) //не учитываем диагональ
+				{
+					cnt++;
+					if (1==cnt)
+						s_aver_temp = s_temp[i][j];
+					else
+						s_aver_temp = s_aver_temp*(cnt-1)/cnt + ((double)s_temp[i][j])/cnt;
+
+					c_all[0].push_back(s_temp[i][j]); //массив всех дуг
+				}
 				//подсчет максимального элемента
 				if (c_max_temp < s_temp[i][j])
 					c_max_temp = s_temp[i][j];
@@ -543,15 +557,16 @@ void GA_path::set_matrices(StreamReader^ sr)
 	//добавляем матрицу 1-го критерия в массив s_m
 	this->set_matrix_criteria(s_temp);
 
-	s_aver_temp = (int)s_aver_temp / this->get_n()*this->get_n();
+	//s_aver_temp = (int)s_aver_temp / (this->get_n()*this->get_n());
 	//добавляем средний и макс элементы в свои массивы
-	this->s_aver.push_back(s_aver_temp);
+	this->s_aver.push_back((int) s_aver_temp);
 	this->c_max_all.push_back(c_max_temp);
 
 	//sw->WriteLine();
 	//printf("\n");
 
 	s_aver_temp = 0;
+	cnt = 0;
 	c_max_temp = 0;
 
 	/*
@@ -631,8 +646,16 @@ void GA_path::set_matrices(StreamReader^ sr)
 				//printf("%d \t", s_temp[i][j]);
 
 				//подсчет среднего элемента
-				s_aver_temp += s_temp[i][j];
-				//подсчет максимального элемента
+				if (i != j) //не учитываем диагональ
+				{
+					cnt++;
+					if (1==cnt)
+						s_aver_temp = s_temp[i][j];
+					else
+						s_aver_temp = s_aver_temp*(cnt-1)/cnt + ((double)s_temp[i][j])/cnt;
+
+					c_all[1].push_back(s_temp[i][j]); //массив всех дуг
+				}
 				if (c_max_temp < s_temp[i][j])
 					c_max_temp = s_temp[i][j];
 				if (this->c_max[i][1] < s_temp[i][j])
@@ -654,9 +677,9 @@ void GA_path::set_matrices(StreamReader^ sr)
 	//добавляем матрицу 2-го критерия в массив s_m
 	this->set_matrix_criteria(s_temp);
 
-	s_aver_temp = (int)s_aver_temp / this->get_n()*this->get_n();
+	//s_aver_temp = (int)s_aver_temp / (this->get_n()*this->get_n());
 	//добавляем средний и макс элементы в свои массивы
-	this->s_aver.push_back(s_aver_temp);
+	this->s_aver.push_back((int) s_aver_temp);
 	this->c_max_all.push_back(c_max_temp);
 
 	//sw->WriteLine();
@@ -1115,12 +1138,13 @@ bool GA_path::local_search_VNS_new(vector<int> p, float alpha, float beta, void*
 						{
 							//новая особь продоминировала особь в архве
 							// => кол-во неживых особей в архиве увеличилось
-							if (((Archive*)p_arch)->ar_index_no_lst.size() < ar_index_no_lst_old)
+							if (((Archive*)p_arch)->ar_index_no_lst.size() > ar_index_no_lst_old)
 								// существует улучшение в 3-opt окрестности
 								is_improve = true;
 
 							// добавление новой особи в архив
 							((Archive*)p_arch)->arch_modify(result_tmp, { s1, s2 });
+							
 						}
 					}
 				}//while(true)
@@ -1636,7 +1660,7 @@ void GA_path::crowd_dist_new(vector<vector<int>> pop_cur, bool flag_sort)
 		}
 	}
 
-	if (pop_cur.size() == 2 * this->get_N())
+	if (pop_cur.size() == this->get_ext_N())
 	{
 		//crowded dist считаем только для первых N особей, дальше не надо
 		for (int i = 0; i < pop_cur.size(); i++)
@@ -1647,14 +1671,14 @@ void GA_path::crowd_dist_new(vector<vector<int>> pop_cur, bool flag_sort)
 				num_extra++;
 
 
-			if ((i_rank_R_t[i] > i_rank_cur) || (i == 2 * this->get_N() - 1)) //признак окончания фронта
+			if ((i_rank_R_t[i] > i_rank_cur) || (i == this->get_ext_N() - 1)) //признак окончания фронта
 			{
 
 				//если признак окончания фронта - конец вектора, то последний индекс добавляем
-				if (i == 2 * this->get_N() - 1)
+				if (i == this->get_ext_N() - 1)
 				{
 					index_front_temp_not_sorted.push_back(i);
-					i_dist.resize(2 * this->get_N());
+					i_dist.resize(this->get_ext_N());
 				}
 				else
 				{

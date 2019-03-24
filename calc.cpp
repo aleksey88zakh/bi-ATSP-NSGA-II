@@ -218,20 +218,21 @@ unsigned GA_path::hyper_volume(vector<int> r, vector<vector<int>> f)
 	return vol_res;
 }
 
-//гиперобъем
-float K_measure(vector<vector<int>> P_set_1, vector<vector<int>> P_set_2)
+//C-metric
+float С_metric(vector<vector<int>> P_set_1, vector<vector<int>> P_set_2)
 {
 	float cnt_improved = 0;
 
 	// пробегаемся по элементам 1-го множества
-	for (int i = 0; i < P_set_1.size(); i++)
+	for (int i = 0; i < P_set_2.size(); i++)
 	{
 		// пробегаемся по индексам элементов 2-го множества
-		for (int j = 0; j < P_set_2.size(); j++)
+		for (int j = 0; j < P_set_1.size(); j++)
 		{
-			if (Pareto_pref(P_set_1[i], P_set_2[j]) || P_set_1[i] == P_set_2[j])
+			if (Pareto_pref(P_set_1[j], P_set_2[i]) || P_set_1[j] == P_set_2[i])
 			{
 				cnt_improved++;
+				break;
 			}
 			/*else
 				if (Pareto_pref(P_set_2[j], P_set_1[i]))
@@ -240,5 +241,5 @@ float K_measure(vector<vector<int>> P_set_1, vector<vector<int>> P_set_2)
 	}
 		
 		
-	return cnt_improved/ P_set_1.size();
+	return cnt_improved/ P_set_2.size();
 }

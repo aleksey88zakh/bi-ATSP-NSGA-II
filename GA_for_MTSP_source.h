@@ -15,9 +15,9 @@
 
 #define ITER_MAX 200
 #define MODIF true
-#define flag_VNSnew          1
+#define flag_VNSnew          0
 #define flag_LS_VNS_from_GA  0
-#define flag_VNS_multi_start 0
+#define flag_VNS_multi_start 1
 
 //ГА
 //локальный поиск
@@ -87,6 +87,7 @@ public:
 	vector<double> i_dist;//расстояние (для ранжирования внутри форнта)
 	vector<int> s_aver;//средняя величина элемента матрицы (по каждому критерию)
 	vector<int> c_max_all; //макс длина дуги (по каждому критерию)
+	vector<vector<int>> c_all; //массив всех дуг
 
 
 	//родители + потомки (R_t = P_t + Q_t)
@@ -227,6 +228,8 @@ public:
 
 	int get_n() { return n; };
 	int get_N() { return N; };
+	int get_ext_N() { return extended_N; };
+	void set_ext_N(int ext_N) { extended_N = ext_N; }
 	int get_m() { return m; };
 	int get_tourn_size() { return tourn_size; };
 	double get_p_mut() { return p_mut; };
@@ -240,6 +243,7 @@ private:
 	int n;//число позиций в перестановке
 	int m;//число критериев
 	int N;//численность популяции
+	int extended_N; //размер расширенной популяции
 	//vector<vector<int>> pop;//популяция
 	//vector<vector<int>> phi;//пригодность особей (векторный критерий)
 	//vector<vector<vector<int>>> s_m;//матрица значений по каждому критерию
@@ -308,21 +312,24 @@ public:
 	bool elite_modify(Archive new_arch);
 };
 
-class Statistics
-{
-public:
-	Statistics();
-	Statistics(double cur_val);
+//template <typename T>
+//class Statistics
+//{
+//public:
+//	Statistics();
+//	Statistics(T cur_val);
+//
+//	T total_val;
+//	T max_val;
+//	T min_val;
+//	int cnt_val;
+//	
+//	void set_to_zero();
+//	void refresh(T new_val);
+//	void init_max_min(T val);
+//	float get_aver();
+//	T get_min();
+//	T get_max();
+//};
 
-	double total_val;
-	double max_val;
-	double min_val;
-	int cnt_val;
-	
-	void set_to_zero();
-	void refresh(double new_val);
-	void init_max_min(double val);
-	double get_aver();
-	double get_min();
-	double get_max();
-};
+float С_metric(vector<vector<int>> P_set_1, vector<vector<int>> P_set_2);
