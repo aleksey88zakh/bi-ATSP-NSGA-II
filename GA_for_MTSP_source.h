@@ -5,11 +5,41 @@
 #include <queue>
 #include <set>
 #include <map>
+#include <list>
 #include <string>
+#include <array>
 #include <direct.h>
+#include "common.h"
+//#include "archive.h"
+//#include "common.cpp"
 
 #define ITER_MAX 200
-#define MODIF true //ПОМЕНЯТЬ!!!
+#define MODIF true
+#define flag_VNSnew          0
+#define flag_LS_VNS_from_GA  0
+#define flag_VNS_multi_start 1
+
+//ГА
+//локальный поиск
+#define LS_GA_BEGIN_ALPHA   0.5
+#define LS_GA_BEGIN_BETA    0.5
+#define LS_GA_END_ALPHA     0.5
+#define LS_GA_END_BETA      0.5
+//турнирная селекция
+#define TOURN_SIZE 10
+//мутация
+#define P_MUTATION 0.1
+
+//VNS
+//локальный поиск
+#define LS_VNS_BEGIN_ALPHA    1
+#define LS_VNS_END_ALPHA      1
+#define LS_VNS_BEGIN_BETA	  1
+#define LS_VNS_END_BETA		  1
+//shaking
+#define MAX_NUM_K_OPT 11
+//VNS_multi_start
+#define MAX_ELITE_NOT_CHANGED 5
 
 //эксперимент по сужению
 //число шагов для teta
@@ -30,8 +60,18 @@ using namespace std;
 using namespace System;
 using namespace System::IO;
 
+//struct Fronts
+//{
+//	vector<int> ranks;
+//	vector<int> fronts_index;
+//};
+
 //операторы кроссинговера
-public enum class recomb_oper {DEC_new, DPX};
+public enum class recomb_oper {DEC_new, DPX, CH_MAX};
+
+//extern template bool Pareto_pref(const vector<int> a, const vector<int> b);
+//extern template bool Pareto_pref(const vector<double> a, const vector<double> b);
+
 
 
 class GA_path
@@ -46,7 +86,9 @@ public:
 	vector<int> i_rank;//ранг фронта по Парето
 	vector<double> i_dist;//расстояние (для ранжирования внутри форнта)
 	vector<int> s_aver;//средняя величина элемента матрицы (по каждому критерию)
-	vector<int> c_max; //макс длина дуги (по каждому критерию)
+	vector<int> c_max_all; //макс длина дуги (по каждому критерию)
+	vector<vector<int>> c_all; //массив всех дуг
+
 
 	//родители + потомки (R_t = P_t + Q_t)
 	vector<vector<int>> pop_R_t;
@@ -55,6 +97,7 @@ public:
 	//вектор (для ранжирования внутри форнта) для R_t
 	vector<double> i_dist_R_t;
 
+	//НАЧАЛЬНАЯ ПОПУЛЯЦИЯ
 	///!!! уточнить про порядок start_time
 	void init_pop(vector<vector<vector<int>>> s, int S_max, unsigned long long start_time,
 		vector<int> p1, vector<int> p2, vector<int> p3, vector<int> p4);
@@ -64,13 +107,20 @@ public:
 	//функции по заполнению матриц расстояний
 	void set_matrix_criteria(vector<vector<int>> s);
 	void set_matrices(StreamReader^ sr);
+	//общая функция
+	void generate_init_pop_VNS(StreamWriter^ sw, StreamWriter^ sw_1, int iter_prbl, String^ file_name_source_Pareto_set_str,
+		vector<vector<int>> phi_Pareto_set, long long* time_local_search_b, int index_run);
+
+
 	//значение векторного критерия для особи
 	vector<int> multi_phitness(vector<int> p);
-	//отношение Парето
-	template <typename T>
-	bool Pareto_pref(vector<T> a, vector<T> b);
+	//вычисление пригодности особи
+	int phitness(vector<vector<int>> s, vector<int> p);
 	//функция строит ранжировнные фронты популяции pop_cur парето-оптимальных решений (без crowding distance)
 	vector<int> range_front(vector<vector<int>>& pop, bool flag_sort_pop);
+	//функция строит ранжировнные фронты популяции pop_cur парето-оптимальных решений (без crowding distance)
+	//алгоритм Jensen (NlogN)
+	vector<int> range_front_J(vector<vector<int>> phi_cur, vector<vector<int>>& pop_cur, vector<int>& indeces_fronts, unsigned int type);
 	//вычисляет расстояния для особей из популяции pop_cur с рангом rank (ранг от 1 до макс элмента i_rank)
 	void crowd_dist(vector<double>& i_dist_cur, int rank, vector<int> i_rank_cur, vector<vector<int>> pop_cur, bool flag_sort);
 	//НОВАЯ вычисляет расстояния для особей из популяции pop_cur с рангом rank (ранг от 1 до макс элмента i_rank)
@@ -83,16 +133,49 @@ public:
 	//? сложность сортировки в multimap
 	//multimap<int, multimap<float, vector<int> > > a
 
+
+	//СОРТИРОВКА
 	//алгоритм быстрой сортировки
-	void GA_path::quick_sort(vector<int>& arr, vector<int>& arr_index, int left, int right);
+	void quick_sort(vector<int>& arr, vector<int>& arr_index, int left, int right);
 	//void GA_path::heap_sort_new(vector<vector<int>>& pop, int i_start, int i_stop);
 	//пирамидальная сортровка
 	//flag_phi_sort = true - сортировка по компоненте критерия
 	//flag_phi_sort = false - сортировка по i_dist
-	void GA_path::heap_sort(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_citeria, int index_begin, int index_end);
+	void heap_sort(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_citeria, int index_begin, int index_end);
+	//void heap_sort_ls(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_citeria, int index_begin, int index_end);
+	//сортировка по i_dist
+	void heap_sort(vector<int>& numbers_index, int index_begin, int index_end);
+	// функция "просеивания" через кучу - формирование кучи
+	//flag_phi_sort = true - сортировка по компоненте критерия
+	//flag_phi_sort = false - сортировка по i_dist
+	void sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_criteria, int root, int bottom, int delta);
 	//
-	void GA_path::heap_sort(vector<int>& numbers_index, int index_begin, int index_end);
+	void sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index, int root, int bottom, int delta);
+	//void sift_down_ls(vector<vector<int>> pop_cur, vector<int>& numbers_index, int root, int bottom, int delta);
+	//сортировка по i_dist
+	void sift_down(vector<int>& numbers_index, int root, int bottom, int delta);
+
+
+	//ЛОКАЛЬНЫЙ ПОИСК
 	
+	//препроцессинг
+	//массив максимальных дуг по каждому критерию
+	vector<vector<int>> c_max;
+	//функция строит ранжировнные фронты популяции pop_cur парето-оптимальных решений (без crowding distance)
+	//алгоритм Jensen (NlogN)
+	//Fronts range_front_J_ls(vector<vector<int>>& pop, bool flag_sort_pop);
+	//бинарный поиск
+	//для поиска фронта F_b при вычислении рангов
+	//int binary_search_Fb_ls(vector<vector<int>> pop_cur, int cur_index, vector<vector<int>> F_j);
+	vector<int> index_pi;
+	vector<int> i_rank_pi;
+	vector<vector<int>> index_p;
+
+	//функции ЛП
+	vector<int> local_search(vector<int> p, float alpha, float beta, void* p_arch = NULL);
+	//VNS
+	bool local_search_VNS_new(vector<int> p, float alpha, float beta, void* p_arch);
+
 
 	//ОПЕРАТОРЫ
 	//турнирная селекция
@@ -107,7 +190,8 @@ public:
 	vector<int> DEC_new(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2);
 	// << julia
 	vector<int> DPX(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2);
-
+	// обучение с подкрепелением в операторах ГА
+	int GA_path::update_rate_crossover(vector<int> p1, vector<int> p2, vector<int> ch);
 
 	//МЕТРИКА
 	//построение аппроксимации мн-ва Парето (значения векторного критерия, без повторов)
@@ -125,7 +209,8 @@ public:
 	double dist_conver_approx_to_P_set_val;
 	double dist_conver_P_set_to_approx_val;
 	int count_P_eq_approx;
-
+	//гиперобъем (сравнение алгоритмов)
+	unsigned hyper_volume(vector<int> r, vector<vector<int>> f);
 
 	//СУЖЕНИЕ МН-ВА ПАРЕТО
 	//сам эксперимент
@@ -143,6 +228,8 @@ public:
 
 	int get_n() { return n; };
 	int get_N() { return N; };
+	int get_ext_N() { return extended_N; };
+	void set_ext_N(int ext_N) { extended_N = ext_N; }
 	int get_m() { return m; };
 	int get_tourn_size() { return tourn_size; };
 	double get_p_mut() { return p_mut; };
@@ -151,21 +238,18 @@ public:
 	void set_tourn_size(int s) { tourn_size = s; };
 	void set_p_mut(double p) { p_mut = p; };
 
-	//чтение множества Парето из файла
-	vector<vector<int>> read_Pareto_set_from_file(String^ file_name_source_str, String^ problem_name_str);
-
-	friend void time_format(unsigned long long result_time, String^ title, StreamWriter^ sw);
 
 private:
 	int n;//число позиций в перестановке
 	int m;//число критериев
 	int N;//численность популяции
+	int extended_N; //размер расширенной популяции
 	//vector<vector<int>> pop;//популяция
 	//vector<vector<int>> phi;//пригодность особей (векторный критерий)
 	//vector<vector<vector<int>>> s_m;//матрица значений по каждому критерию
 
-	int tourn_size = 10;//размер турнира
-	double p_mut = 0.1;//вероятность мутации
+	int tourn_size;//размер турнира
+	double p_mut;//вероятность мутации
 
 	int count_best_child;//число итераций где потомок лучше родителей
 	int iter_best_child;//последняя итерация где потомок лучше родителей
@@ -183,28 +267,20 @@ private:
 	int q_current;//значение q для текущей задачи ОР (по алгоритму Сердюкова)
 
 	//РЕКОМБИНАЦИЯ
-	// << julia: Используется в функциях DEC_new и DCX
+	// << Yulechka: Используется в функциях DEC_new и DCX
 	vector<bool> flag_Pareto_sol(int k, vector<vector<int>> s);
-	// << julia: Используется в функциях DEC_new и DCX
+	// << Yulechka: Используется в функциях DEC_new и DCX
 	//           поиск следующего активного элемента
 	int next(int j, int k, vector<bool> flag_S);
 
 
-	//ЛОКАЛЬНЫЙ ПОИСК
-	vector<int> local_search(vector<int> assignment, vector<vector<int>> s_m_crit_index);
-
-	//вычисление пригодности особи
-	int phitness(vector<vector<int>> s, vector<int> p);
-
 	//Венгерский метод
 	vector<int> Hungarian_method(int n, int m, vector<vector<int>> cost);
 	
-	// функция "просеивания" через кучу - формирование кучи
-	//flag_phi_sort = true - сортировка по компоненте критерия
-	//flag_phi_sort = false - сортировка по i_dist
-	void sift_down(vector<vector<int>> pop_cur, vector<int>& numbers_index, int num_criteria, int root, int bottom, int delta);
-	//
-	void sift_down(vector<int>& numbers_index, int root, int bottom, int delta);
+
+	//бинарный поиск
+	int binary_search_Fb(vector<vector<int>> pop_cur, int cur_index, vector<vector<int>> F_j);
+
 	
 	//3-opt замена в мутации
 	vector<int> random_change2(vector<int> assignment, int Nchange, vector<vector<int>> c,
@@ -214,3 +290,46 @@ private:
 	//vector<int> GA_path::local_search_fast(vector<int> assignment, vector<vector<int>> c,
 	//	vector<vector<int>> vertex, vector<int> vertex_initial, int alpha);
 };
+
+class Archive
+{
+public:
+	Archive();
+	Archive(GA_path* ga); // на основе данных генетического алгоритма
+	~Archive();
+
+	vector<vector<int>> archive;
+	vector<vector<int>> val_crit_archive;
+	list<unsigned> ar_index_cons_lst;
+	list<unsigned> ar_index_not_cons_lst;
+	list<unsigned> ar_index_no_lst;
+
+	int check_new(vector<int> val_crit_new);
+	void arch_modify(vector<int> pop_new, vector<int> val_crit_new);
+	//обновление архива на основе элементов другого архива (объединение архивов)
+	// this = (this U new_arch)
+	// !!! справедлива, если текущий архив является элитой (просмотр особи = пусто, непросмотр особи = живые особи)
+	bool elite_modify(Archive new_arch);
+};
+
+//template <typename T>
+//class Statistics
+//{
+//public:
+//	Statistics();
+//	Statistics(T cur_val);
+//
+//	T total_val;
+//	T max_val;
+//	T min_val;
+//	int cnt_val;
+//	
+//	void set_to_zero();
+//	void refresh(T new_val);
+//	void init_max_min(T val);
+//	float get_aver();
+//	T get_min();
+//	T get_max();
+//};
+
+float С_metric(vector<vector<int>> P_set_1, vector<vector<int>> P_set_2);
