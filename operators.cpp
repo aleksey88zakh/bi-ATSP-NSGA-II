@@ -1296,6 +1296,585 @@ vector<int> GA_path::DPX(vector< vector <vector<int> > > s, vector<int> p1, vect
 }
 ////////////////////////////////////////////////////////////////////////////////////
 
+///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!///
+///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!///
+vector<int> GA_path::SAX(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2)
+{
+	int n = p1.size();
+	vector<vector<int>> list_out(n, vector<int>(3));//исходящие вершины
+	vector<vector<int>> list_in(n, vector<int>(3));//входящие вершины
+
+	vector<vector<int>> chains(n, vector<int>(3));//начальные и конечные вершины цепей
+	int N_chains = 0;//число цепей
+	vector<int> child(n);//потомок
+	vector<bool> viewed(n);//индикатор просмотренных вершин
+	int nNonViewed = n;
+	int i_temp, i1, block;
+	vector<bool> flag;
+	
+	
+	////////////////////////////////////////////////////////////////////////////////   
+	/////!заполняем списки!/////
+	//++++++++++++++++++++++++++
+	for (int i = 0; i < p1.size() - 1; ++i) {
+		viewed[i] = false;
+		//++++++++++++++++++++++++++
+		//++++++++++++++++++++++++++
+		//списки
+		//исходящие вершины для p1[i]
+		if (list_out[p1[i] - 1][0] == 0) {
+			list_out[p1[i] - 1][0] = 1;
+			list_out[p1[i] - 1][1] = p1[i + 1];
+		}
+		if (list_out[p1[i] - 1][0] == 1 && list_out[p1[i] - 1][1] != p1[i + 1]) {
+			list_out[p1[i] - 1][0] = 2;
+			list_out[p1[i] - 1][2] = p1[i + 1];
+		}
+		//входящие вершины для p1[i+1]
+		if (list_in[p1[i + 1] - 1][0] == 0) {
+			list_in[p1[i + 1] - 1][0] = 1;
+			list_in[p1[i + 1] - 1][1] = p1[i];
+		}
+		if (list_in[p1[i + 1] - 1][0] == 1 && list_in[p1[i + 1] - 1][1] != p1[i]) {
+			list_in[p1[i + 1] - 1][0] = 2;
+			list_in[p1[i + 1] - 1][2] = p1[i];
+		}
+		//исходящие вершины для p2[i]
+		if (list_out[p2[i] - 1][0] == 0) {
+			list_out[p2[i] - 1][0] = 1;
+			list_out[p2[i] - 1][1] = p2[i + 1];
+		}
+		if (list_out[p2[i] - 1][0] == 1 && list_out[p2[i] - 1][1] != p2[i + 1]) {
+			list_out[p2[i] - 1][0] = 2;
+			list_out[p2[i] - 1][2] = p2[i + 1];
+		}
+		//входящие вершины для p2[i+1]
+		if (list_in[p2[i + 1] - 1][0] == 0) {
+			list_in[p2[i + 1] - 1][0] = 1;
+			list_in[p2[i + 1] - 1][1] = p2[i];
+		}
+		if (list_in[p2[i + 1] - 1][0] == 1 && list_in[p2[i + 1] - 1][1] != p2[i]) {
+			list_in[p2[i + 1] - 1][0] = 2;
+			list_in[p2[i + 1] - 1][2] = p2[i];
+		}
+	}
+	viewed[p1.size() - 1] = false;
+	//списки
+	//исходящие вершины для p1[n-1]
+	if (list_out[p1[p1.size() - 1] - 1][0] == 0) {
+		list_out[p1[p1.size() - 1] - 1][0] = 1;
+		list_out[p1[p1.size() - 1] - 1][1] = p1[0];
+	}
+	if (list_out[p1[p1.size() - 1] - 1][0] == 1 && list_out[p1[p1.size() - 1] - 1][1] != p1[0]) {
+		list_out[p1[p1.size() - 1] - 1][0] = 2;
+		list_out[p1[p1.size() - 1] - 1][2] = p1[0];
+	}
+	//входящие вершины для p1[0]
+	if (list_in[p1[0] - 1][0] == 0) {
+		list_in[p1[0] - 1][0] = 1;
+		list_in[p1[0] - 1][1] = p1[p1.size() - 1];
+	}
+	if (list_in[p1[0] - 1][0] == 1 && list_in[p1[0] - 1][1] != p1[p1.size() - 1]) {
+		list_in[p1[0] - 1][0] = 2;
+		list_in[p1[0] - 1][2] = p1[p1.size() - 1];
+	}
+	//исходящие вершины для p2[n-1]
+	if (list_out[p2[p2.size() - 1] - 1][0] == 0) {
+		list_out[p2[p2.size() - 1] - 1][0] = 1;
+		list_out[p2[p2.size() - 1] - 1][1] = p2[0];
+	}
+	if (list_out[p2[p2.size() - 1] - 1][0] == 1 && list_out[p2[p2.size() - 1] - 1][1] != p2[0]) {
+		list_out[p2[p2.size() - 1] - 1][0] = 2;
+		list_out[p2[p2.size() - 1] - 1][2] = p2[0];
+	}
+	//входящие вершины для p2[0]
+	if (list_in[p2[0] - 1][0] == 0) {
+		list_in[p2[0] - 1][0] = 1;
+		list_in[p2[0] - 1][1] = p2[p2.size() - 1];
+	}
+	if (list_in[p2[0] - 1][0] == 1 && list_in[p2[0] - 1][1] != p2[p2.size() - 1]) {
+		list_in[p2[0] - 1][0] = 2;
+		list_in[p2[0] - 1][2] = p2[p2.size() - 1];
+	}
+	//++++++++++++++++++++++++++
+	//++++++++++++++++++++++++++
+	///////////////////////////////////////////////////////////////////////////////
+	while (nNonViewed != 0) {
+		int i_cur = -1;
+		i1 = rand() % nNonViewed + 1; //случайное число от 1 до nNonViewed
+		i_temp = 0;
+		for (int i = 0; i < p1.size(); ++i) {//выбираем случайную вершину из непросмотренных
+			if (viewed[i] == false) {
+				i_temp++;
+				if (i_temp == i1) {
+					i_cur = i;
+					break;
+				}
+			}
+		}
+		printf("cur: %d\n", (i_cur + 1));
+		//помечаем вершину как просмотренную и назначаем для нее новую цепь
+		viewed[i_cur] = true;
+		nNonViewed--;
+		N_chains++;
+		chains[N_chains - 1][0] = i_cur + 1;
+		chains[N_chains - 1][1] = i_cur + 1;
+		chains[N_chains - 1][2] = i_cur + 1;
+		while (i_cur > -1) {
+			//пытаемся расширить цепь, двигаясь вперед
+			if (list_out[i_cur][0] == 1) {
+				//если есть одна исходящая вершина
+				if (viewed[list_out[i_cur][1] - 1] == false) {
+					i_cur = list_out[i_cur][1] - 1;//переходим в нее и помечаем как просмотренную
+					viewed[i_cur] = true;
+					nNonViewed--;
+					chains[N_chains - 1][1] = i_cur + 1;
+				}
+				else {
+					i_cur = -1;
+				}
+			}
+			else {
+				if (list_out[i_cur][0] == 2) {
+					//если две исходящие вершины, то выбираем лучшую
+					if (viewed[list_out[i_cur][1] - 1] == false && viewed[list_out[i_cur][2] - 1] == false) {
+						//обе вершины непросмотрены
+						i_temp = i_cur;//запоминаем текщую вершину
+									   //можно усовершенствовать
+						if (s[0][i_cur][list_out[i_cur][1] - 1] >= s[0][i_cur][list_out[i_cur][2] - 1]
+							&& s[1][i_cur][list_out[i_cur][1] - 1] >= s[1][i_cur][list_out[i_cur][2] - 1]) {
+							//переходим в первую вершину
+							i_cur = list_out[i_cur][1] - 1;//переходим в нее и помечаем как просмотренную
+							viewed[i_cur] = true;
+							nNonViewed--;
+							chains[N_chains - 1][1] = i_cur + 1;
+							//удаляем дугу
+							if (list_in[list_out[i_temp][2] - 1][0] == 1) {
+								list_in[list_out[i_temp][2] - 1][0] = 0;
+								list_in[list_out[i_temp][2] - 1][1] = 0;
+							}
+							else {
+								if (list_in[list_out[i_temp][2] - 1][2] == i_temp + 1) {
+									list_in[list_out[i_temp][2] - 1][0] = 1;
+									list_in[list_out[i_temp][2] - 1][2] = 0;
+								}
+								else {
+									list_in[list_out[i_temp][2] - 1][0] = 1;
+									list_in[list_out[i_temp][2] - 1][1] = list_in[list_out[i_temp][2] - 1][2];
+									list_in[list_out[i_temp][2] - 1][2] = 0;
+								}
+							}
+							list_out[i_temp][0]--;
+							list_out[i_temp][2] = 0;
+
+						}
+						else {
+							//переходим во вторую вершину
+							i_cur = list_out[i_cur][2] - 1;//переходим в нее и помечаем как просмотренную
+							viewed[i_cur] = true;
+							nNonViewed--;
+							chains[N_chains - 1][1] = i_cur + 1;
+							//удаляем дугу
+							if (list_in[list_out[i_temp][1] - 1][0] == 1) {
+								list_in[list_out[i_temp][1] - 1][0] = 0;
+								list_in[list_out[i_temp][1] - 1][1] = 0;
+							}
+							else {
+								if (list_in[list_out[i_temp][1] - 1][2] == i_temp + 1) {
+									list_in[list_out[i_temp][1] - 1][0] = 1;
+									list_in[list_out[i_temp][1] - 1][2] = 0;
+								}
+								else {
+									list_in[list_out[i_temp][1] - 1][0] = 1;
+									list_in[list_out[i_temp][1] - 1][1] = list_in[list_out[i_temp][1] - 1][2];
+									list_in[list_out[i_temp][1] - 1][2] = 0;
+								}
+							}
+							list_out[i_temp][0]--;
+							list_out[i_temp][1] = list_out[i_temp][2];
+							list_out[i_temp][2] = 0;
+						}
+					}
+					else {
+						//если только одна из вершин непросмотрена
+						if (viewed[list_out[i_cur][1] - 1] == false) {
+							i_temp = i_cur;
+							//только первая вершина
+							i_cur = list_out[i_cur][1] - 1;//переходим в нее и помечаем как просмотренную
+							viewed[i_cur] = true;
+							nNonViewed--;
+							chains[N_chains - 1][1] = i_cur + 1;
+							//удаляем дугу
+							if (list_in[list_out[i_temp][2] - 1][0] == 1) {
+								list_in[list_out[i_temp][2] - 1][0] = 0;
+								list_in[list_out[i_temp][2] - 1][1] = 0;
+							}
+							else {
+								if (list_in[list_out[i_temp][2] - 1][2] == i_temp + 1) {
+									list_in[list_out[i_temp][2] - 1][0] = 1;
+									list_in[list_out[i_temp][2] - 1][2] = 0;
+								}
+								else {
+									list_in[list_out[i_temp][2] - 1][0] = 1;
+									list_in[list_out[i_temp][2] - 1][1] = list_in[list_out[i_temp][2] - 1][2];
+									list_in[list_out[i_temp][2] - 1][2] = 0;
+								}
+							}
+							list_out[i_temp][0]--;
+							list_out[i_temp][2] = 0;
+
+						}
+						else {
+							if (viewed[list_out[i_cur][2] - 1] == false) {
+								i_temp = i_cur;
+								//вторая вершина
+								i_cur = list_out[i_cur][2] - 1;//переходим в нее и помечаем как просмотренную
+								viewed[i_cur] = true;
+								nNonViewed--;
+								chains[N_chains - 1][1] = i_cur + 1;
+								//удаляем дугу
+								if (list_in[list_out[i_temp][1] - 1][0] == 1) {
+									list_in[list_out[i_temp][1] - 1][0] = 0;
+									list_in[list_out[i_temp][1] - 1][1] = 0;
+								}
+								else {
+									if (list_in[list_out[i_temp][1] - 1][2] == i_temp + 1) {
+										list_in[list_out[i_temp][1] - 1][0] = 1;
+										list_in[list_out[i_temp][1] - 1][2] = 0;
+									}
+									else {
+										list_in[list_out[i_temp][1] - 1][0] = 1;
+										list_in[list_out[i_temp][1] - 1][1] = list_in[list_out[i_temp][1] - 1][2];
+										list_in[list_out[i_temp][1] - 1][2] = 0;
+									}
+								}
+								list_out[i_temp][0]--;
+								list_out[i_temp][1] = list_out[i_temp][2];
+								list_out[i_temp][2] = 0;
+							}
+							else {
+								i_cur = -1;
+							}
+
+						}
+					}
+					///
+				}
+				else {
+					i_cur = -1;
+				}
+
+			}
+			printf("cur: %d\n", (i_cur + 1));
+		}
+		printf("start: %d\n", chains[N_chains - 1][0]);
+		printf("finish: %d\n", chains[N_chains - 1][1]);
+		printf("median: %d\n", chains[N_chains - 1][2]);
+		
+		i_cur = chains[N_chains - 1][0] - 1;
+		while (i_cur > -1) {
+			//пытаемся расширить цепь, двигаясь назад
+			if (list_in[i_cur][0] == 1) {
+				//если есть одна входящая вершина и она непросмотрена
+				if (viewed[list_in[i_cur][1] - 1] == false) {
+					i_cur = list_in[i_cur][1] - 1;//переходим в нее и помечаем как просмотренную
+					viewed[i_cur] = true;
+					nNonViewed--;
+					chains[N_chains - 1][0] = i_cur + 1;
+				}
+				else {
+					i_cur = -1;
+				}
+			}
+			else {
+				if (list_in[i_cur][0] == 2) {
+					//если две входящие вершины, то выбираем лучшую
+					if (viewed[list_in[i_cur][1] - 1] == false && viewed[list_in[i_cur][2] - 1] == false) {
+						i_temp = i_cur;
+						//можно усовершенствовать
+						if (s[0][list_in[i_cur][1] - 1][i_cur] >= s[0][list_in[i_cur][2] - 1][i_cur]
+							&& s[1][list_in[i_cur][1] - 1][i_cur] >= s[1][list_in[i_cur][2] - 1][i_cur]) {
+							i_cur = list_in[i_cur][1] - 1;//переходим в нее и помечаем как просмотренную
+							viewed[i_cur] = true;
+							nNonViewed--;
+							chains[N_chains - 1][0] = i_cur + 1;
+							//удаляем дугу
+							if (list_out[list_in[i_temp][2] - 1][0] == 1) {
+								list_out[list_in[i_temp][2] - 1][0] = 0;
+								list_out[list_in[i_temp][2] - 1][1] = 0;
+							}
+							else {
+								if (list_out[list_in[i_temp][2] - 1][2] == i_temp + 1) {
+									list_out[list_in[i_temp][2] - 1][0] = 1;
+									list_out[list_in[i_temp][2] - 1][2] = 0;
+								}
+								else {
+									list_out[list_in[i_temp][2] - 1][0] = 1;
+									list_out[list_in[i_temp][2] - 1][1] = list_out[list_in[i_temp][2] - 1][2];
+									list_out[list_in[i_temp][2] - 1][2] = 0;
+								}
+							}
+							list_in[i_temp][0]--;
+							list_in[i_temp][2] = 0;
+						}
+						else {
+							i_cur = list_in[i_cur][2] - 1;//переходим в нее и помечаем как просмотренную
+							viewed[i_cur] = true;
+							nNonViewed--;
+							chains[N_chains - 1][0] = i_cur + 1;
+							//удаляем дугу
+							if (list_out[list_in[i_temp][1] - 1][0] == 1) {
+								list_out[list_in[i_temp][1] - 1][0] = 0;
+								list_out[list_in[i_temp][1] - 1][1] = 0;
+							}
+							else {
+								if (list_out[list_in[i_temp][1] - 1][2] == i_temp + 1) {
+									list_out[list_in[i_temp][1] - 1][0] = 1;
+									list_out[list_in[i_temp][1] - 1][2] = 0;
+								}
+								else {
+									list_out[list_in[i_temp][1] - 1][0] = 1;
+									list_out[list_in[i_temp][1] - 1][1] = list_out[list_in[i_temp][1] - 1][2];
+									list_out[list_in[i_temp][1] - 1][2] = 0;
+								}
+							}
+							list_in[i_temp][0]--;
+							list_in[i_temp][1] = list_in[i_temp][2];
+							list_in[i_temp][2] = 0;
+
+						}
+					}
+					else {
+						if (viewed[list_in[i_cur][1] - 1] == false) {
+							i_temp = i_cur;
+							i_cur = list_in[i_cur][1] - 1;//переходим в нее и помечаем как просмотренную
+							viewed[i_cur] = true;
+							nNonViewed--;
+							chains[N_chains - 1][0] = i_cur + 1;
+							//удаляем дугу
+							if (list_out[list_in[i_temp][2] - 1][0] == 1) {
+								list_out[list_in[i_temp][2] - 1][0] = 0;
+								list_out[list_in[i_temp][2] - 1][1] = 0;
+							}
+							else {
+								if (list_out[list_in[i_temp][2] - 1][2] == i_temp + 1) {
+									list_out[list_in[i_temp][2] - 1][0] = 1;
+									list_out[list_in[i_temp][2] - 1][2] = 0;
+								}
+								else {
+									list_out[list_in[i_temp][2] - 1][0] = 1;
+									list_out[list_in[i_temp][2] - 1][1] = list_out[list_in[i_temp][2] - 1][2];
+									list_out[list_in[i_temp][2] - 1][2] = 0;
+								}
+							}
+							list_in[i_temp][0]--;
+							list_in[i_temp][2] = 0;
+
+						}
+						else {
+							if (viewed[list_in[i_cur][2] - 1] == false) {
+								i_temp = i_cur;
+								i_cur = list_in[i_cur][2] - 1;//переходим в нее и помечаем как просмотренную
+								viewed[i_cur] = true;
+								nNonViewed--;
+								chains[N_chains - 1][0] = i_cur + 1;
+								//удаляем дугу
+								if (list_out[list_in[i_temp][1] - 1][0] == 1) {
+									list_out[list_in[i_temp][1] - 1][0] = 0;
+									list_out[list_in[i_temp][1] - 1][1] = 0;
+								}
+								else {
+									if (list_out[list_in[i_temp][1] - 1][2] == i_temp + 1) {
+										list_out[list_in[i_temp][1] - 1][0] = 1;
+										list_out[list_in[i_temp][1] - 1][2] = 0;
+									}
+									else {
+										list_out[list_in[i_temp][1] - 1][0] = 1;
+										list_out[list_in[i_temp][1] - 1][1] = list_out[list_in[i_temp][1] - 1][2];
+										list_out[list_in[i_temp][1] - 1][2] = 0;
+									}
+								}
+								list_in[i_temp][0]--;
+								list_in[i_temp][1] = list_in[i_temp][2];
+								list_in[i_temp][2] = 0;
+
+							}
+							else {
+								i_cur = -1;
+							}
+
+						}
+					}
+					///
+				}
+				else {
+					i_cur = -1;
+				}
+
+			}
+			printf("cur: %d\n", (i_cur + 1));
+		}
+		printf("start: %d\n", chains[N_chains - 1][0]);
+		printf("finish: %d\n", chains[N_chains - 1][1]);
+		printf("median: %d\n", chains[N_chains - 1][2]);
+		for (int i = 0; i<n; i++) {
+			printf("%d%c", viewed[i],' ');
+		}
+		printf("\n");
+	}
+	printf("Nchains: %d\n", N_chains);
+	if (N_chains > 1) {
+		//если цепей несколько, то склеиваем их
+		vector<vector<int>> arcWeightsChains(N_chains - 1, vector<int>(2));//веса дуг
+		vector<bool> ViewedChains(N_chains);//закреплена ли цепь
+		vector<int> SequenceChains(N_chains);//закреплена ли цепь
+		vector<int> chainNumber(N_chains);//сопоставляем номера цепей
+
+		int nCurrent;
+		int currentChain = rand() % N_chains;//начинаем с произвольной цепи
+		ViewedChains[currentChain] = true;
+		printf("chain: %d\n", currentChain);
+	    SequenceChains[0] = currentChain;
+		for (int j = 0; j < N_chains - 1; ++j) {//выстраиваем цепи по принципу "иди в ближайший"
+			nCurrent = 0;
+			//просматриваем неназначенные цепи
+			for (int i = 0; i < N_chains; i++) {
+				if (ViewedChains[i] == false) {
+					arcWeightsChains[nCurrent][0] = s[0][chains[currentChain][1] - 1][chains[i][0] - 1];
+					arcWeightsChains[nCurrent][1] = s[1][chains[currentChain][1] - 1][chains[i][0] - 1];
+					chainNumber[nCurrent] = i;
+					nCurrent++;
+				}
+			}
+			if (nCurrent > 1) {//если цепей 2 и более				
+				flag = flag_Pareto_sol(nCurrent, arcWeightsChains);
+				i1 = 0;
+				for (int i = 0; i < nCurrent; ++i) {
+					if (flag[i] == false) {
+						i1++;
+					}
+					printf("%d%c%d%c%d%c%d%c\n", arcWeightsChains[i][0],' ', arcWeightsChains[i][1],';', chainNumber[i],';', flag[i],';');
+					}
+				i_temp = rand() % i1 + 1;
+				i1 = 0;
+				block = -1;
+				for (int i = 0; i < nCurrent; ++i) {
+					if (flag[i] == false) {
+						i1++;
+					}
+					if (i1 == i_temp) {
+						block = i;
+						break;
+					}
+				}
+				ViewedChains[chainNumber[block]] = true;
+				currentChain = chainNumber[block];
+				SequenceChains[j + 1] = chainNumber[block];
+	     		printf("chain: %d\n", chainNumber[block]);
+			}
+			else {
+				printf("chain: %d\n", chainNumber[nCurrent - 1]);
+				SequenceChains[j + 1] = chainNumber[nCurrent - 1];
+			}
+
+		}
+		//строим потомка,просматривая цепи в заданном порядке
+		i_temp = 0;
+		for (int j = 0; j < N_chains; ++j) {
+			int i = 0;
+			i1 = chains[SequenceChains[j]][2];
+			while (i1 != chains[SequenceChains[j]][0]) {
+				i1 = list_in[i1 - 1][1];
+				printf("%d%c", i1, ' ');
+				i++;
+			}
+			printf("i: %d\n", i);
+			if (i>0) {
+				i_temp = i_temp + i;
+				i1 = chains[SequenceChains[j]][2];
+				while (i1 != chains[SequenceChains[j]][0]) {
+					i1 = list_in[i1 - 1][1];
+					child[i_temp - 1] = i1; i_temp--;
+				}
+				i_temp = i_temp + i;
+			}
+			i1 = chains[SequenceChains[j]][2];
+			child[i_temp] = i1; i_temp++;
+			printf("%d%c", i1, ' ');
+			while (i1 != chains[SequenceChains[j]][1]) {
+				i1 = list_out[i1 - 1][1];
+				printf("%d%c", i1, ' ');
+				child[i_temp] = i1; i_temp++;
+			}
+			printf("\n");
+		}
+		printf("child: \n");
+		for (int j = 0; j < n; ++j) {
+			printf("%d%c", child[j], ' ');
+		}
+		printf("\n");
+
+	}
+	else {
+		//если цепь одна
+		//строим потомка  
+		int i = 0; i_temp = 0;
+		i1 = chains[0][2];
+		while (i1 != chains[0][0]) {
+			i1 = list_in[i1 - 1][1];
+			printf("%d%c", i1, ' ');
+			i++;
+		}
+		printf("i: %d\n", i);
+		if (i>0) {
+			i_temp = i_temp + i;
+			i1 = chains[0][2];
+			while (i1 != chains[0][0]) {
+				i1 = list_in[i1 - 1][1];
+				child[i_temp - 1] = i1; i_temp--;
+			}
+			i_temp = i_temp + i;
+		}
+		i1 = chains[0][2];
+		child[i_temp] = i1; i_temp++;
+		printf("%d%c", i1, ' ');
+		while (i1 != chains[0][1]) {
+			i1 = list_out[i1 - 1][1];
+			printf("%d%c", i1, ' ');
+			child[i_temp] = i1; i_temp++;
+		}
+		printf("\n");
+		printf("child: \n");
+		for (int j = 0; j < n; ++j) {
+			printf("%d%c", child[j], ' ');
+		}
+		printf("\n");
+
+	}	
+	//записываем потомка, начиная с 1
+	vector<int> childRew(n);//потомок
+	i1 = -1;
+	for (int j = 0; j < n; j++) {
+		if (child[j] == 1) {
+			i1 = j;
+			break;
+		}
+	}
+	i_temp = 0;
+	for (int j = i1; j < n; j++) {
+		childRew[i_temp] = child[j];
+		i_temp++;
+	}
+	for (int j = 0; j < i1; j++) {
+		childRew[i_temp] = child[j];
+		i_temp++;
+	}
+	return childRew;
+}
+///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!///
+///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!///
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // << julia: Используется в функциях DEC_new и DCX
 ////////////////////////////////////////////////////////////////////////////////

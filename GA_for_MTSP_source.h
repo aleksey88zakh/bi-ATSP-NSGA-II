@@ -192,6 +192,8 @@ public:
 	vector<int> DPX(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2);
 	// обучение с подкрепелением в операторах ГА
 	int GA_path::update_rate_crossover(vector<int> p1, vector<int> p2, vector<int> ch);
+	vector<int> SAX(vector< vector <vector<int> > > s, vector<int> p1, vector<int> p2);
+	// << julia:  оператор кроссинговера SAX
 
 	//МЕТРИКА
 	//построение аппроксимации мн-ва Парето (значения векторного критерия, без повторов)
