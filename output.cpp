@@ -3,18 +3,19 @@
 
 void GA_path::output_pop()
 {
-	for (int j = 0; j < this->get_n(); j++)
+	for (int i = 0; i < this->get_N(); i++)
 	{
-		for (int i = 0; i < this->get_N(); i++)
+		for (int j = 0; j < this->get_n(); j++)
 		{
 			//sw->Write("{0};", this->pop[i][j]);
 			printf("%d\t", this->pop[i][j]);
 		}
 		//sw->WriteLine();
+		printf("\n");
 	}
 
 	//sw->WriteLine();
-	printf("\n");
+	
 }
 
 //вывод значений критерия
@@ -75,15 +76,15 @@ void write_to_file(StreamWriter^ sw, String^ st)
 	sw->Write(st);
 }
 
-void write_to_file(StreamWriter^ sw, array<wchar_t> ^buffer)
-{
-	sw->Write(buffer);
-}
+//void write_to_file(StreamWriter^ sw, array<wchar_t> ^buffer)
+//{
+//	sw->Write(buffer);
+//}
 
-void write_to_file(StreamWriter^ sw, array<wchar_t> ^buffer, int index, int count)
-{
-	sw->Write(buffer, index, count);
-}
+//void write_to_file(StreamWriter^ sw, array<wchar_t> ^buffer, int index, int count)
+//{
+//	sw->Write(buffer, index, count);
+//}
 
 void write_to_file(StreamWriter^ sw, wchar_t val)
 {

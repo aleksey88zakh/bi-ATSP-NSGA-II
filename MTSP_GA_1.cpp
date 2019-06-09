@@ -4244,76 +4244,36 @@ int main(int argc, char* argv[])
 
 #ifdef _DEBUG_
 
-	vector<vector<int>> P_set1 = { {3, 2}, {0, 5}, {1, 4}, {7, 1} };
-	vector<vector<int>> P_set2 = { { 0, 2 }, { 7, 1 }, { 1, 4 }, { 8, 0 } };
-	
-	float P1_P2 = С_metric(P_set1, P_set2);
-	float P2_P1 = С_metric(P_set2, P_set1);
+	//число городов
+	int n = 12;
+	//число особей
+	int N = 2;
+	//число критериев
+	int m = 2;
+	GA_path ga(n, N, m, 100); //последний аргумент можно не трогать (не влияет)
 
-	printf("P1 cover P2 = %.2f \%\n", P1_P2*100);
-	printf("P2 cover P1 = %.2f \%\n", P2_P1*100);
+	//имя файла, с которого считываем
+	String^ file_name_rd_str = "Example_MTSP_m2_n50_N50_1_10.txt";//ПОМЕНЯТЬ!!!
+	//открываем для считывания
+	StreamReader^ sr = gcnew StreamReader(file_name_rd_str);
 
-	/*
-	GA_path ga_tmp(12, 50, 2, 100);
+	//заполнение матриц критериев
+	ga.set_matrices(sr);
 
-	
-	String^ file_name_rd_str_1 = "Pareto_set_VNS_n50_1_20.csv";
-	//String^ file_name_rd_str_2 = "Pareto_set_VNS_1-10_1-10.csv";
+	//для рандомизатора
+	unsigned long temp_time = ::GetTickCount();
+	srand(temp_time);
+	//генерация 2-х случайных особей в массиве pop
+	for (int i = 0; i < N; ++i)
+		ga.pop.push_back(ga.random_individual());
 
-	//считываем название задач
-	StreamReader^ sr_1 = gcnew StreamReader(file_name_rd_str_1);
-	vector<string> array_problems; // массив имен задач
-	string cur_line_str;
-	String^ cur_line_str_;
-	while (!sr_1->EndOfStream)
-	{
-		cur_line_str_ = sr_1->ReadLine();
-		if (cur_line_str_->Contains("mtsp"))
-		{
-			//преобразуем String^ в стандартный string
-			cur_line_str = (const char*)(Runtime::InteropServices::Marshal::StringToHGlobalAnsi(cur_line_str_).ToPointer());
-			cur_line_str.pop_back(); // убираем ';' в конце имени задачи
-			array_problems.push_back(cur_line_str);
-		}
-	}
-	sr_1->Close();
+	printf("Initial population:\n");
+	ga.output_pop();
 
-	//считаем гиперобъемы и записываем результаты в файл	
-	//StreamWriter^ sw_1 = gcnew StreamWriter("results_GA_VNS_hiper_volume.csv");
-	
-	vector<int> r = { 12, 11 };
-
-	
-	for (int i = 0; i < array_problems.size(); i++)
-	{
-		//преобразуем стандартный string в String^  
-		cur_line_str_ = gcnew String(array_problems[i].c_str());
-		//читаем мн-ва Парето, полученные двумя методами из файла
-		vector<vector<int>> Pareto_set_1 = { {2, 10}, {6, 9}, {7, 6}, {9, 5}, {10, 3} };
-			//= read_Pareto_set_from_file(file_name_rd_str_1, cur_line_str_, 2);
-	//	vector<vector<int>> Pareto_set_2 = read_Pareto_set_from_file(file_name_rd_str_2, cur_line_str_, 2);
-
-		//вычисляем гиперобъемы
-		unsigned volume_val_1 = ga_tmp.hyper_volume(r, Pareto_set_1);
-	//	unsigned volume_val_2 = ga_tmp.hiper_volume(r, Pareto_set_2);
-		printf("volume_val_1 = %d\n", volume_val_1);
-	//	printf("volume_val_2 = %d\n", volume_val_2);
-	//	sw_1->WriteLine("{0};", cur_line_str_);
-	//	sw_1->WriteLine("GA; {0};", volume_val_1);
-	//	sw_1->WriteLine("VNS; {0};", volume_val_2);
-	}
-	//sw_1->Close();
-	*/
 
 	system("pause");
 	
-	/*
-	vector<vector<int>> Pareto_set_1 = { {4, 3}, {7, 2}, {1, 6}, {3, 5} };
-	unsigned volume_val_1 = ga_tmp.hyper_volume(r, Pareto_set_1);
-	printf("volume_val_1 = %d\n", volume_val_1);
-
-	system("pause");
-	*/
+	
 
 #else
 
