@@ -212,6 +212,15 @@ public:
 	//гиперобъем (сравнение алгоритмов)
 	unsigned hyper_volume(vector<int> r, vector<vector<int>> f);
 
+	//ВЫВОД, ВЫЧИСЛЕНИЯ
+	void output_pop();
+	void output_phi();
+	void output_ranks();
+	void output_dist();
+	void output_P_approx();
+	void calc_phi();
+	void calc_ext_phi();
+
 	//СУЖЕНИЕ МН-ВА ПАРЕТО
 	//сам эксперимент
 	vector<double> experiment_reduction(StreamWriter^ sw, String^ problem_name_str, 
@@ -333,3 +342,9 @@ public:
 //};
 
 float С_metric(vector<vector<int>> P_set_1, vector<vector<int>> P_set_2);
+
+//вывод информации в файл
+void write_to_file(StreamWriter^ sw, String^ st);
+void write_to_file_DEBUG(StreamWriter^ sw, String^ st);
+void write_to_file_endl(StreamWriter^ sw, String^ st);
+void write_to_file_endl_DEBUG(StreamWriter^ sw, String^ st);

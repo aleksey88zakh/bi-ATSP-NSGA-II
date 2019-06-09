@@ -34,6 +34,20 @@ vector<int> GA_path::multi_phitness(vector<int> p)
 	return temp;
 }
 
+//заполнение значений критерия
+void  GA_path::calc_phi()
+{
+	for (int i = 0; i <this->get_N(); i++)
+		this->phi[i] = this->multi_phitness(this->pop[i]);
+}
+
+//заполнение значений критерия расширенной популяции
+void  GA_path::calc_ext_phi()
+{
+	for (int i = 0; i < this->get_ext_N(); i++)
+		this->phi[i] = this->multi_phitness(this->pop_R_t[i]);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //Построение аппроксимации мн-ва Парето (значения векторного критерия, без повторов)
