@@ -532,7 +532,7 @@ int main_GA(int argc, char* argv[])
 			//построение перестановки pi (переменная index_pi)
 			//сохраняем все дуги в один массив
 			//vector<vector<int>> c_all(ga.get_n()*ga.get_n() - ga.get_n(), vector<int>(2));
-			c_all = ga.get_c_all();
+			//c_all = ga.get_c_all();
 			//? определение fronts_struct_temp с размерностью
 			vector<vector<int>> tmp; //заглушка
 			ga.i_rank_pi = ga.range_front_J(ga.c_max, tmp, ga.index_pi, 0);
