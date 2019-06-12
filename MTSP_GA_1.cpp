@@ -1136,6 +1136,8 @@ int main_GA(int argc, char* argv[])
 					//сравниваем потомка с архивом
 					if (arch_ga.check_new(phi_child))
 						arch_ga.arch_modify(child, phi_child);
+
+
 					// просматриваем окрестность потомка
 					ga.local_search_VNS_new(child, _alpha_LS_[1], _beta_LS_[1], &arch_ga);
 
@@ -4245,7 +4247,7 @@ int main(int argc, char* argv[])
 #ifdef _DEBUG_
 
 	//число городов
-	int n = 12;
+	int n = 20;
 	//число особей
 	int N = 2;
 	//число критериев
@@ -4264,11 +4266,15 @@ int main(int argc, char* argv[])
 	unsigned long temp_time = ::GetTickCount();
 	srand(temp_time);
 	//генерация 2-х случайных особей в массиве pop
-	for (int i = 0; i < N; ++i)
+	for (int i = 0; i < ga.get_N(); ++i)
 		ga.pop.push_back(ga.random_individual());
+	
 
 	printf("Initial population:\n");
 	ga.output_pop();
+	ga.SAX(ga.s_m, ga.pop[0], ga.pop[1]);
+	ga.recombinationOCX(ga.s_m, ga.pop[0], ga.pop[1]);
+	
 
 
 	system("pause");
